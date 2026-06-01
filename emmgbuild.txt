@@ -1,0 +1,21 @@
+dir obj
+dir build
+
+compiler gcc
+
+srcflag -Iinclude/
+buildflag -lSDL3
+
+# Put src here
+src main.c
+src types.c
+
+# Put build here
+build physics
+
+embedmake
+clean:
+	rm -r obj
+	rm -r build
+.PHONY: clean
+endmake
