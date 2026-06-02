@@ -8,7 +8,8 @@ collision_info check_collision(ball a, wall b) {
 	float previous_collision_dot = dot(previous_relative_position, b.normal);
 	collision_info info;
 
-	int changed_sides = (previous_collision_dot * collision_dot) < 0; // just in case, but for some reason even without this it detects the collision if the ball completely changes sides i have no clue how but this is here just in case
+	//int changed_sides = (previous_collision_dot * collision_dot) < 0; // just in case, but for some reason even without this it detects the collision if the ball completely changes sides i have no clue how but this is here just in case
+	int changed_sides = 0; // doesnt actually do much i dont think and stops just changing the velocity against walls
 
 	int side = (previous_collision_dot <= 0) * 2 - 1;
 	info.normal = v2_fmult(b.normal, side);
@@ -56,9 +57,10 @@ collision_info check_collision(ball a, wall b) {
 void resolve_collision(ball *body, collision_info hit_info) {
 	if(hit_info.hit) {
 		vec2 velocity = v2_sub(body->position, body->previous_position);
+		if(dot(velocity, hit_info.normal) > 0) return; // moving in the same direction as wall i dont know why its > 0 instead of < 0 but whatever
 		float speed = sqrt(dot(velocity, velocity));
 		body->position = v2_sub(body->position, v2_fmult(hit_info.normal, hit_info.depth));
-		float elasticity = 0.8;
+		float elasticity = 0;
 		float friction = 0;
 
 		float bounce_dot = -dot(hit_info.normal, velocity);
@@ -89,13 +91,57 @@ void distance_constraint(ball *a, ball *b, float length) {
 }
 
 
-void spring_constraint(ball *a, ball *b, float length) {
-	vec2 direction_between = v2_sub(a->position, b->position);
+void spring_constraint(ball *a, ball *b, float length, float stiffness, float deltatime) {
+	/*vec2 direction_between = v2_sub(a->position, b->position);
 	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
 	vec2 normalized_direction = v2_fmult(direction_between, 1/(sqrt(dot(direction_between, direction_between))));
 	vec2 a_wanted_position = v2_add(inbetween_point, v2_fmult(normalized_direction, length*0.5));
 	vec2 b_wanted_position = v2_add(inbetween_point, v2_fmult(normalized_direction, -length*0.5));
 
-	a->position = v2_add(a->position, v2_fmult(v2_sub(a_wanted_position, a->position), 0.5));
-	b->position = v2_add(b->position, v2_fmult(v2_sub(b_wanted_position, b->position), 0.5));
+	stiffness *= stiffness <= 1;
+
+	a->position = v2_add(a->position, v2_fmult(v2_sub(a_wanted_position, a->position), stiffness));
+	b->position = v2_add(b->position, v2_fmult(v2_sub(b_wanted_position, b->position), stiffness));*/
+	// k(l−l0)n
+	vec2 relative_position = v2_sub(b->position, a->position);
+	float relative_magnitude = sqrt(dot(relative_position, relative_position));
+	float force = stiffness * (relative_magnitude - length);
+	vec2 normalized_relative_position = v2_fmult(relative_position, 1/relative_magnitude);
+	vec2 push = v2_fmult(normalized_relative_position, force * deltatime * deltatime);
+
+	a->position = v2_add(a->position, v2_fmult(push, 0.5));
+	b->position = v2_add(b->position, v2_fmult(push, -0.5));
+}
+
+void rope_constraint(ball *a, ball *b, float length) {
+	vec2 direction_between = v2_sub(a->position, b->position);
+	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
+	float distance = sqrt(dot(direction_between, direction_between));
+	if(distance < length) return;
+	vec2 normalized_direction = v2_fmult(direction_between, 1/distance);
+	a->position = v2_add(inbetween_point, v2_fmult(normalized_direction, length*0.5));
+	b->position = v2_add(inbetween_point, v2_fmult(normalized_direction, -length*0.5));
+}
+
+void rope_spring_constraint(ball *a, ball *b, float length, float stiffness, float deltatime) {
+	/*vec2 direction_between = v2_sub(a->position, b->position);
+	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
+	vec2 normalized_direction = v2_fmult(direction_between, 1/(sqrt(dot(direction_between, direction_between))));
+	vec2 a_wanted_position = v2_add(inbetween_point, v2_fmult(normalized_direction, length*0.5));
+	vec2 b_wanted_position = v2_add(inbetween_point, v2_fmult(normalized_direction, -length*0.5));
+
+	stiffness *= stiffness <= 1;
+
+	a->position = v2_add(a->position, v2_fmult(v2_sub(a_wanted_position, a->position), stiffness));
+	b->position = v2_add(b->position, v2_fmult(v2_sub(b_wanted_position, b->position), stiffness));*/
+	// k(l−l0)n
+	vec2 relative_position = v2_sub(b->position, a->position);
+	float relative_magnitude = sqrt(dot(relative_position, relative_position));
+	if(relative_magnitude < length) return;
+	float force = stiffness * (relative_magnitude - length);
+	vec2 normalized_relative_position = v2_fmult(relative_position, 1/relative_magnitude);
+	vec2 push = v2_fmult(normalized_relative_position, force * deltatime * deltatime);
+
+	a->position = v2_add(a->position, v2_fmult(push, 0.5));
+	b->position = v2_add(b->position, v2_fmult(push, -0.5));
 }

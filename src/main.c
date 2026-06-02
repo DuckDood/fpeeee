@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include <physics.h>
 
-#define WIDTH 800
-#define HEIGHT 600
+//#define WIDTH 800
+//#define HEIGHT 600
+#define WIDTH 1280
+#define HEIGHT 720
 
 void draw_circle(SDL_Renderer *renderer, ball b, int resolution) {
 	for(float angle = 0; angle < 3.14159*2; angle += (3.14159*2)/resolution) {
@@ -41,13 +43,13 @@ int main() {
 
 	mainBall.position = (vec2){100, 200};
 	mainBall.previous_position = (vec2){100, 200};
-	mainBall.radius = 25;
+	mainBall.radius = 10;
 	
 	ball mainBall2;
 
 	mainBall2.position = (vec2){200, 200};
 	mainBall2.previous_position = (vec2){200, 200};
-	mainBall2.radius = 25;
+	mainBall2.radius = 10;
 
 	Uint64 fpsTicks = SDL_GetTicks();
 	int frame = 0;
@@ -58,6 +60,8 @@ int main() {
 
 	float a = -3.14/2.1;
 
+	int mouse_down = 0;
+	vec2 mouse_offset = {0, 0};
 
 	wall walls[5];
 	int wall_count = 5;
@@ -84,7 +88,7 @@ int main() {
 		lastFrameTime = frameStartTime;
 		frameStartTime = SDL_GetPerformanceCounter();
 		deltatime = (double)(frameStartTime - lastFrameTime)/SDL_GetPerformanceFrequency();
-		deltatime*=1/10.;
+		deltatime*=1;
 
 
 
@@ -95,28 +99,34 @@ int main() {
 
 
 		
-		for(int i = 0; i < 10; i++) {
+		for(int i = 0; i < 1; i++) {
 			update_ball(&mainBall);
 			mainBall.position = v2_add(mainBall.position, v2_fmult((vec2){0, 300}, deltatime * deltatime));
 			update_ball(&mainBall2);
 			mainBall2.position = v2_add(mainBall2.position, v2_fmult((vec2){0, 300}, deltatime * deltatime));
 
 			float mx, my;
-			int mouse_down = SDL_BUTTON_LMASK & SDL_GetMouseState(&mx, &my);
+			int last_mouse_down = mouse_down;
+			int mouse_down = SDL_BUTTON_LMASK & SDL_GetRelativeMouseState(&mx, &my);
 			if(mouse_down) {
 				//mainBall.previous_position = v2_sub(mainBall.position,(vec2){mx/2, my/2});
 				//mainBall.position = v2_add(mainBall.position,(vec2){mx/2, my/2});
-				mainBall.position = (vec2){mx, my};
+				//mainBall.position = v2_add((vec2){mx, my}, mouse_offset);
+				mainBall.previous_position = v2_sub(mainBall.position, (vec2){mx, my});
 			}
 
 
+				spring_constraint(&mainBall, &mainBall2, 150, 10, deltatime);
+				
 			for(int wall = 0; wall < wall_count; wall++) {
 				check_and_resolve(&mainBall, walls[wall]);
-				distance_constraint(&mainBall, &mainBall2, 150);
+				//distance_constraint(&mainBall, &mainBall2, 150);
 				check_and_resolve(&mainBall2, walls[wall]);
-				distance_constraint(&mainBall, &mainBall2, 150);
+				//distance_constraint(&mainBall, &mainBall2, 150);
+
 			}
 		}
+
 		/*if(mainBall.position.y + mainBall.radius > HEIGHT) {
 			//mainBall.velocity.y = -mainBall.velocity.y * 0.5;
 			mainBall.position.y = HEIGHT - mainBall.radius;
@@ -137,7 +147,6 @@ int main() {
 
 		SDL_FRect ballRect = {mainBall.position.x-mainBall.radius, mainBall.position.y-mainBall.radius, mainBall.radius*2, mainBall.radius*2};
 		//SDL_RenderFillRect(renderer, &ballRect);
-		draw_circle(renderer, mainBall, 25);
 		draw_circle(renderer, mainBall2, 25);
 
 		for(int i = 0; i < wall_count; i++) {
@@ -145,6 +154,8 @@ int main() {
 		}
 		SDL_RenderLine(renderer, 0, 200, 500, 200);
 		SDL_RenderLine(renderer, mainBall.position.x, mainBall.position.y, mainBall2.position.x, mainBall2.position.y);
+		SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+		draw_circle(renderer, mainBall, 25);
 
 
 
@@ -155,7 +166,7 @@ int main() {
 			fpsTicks = SDL_GetTicks();
 			frame = 0;
 		}
-		SDL_Delay(1000/60. - deltatime*100);
+		SDL_Delay(1000/60. + deltatime*100);
 
 	}
 	SDL_DestroyRenderer(renderer);
