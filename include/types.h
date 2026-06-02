@@ -5,7 +5,7 @@ typedef struct {
 
 typedef struct {
 	vec2 position;
-	vec2 velocity;
+	vec2 previous_position;
 	float radius;
 } ball;
 
@@ -27,5 +27,3 @@ vec2 v2_mult(vec2 a, vec2 b);
 vec2 v2_fmult(vec2 a, float b);
 vec2 v2_fdiv(vec2 a, float b);
 float dot(vec2 a, vec2 b);
-
-collision_info check_collision(ball a, wall b);

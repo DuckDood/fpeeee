@@ -1,4 +1,4 @@
-all: obj/ build/ obj/main.c.o obj/types.c.o build/physics 
+all: obj/ build/ obj/main.c.o obj/types.c.o obj/physics.c.o build/physics 
 OSMODE := l
 
 obj/: 
@@ -31,11 +31,19 @@ else
 endif
 
 
-build/physics: obj/main.c.o obj/types.c.o 
+obj/physics.c.o: src/physics.c 
 ifeq (${OSMODE}, l)
-	${CXX} obj/main.c.o obj/types.c.o -o build/physics -lSDL3
+	gcc src/physics.c -c -o obj/physics.c.o -Iinclude/
 else
-	${CXX} obj/main.c.o obj/types.c.o -o build/physics -lSDL3
+	gcc src/physics.c -c -o obj/physics.c.o -Iinclude/
+endif
+
+
+build/physics: obj/main.c.o obj/types.c.o obj/physics.c.o 
+ifeq (${OSMODE}, l)
+	${CXX} obj/main.c.o obj/types.c.o obj/physics.c.o -o build/physics -lSDL3
+else
+	${CXX} obj/main.c.o obj/types.c.o obj/physics.c.o -o build/physics -lSDL3
 endif
 
 
@@ -56,6 +64,11 @@ ifeq (${OSMODE}, l)
 	clang src/types.c  -Iinclude/ -MJ emmgtemp/1.json -fsyntax-only
 else
 	clang src/types.c  -Iinclude/ -MJ emmgtemp/1.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang src/physics.c  -Iinclude/ -MJ emmgtemp/2.json -fsyntax-only
+else
+	clang src/physics.c  -Iinclude/ -MJ emmgtemp/2.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[

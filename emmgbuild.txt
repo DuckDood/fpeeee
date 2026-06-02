@@ -9,6 +9,7 @@ buildflag -lSDL3
 # Put src here
 src main.c
 src types.c
+src physics.c
 
 # Put build here
 build physics
