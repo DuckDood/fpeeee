@@ -1,5 +1,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_init.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_surface.h>
 #include <math.h>
 #include <stdio.h>
 #include <physics.h>
@@ -43,13 +45,13 @@ int main() {
 
 	mainBall.position = (vec2){100, 200};
 	mainBall.previous_position = (vec2){100, 200};
-	mainBall.radius = 10;
+	mainBall.radius = 25;
 	
 	ball mainBall2;
 
 	mainBall2.position = (vec2){200, 200};
 	mainBall2.previous_position = (vec2){200, 200};
-	mainBall2.radius = 10;
+	mainBall2.radius = 25;
 
 	Uint64 fpsTicks = SDL_GetTicks();
 	int frame = 0;
@@ -61,7 +63,7 @@ int main() {
 	float a = -3.14/2.1;
 
 	int mouse_down = 0;
-	vec2 mouse_offset = {0, 0};
+	float mx, my;
 
 	wall walls[5];
 	int wall_count = 5;
@@ -88,7 +90,7 @@ int main() {
 		lastFrameTime = frameStartTime;
 		frameStartTime = SDL_GetPerformanceCounter();
 		deltatime = (double)(frameStartTime - lastFrameTime)/SDL_GetPerformanceFrequency();
-		deltatime*=1;
+		deltatime*=1./1.;
 
 
 
@@ -99,33 +101,38 @@ int main() {
 
 
 		
+
+			int mouse_down = SDL_BUTTON_LMASK & SDL_GetRelativeMouseState(&mx, &my);
 		for(int i = 0; i < 1; i++) {
+				check_and_resolve_balls(&mainBall2, &mainBall);
 			update_ball(&mainBall);
 			mainBall.position = v2_add(mainBall.position, v2_fmult((vec2){0, 300}, deltatime * deltatime));
 			update_ball(&mainBall2);
 			mainBall2.position = v2_add(mainBall2.position, v2_fmult((vec2){0, 300}, deltatime * deltatime));
+				check_and_resolve_balls(&mainBall2, &mainBall);
 
-			float mx, my;
-			int last_mouse_down = mouse_down;
-			int mouse_down = SDL_BUTTON_LMASK & SDL_GetRelativeMouseState(&mx, &my);
 			if(mouse_down) {
 				//mainBall.previous_position = v2_sub(mainBall.position,(vec2){mx/2, my/2});
 				//mainBall.position = v2_add(mainBall.position,(vec2){mx/2, my/2});
+				//mainBall.position = (vec2){mx, my};
+				//set_velocity(&mainBall, (vec2){mx/5, my/5});
+				set_velocity(&mainBall, (vec2){mx, my});
 				//mainBall.position = v2_add((vec2){mx, my}, mouse_offset);
-				mainBall.previous_position = v2_sub(mainBall.position, (vec2){mx, my});
+				//mainBall.previous_position = v2_sub(mainBall.position, (vec2){mx, my});
 			}
 
 
-				spring_constraint(&mainBall, &mainBall2, 150, 10, deltatime);
+				//spring_constraint(&mainBall , &mainBall2, 150, 300, deltatime);
+
+				//distance_constraint(&mainBall, &mainBall2, 150);
+				rope_constraint(&mainBall, &mainBall2, 150);
 				
 			for(int wall = 0; wall < wall_count; wall++) {
-				check_and_resolve(&mainBall, walls[wall]);
-				//distance_constraint(&mainBall, &mainBall2, 150);
-				check_and_resolve(&mainBall2, walls[wall]);
-				//distance_constraint(&mainBall, &mainBall2, 150);
-
+				check_and_resolve(&mainBall, walls[wall], deltatime);
+				check_and_resolve(&mainBall2, walls[wall], deltatime);
 			}
 		}
+
 
 		/*if(mainBall.position.y + mainBall.radius > HEIGHT) {
 			//mainBall.velocity.y = -mainBall.velocity.y * 0.5;
@@ -152,21 +159,27 @@ int main() {
 		for(int i = 0; i < wall_count; i++) {
 			draw_wall(renderer, walls[i]);
 		}
-		SDL_RenderLine(renderer, 0, 200, 500, 200);
+		//SDL_RenderLine(renderer, 0, 200, 500, 200);
 		SDL_RenderLine(renderer, mainBall.position.x, mainBall.position.y, mainBall2.position.x, mainBall2.position.y);
 		SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
 		draw_circle(renderer, mainBall, 25);
 
-
+		SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+		ball cursor;
+		cursor.position = (vec2){mx, my};
+		cursor.radius = 5;
+		draw_circle(renderer, cursor, 25);
 
 		SDL_RenderPresent(renderer);
+
+
 		frame++;
-		if(SDL_GetTicks() > fpsTicks + 3000) {
-			printf("fps: %i\n", frame/3);
+		if(SDL_GetTicks() > fpsTicks + 1000) {
+			printf("fps: %i\n", frame/1);
 			fpsTicks = SDL_GetTicks();
 			frame = 0;
 		}
-		SDL_Delay(1000/60. + deltatime*100);
+		SDL_Delay(1000/60.);
 
 	}
 	SDL_DestroyRenderer(renderer);
