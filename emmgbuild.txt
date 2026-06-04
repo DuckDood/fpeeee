@@ -6,6 +6,8 @@ compiler gcc
 srcflag -Iinclude/
 buildflag -lSDL3
 
+srcflag -O2
+
 # Put src here
 src main.c
 src types.c

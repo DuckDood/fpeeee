@@ -74,7 +74,7 @@ void resolve_collision(ball *body, collision_info hit_info, float deltatime) {
 		//float elasticity = 0.5;
 		//float friction = 0.01;
 		//float elasticity = 0.5;
-		float elasticity = 0.8;
+		float elasticity = 0;
 		//float friction = 10 * deltatime;
 		float friction = 0;
 

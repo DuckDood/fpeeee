@@ -17,25 +17,25 @@ endif
 
 obj/main.c.o: src/main.c 
 ifeq (${OSMODE}, l)
-	gcc src/main.c -c -o obj/main.c.o -Iinclude/
+	gcc src/main.c -c -o obj/main.c.o -Iinclude/ -O2
 else
-	gcc src/main.c -c -o obj/main.c.o -Iinclude/
+	gcc src/main.c -c -o obj/main.c.o -Iinclude/ -O2
 endif
 
 
 obj/types.c.o: src/types.c 
 ifeq (${OSMODE}, l)
-	gcc src/types.c -c -o obj/types.c.o -Iinclude/
+	gcc src/types.c -c -o obj/types.c.o -Iinclude/ -O2
 else
-	gcc src/types.c -c -o obj/types.c.o -Iinclude/
+	gcc src/types.c -c -o obj/types.c.o -Iinclude/ -O2
 endif
 
 
 obj/physics.c.o: src/physics.c 
 ifeq (${OSMODE}, l)
-	gcc src/physics.c -c -o obj/physics.c.o -Iinclude/
+	gcc src/physics.c -c -o obj/physics.c.o -Iinclude/ -O2
 else
-	gcc src/physics.c -c -o obj/physics.c.o -Iinclude/
+	gcc src/physics.c -c -o obj/physics.c.o -Iinclude/ -O2
 endif
 
 
@@ -56,19 +56,19 @@ clean:
 gencommands:
 	mkdir emmgtemp
 ifeq (${OSMODE}, l)
-	clang src/main.c  -Iinclude/ -MJ emmgtemp/0.json -fsyntax-only
+	clang src/main.c  -Iinclude/ -O2 -MJ emmgtemp/0.json -fsyntax-only
 else
-	clang src/main.c  -Iinclude/ -MJ emmgtemp/0.json -fsyntax-only
+	clang src/main.c  -Iinclude/ -O2 -MJ emmgtemp/0.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang src/types.c  -Iinclude/ -MJ emmgtemp/1.json -fsyntax-only
+	clang src/types.c  -Iinclude/ -O2 -MJ emmgtemp/1.json -fsyntax-only
 else
-	clang src/types.c  -Iinclude/ -MJ emmgtemp/1.json -fsyntax-only
+	clang src/types.c  -Iinclude/ -O2 -MJ emmgtemp/1.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang src/physics.c  -Iinclude/ -MJ emmgtemp/2.json -fsyntax-only
+	clang src/physics.c  -Iinclude/ -O2 -MJ emmgtemp/2.json -fsyntax-only
 else
-	clang src/physics.c  -Iinclude/ -MJ emmgtemp/2.json -fsyntax-only
+	clang src/physics.c  -Iinclude/ -O2 -MJ emmgtemp/2.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[
