@@ -67,7 +67,7 @@ collision_info check_collision(ball a, wall b) {
 void resolve_collision(ball *body, collision_info hit_info, float deltatime) {
 	/* note for future if i add moving walls: if the wall is kinematic, 
 	body->position = v2_sub(body->position, v2_fmult(hit_info.normal, hit_info.depth));
-	is all you need to do
+	is all you need to do (not really)
 	otherwise its kinda weird
 	*/
 	if(hit_info.hit) {

@@ -1,0 +1,25 @@
+dir obj
+dir build
+
+compiler emcc -s USE_SDL=3
+linker emcc -s USE_SDL=3
+
+srcflag -Iinclude/
+buildflag -lSDL3
+
+srcflag -O2
+
+# Put src here
+src main.c
+src types.c
+src physics.c
+
+# Put build here
+build index.html
+
+embedmake
+clean:
+	rm -r obj
+	rm -r build
+.PHONY: clean
+endmake
