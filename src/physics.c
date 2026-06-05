@@ -65,6 +65,11 @@ collision_info check_collision(ball a, wall b) {
 }
 
 void resolve_collision(ball *body, collision_info hit_info, float deltatime) {
+	/* note for future if i add moving walls: if the wall is kinematic, 
+	body->position = v2_sub(body->position, v2_fmult(hit_info.normal, hit_info.depth));
+	is all you need to do
+	otherwise its kinda weird
+	*/
 	if(hit_info.hit) {
 		vec2 velocity = v2_sub(body->position, body->previous_position);
 		if(dot(velocity, hit_info.normal) > 0) return; // moving in the same direction as wall i dont know why its > 0 instead of < 0 but whatever
@@ -170,10 +175,14 @@ void rope_spring_constraint(ball *a, ball *b, float length, float stiffness, flo
 collision_info check_ball_collision(ball a, ball b) {
 	float distance = magnitude(v2_sub(a.position, b.position));
 	collision_info hit_info;
-	hit_info.hit = distance <= a.radius + b.radius;
-	hit_info.normal = normalize(v2_sub(b.position, a.position));
-	hit_info.normal = v2_fmult(hit_info.normal, -1);
-	hit_info.depth = distance - a.radius - b.radius;
+	if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
+		hit_info.hit = distance <= a.radius + b.radius;
+		hit_info.normal = normalize(v2_sub(b.position, a.position));
+		hit_info.normal = v2_fmult(hit_info.normal, -1);
+		hit_info.depth = distance - a.radius - b.radius;
+	} else {
+		hit_info.hit = 0;
+	}
 
 	return hit_info;
 }

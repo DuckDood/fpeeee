@@ -69,7 +69,10 @@ int main() {
 	ball *balls = malloc(ball_count * sizeof(ball));
 	for(int i = 0; i < ball_count; i++) {
 		balls[i].position = (vec2) {rand() % WIDTH, 50};
+		//balls[i].position = (vec2) {i * 20 % WIDTH, 50 + (int)((i * 20.)/WIDTH) * 20};
 		balls[i].radius = 10;
+		//balls[i].radius = rand() % 15 + 5;
+
 		set_velocity(balls+i, (vec2){0,0});
 	}
 
@@ -95,6 +98,10 @@ int main() {
 					break;
 			}
 		}
+
+		//a+=0.05;
+		walls[0] = (wall){{400, 500}, {cos(a), sin(a)}, 300};
+
 		lastFrameTime = frameStartTime;
 		frameStartTime = SDL_GetPerformanceCounter();
 		deltatime = (double)(frameStartTime - lastFrameTime)/SDL_GetPerformanceFrequency();
@@ -139,7 +146,7 @@ int main() {
 				balls[i].position = v2_add(balls[i].position, (vec2){0, 800 * deltatime * deltatime});
 
 				if(mouse_down) {
-					float dist_to_cursor = magnitude(v2_sub(balls[i].position, mouse_vector));
+					float dist_to_cursor = magnitude(v2_sub(balls[i].position, mouse_vector)) - balls[i].radius;
 					float affect_power = ((mouse_distance - dist_to_cursor) / mouse_distance) * mouse_power;
 					if(affect_power > 0) {
 						balls[i].position = v2_add(balls[i].position, v2_fmult(v2_sub(mouse_vector,balls[i].position), deltatime * deltatime * affect_power));
@@ -185,6 +192,7 @@ int main() {
 		Uint64 time_taken = SDL_GetTicks() - start_time;
 		if(time_taken > 0)
 			time_taken -= 1;
+		if(time_taken > 1000 / 60) time_taken = 1000 / 60;
 		//SDL_DelayNS(1000000000/240. - time_taken);
 		SDL_Delay(1000 / 60 - time_taken);
 		//SDL_Delay(1000 / 60);
