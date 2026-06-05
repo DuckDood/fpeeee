@@ -64,7 +64,7 @@ collision_info check_collision(ball a, wall b) {
 	return info;
 }
 
-void resolve_collision(ball *body, collision_info hit_info, float deltatime) {
+void resolve_collision(ball *body, collision_info hit_info, float elasticity, float friction, float deltatime) {
 	/* note for future if i add moving walls: if the wall is kinematic, 
 	body->position = v2_sub(body->position, v2_fmult(hit_info.normal, hit_info.depth));
 	is all you need to do (not really)
@@ -73,15 +73,9 @@ void resolve_collision(ball *body, collision_info hit_info, float deltatime) {
 	if(hit_info.hit) {
 		vec2 velocity = v2_sub(body->position, body->previous_position);
 		if(dot(velocity, hit_info.normal) > 0) return; // moving in the same direction as wall i dont know why its > 0 instead of < 0 but whatever
-		//float speed = sqrt(dot(velocity, velocity));
+		friction *= deltatime; // works for some reason, seemingly it should be squared or not at all but idk
 		float speed = magnitude(velocity);
 		body->position = v2_sub(body->position, v2_fmult(hit_info.normal, hit_info.depth));
-		//float elasticity = 0.5;
-		//float friction = 0.01;
-		//float elasticity = 0.5;
-		float elasticity = 0;
-		//float friction = 10 * deltatime;
-		float friction = 0;
 
 		float bounce_dot = -dot(hit_info.normal, velocity);
 		vec2 bounce_velocity = v2_fmult(hit_info.normal, bounce_dot);
@@ -93,8 +87,8 @@ void resolve_collision(ball *body, collision_info hit_info, float deltatime) {
 	}
 }
 
-void check_and_resolve(ball *body, wall collider, float deltatime) {
-	resolve_collision(body, check_collision(*body, collider), deltatime);
+void check_and_resolve(ball *body, wall collider, float elasticity, float friction, float deltatime) {
+	resolve_collision(body, check_collision(*body, collider), elasticity, friction, deltatime);
 }
 
 void update_ball(ball *body) {
