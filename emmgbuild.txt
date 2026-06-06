@@ -12,6 +12,7 @@ srcflag -O2
 src main.c
 src types.c
 src physics.c
+src shape_generators.c
 
 # Put build here
 build physics

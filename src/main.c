@@ -6,6 +6,7 @@
 #include <SDL3/SDL_surface.h>
 #include <math.h>
 #include <physics.h>
+#include <shape_generators.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -31,16 +32,20 @@ void draw_wall(SDL_Renderer *renderer, wall w) {
 	 );
 }
 
+void draw_linkage(SDL_Renderer *renderer, linkage link) {
+	SDL_RenderLine(renderer, link.a->position.x, link.a->position.y, link.b->position.x, link.b->position.y);
+}
+
 typedef struct {
 	SDL_Window *window;
 	SDL_Renderer *renderer;
 
-	Uint64 fpsTicks;
+	Uint64 fps_ticks;
 	int frame;
 	float deltatime;
 
-	Uint64 frameStartTime;
-	Uint64 lastFrameTime;
+	Uint64 frame_start_time;
+	Uint64 last_frame_time;
 
 	wall walls[5];
 	int wall_count;
@@ -55,6 +60,8 @@ typedef struct {
 	int mouse_down;
 	float mx, my;
 	vec2 mouse_vector;
+
+	shape cloth;
 } prog_state;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
@@ -71,12 +78,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 		return SDL_APP_FAILURE;
 	}
 
-	app_state->fpsTicks = SDL_GetTicks();
+	app_state->fps_ticks = SDL_GetTicks();
 	app_state->frame = 0;
 	app_state->deltatime = 0;
 	
-	app_state->frameStartTime  = SDL_GetPerformanceCounter();
-	app_state->lastFrameTime = 1;
+	app_state->frame_start_time  = SDL_GetPerformanceCounter();
+	app_state->last_frame_time = 1;
 
 	float a = -3.14/2.1;
 
@@ -91,27 +98,26 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 	app_state->walls[4] = (wall){WIDTH, HEIGHT/2., {-1, 0}, HEIGHT};
 
 
-	app_state->ball_count = 2;
+	app_state->ball_count = 200;
 	app_state->balls = malloc(app_state->ball_count * sizeof(ball));
 	for(int i = 0; i < app_state->ball_count; i++) {
-		app_state->balls[i].position = (vec2) {rand() % WIDTH, 50};
-		app_state->balls[i].position = (vec2) {i * 20 % WIDTH, 50 + (int)((i * 20.)/WIDTH) * 20};
-		app_state->balls[i].radius = 25;
+		//app_state->balls[i].position = (vec2) {rand() % WIDTH, 50};
+		app_state->balls[i].position = (vec2) {i * 40 % WIDTH, 50 + (int)((i * 40.)/WIDTH) * 40};
+		app_state->balls[i].radius = 20;
 		//app_state->balls[i].radius = rand() % 15 + 5;
 
 		set_velocity(app_state->balls+i, (vec2){0,0});
 	}
 
-	//ball *cursor_ball = balls; // commented incase i dont want the range thing anymore
-
-	app_state->mouse_power = 300;
-	app_state->mouse_distance = 150;
+	app_state->mouse_power = 1000;
+	app_state->mouse_distance = 100;
 
 	app_state->mouse_down = 0;
 	app_state->mx = 0;
 	app_state->my = 0;
 	app_state->mouse_vector = (vec2){app_state->mx, app_state->my};
 
+	app_state->cloth = generate_cloth(300, 300, 15, 15, (vec2){WIDTH/2., HEIGHT/2.});
 	return SDL_APP_CONTINUE;
 }
 
@@ -119,24 +125,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	prog_state *app_state = appstate;
 
 	Uint64 start_time = SDL_GetTicks();
-	/*while(SDL_PollEvent(&event)) {
-		switch(event.type) {
-			case SDL_EVENT_QUIT:
-				running = false;
-				break;
-			default: 
-				break;
-		}
-	}*/
 
-	//a+=0.05;
-	//app_state->walls[0] = (wall){{400, 500}, {cos(a), sin(a)}, 300};
-
-	app_state->lastFrameTime = app_state->frameStartTime;
-	app_state->frameStartTime = SDL_GetPerformanceCounter();
-	app_state->deltatime = (double)(app_state->frameStartTime - app_state->lastFrameTime)/SDL_GetPerformanceFrequency();
+	app_state->last_frame_time = app_state->frame_start_time;
+	app_state->frame_start_time = SDL_GetPerformanceCounter();
+	//app_state->deltatime = (double)(app_state->frameStartTime - app_state->lastFrameTime)/SDL_GetPerformanceFrequency();
 	int framerate = 60;
-	int steps_per_frame = 3;
+	int steps_per_frame = 2;
 	app_state->deltatime = 1.0/framerate; // more consistent and basically the same to the user
 	app_state->deltatime*=1.0/steps_per_frame;
 
@@ -152,47 +146,57 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	app_state->mouse_down = SDL_BUTTON_LMASK & SDL_GetMouseState(&app_state->mx, &app_state->my);
 	app_state->mouse_vector = (vec2){app_state->mx, app_state->my};
 
-	/*if(mouse_down && !previous_mouse_down) {
-		int current_closest = 0;
-		float current_closest_distance = INFINITY;
-		for(int i = 0; i < ball_count; ++i) {
-			float distance = magnitude(v2_sub(balls[i].position, mouse_vector));
-			if(current_closest_distance > distance) {
-				current_closest_distance = distance;
-				current_closest = i;
-			}
-		}
-		cursor_ball = balls+current_closest;
-	}*/
-
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
 		for(int i = 0; i < app_state->ball_count; ++i) {
 			update_ball(app_state->balls+i);
 		}
-		if(app_state->mouse_down) {
-			//cursor_ball->position = mouse_vector;
-			//set_velocity(cursor_ball, v2_fdiv(v2_sub(mouse_vector, previous_mouse_vector), steps_per_frame));
-			app_state->balls[0].position = app_state->mouse_vector;
-		}
 		for(int i = 0; i < app_state->ball_count; ++i) {
 			app_state->balls[i].position = v2_add(app_state->balls[i].position, (vec2){0, 800 * app_state->deltatime * app_state->deltatime});
 
-			/*if(app_state->mouse_down) {
+			if(app_state->mouse_down) {
 				float dist_to_cursor = magnitude(v2_sub(app_state->balls[i].position, app_state->mouse_vector)) - app_state->balls[i].radius;
 				float affect_power = ((app_state->mouse_distance - dist_to_cursor) / app_state->mouse_distance) * app_state->mouse_power;
 				if(affect_power > 0) {
 					app_state->balls[i].position = v2_add(app_state->balls[i].position, v2_fmult(v2_sub(app_state->mouse_vector,app_state->balls[i].position), app_state->deltatime * app_state->deltatime * affect_power));
 				}
-			}*/
+			}
 
 			for(int j = 0; j < app_state->wall_count; ++j) {
-				check_and_resolve(app_state->balls+i, app_state->walls[j], 1, 0, app_state->deltatime);
+				check_and_resolve(app_state->balls+i, app_state->walls[j], 0, 1, app_state->deltatime);
 			}
 			for(int j = 0; j < app_state->ball_count; ++j) {
 				if(i == j) continue;
 				check_and_resolve_balls(app_state->balls+i, app_state->balls+j);
 			}
-		distance_constraint(app_state->balls, app_state->balls+1, 200);
+
+		}
+
+		for(int i = 0; i < app_state->cloth.ball_count; ++i) {
+			update_ball(app_state->cloth.balls+i);
+		}
+		for(int i = 0; i < app_state->cloth.ball_count; ++i) {
+			app_state->cloth.balls[i].position = v2_add(app_state->cloth.balls[i].position, (vec2){0, 800 * app_state->deltatime * app_state->deltatime});
+
+			/*if(app_state->mouse_down) {
+				float dist_to_cursor = magnitude(v2_sub(app_state->cloth.balls[i].position, app_state->mouse_vector)) - app_state->cloth.balls[i].radius;
+				float affect_power = ((app_state->mouse_distance - dist_to_cursor) / app_state->mouse_distance) * app_state->mouse_power;
+				if(affect_power > 0) {
+					app_state->cloth.balls[i].position = v2_add(app_state->cloth.balls[i].position, v2_fmult(v2_sub(app_state->mouse_vector,app_state->cloth.balls[i].position), app_state->deltatime * app_state->deltatime * affect_power));
+				}
+			}*/
+
+			for(int j = 0; j < app_state->cloth.link_count; ++j) {
+				update_linkage(app_state->cloth.links[j], app_state->deltatime);
+			}
+			for(int j = 0; j < app_state->wall_count; ++j) {
+				check_and_resolve(app_state->cloth.balls+i, app_state->walls[j], 0, 1, app_state->deltatime);
+			}
+			for(int j = 0; j < app_state->ball_count; ++j) {
+				check_and_resolve_balls(app_state->cloth.balls+i, app_state->balls + j);
+			}
+			for(int j = 0; j < 15; ++j) {
+				app_state->cloth.balls[j].position = app_state->cloth.balls[j].previous_position; // pins top row in place
+			}
 		}
 	}
 
@@ -201,13 +205,19 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		draw_wall(app_state->renderer, app_state->walls[i]);
 	}
 	for(int i = 0; i < app_state->ball_count; i++) {
-		//if(balls+i == cursor_ball) continue; // kinda evil comparing memory addresses like this but it works
 		draw_circle(app_state->renderer, app_state->balls[i], 25);
 	}
 
-	SDL_RenderLine(app_state->renderer, app_state->balls[0].position.x, app_state->balls[0].position.y, app_state->balls[1].position.x, app_state->balls[1].position.y);
+	for(int i = 0; i < app_state->cloth.link_count; i++) {
+		draw_linkage(app_state->renderer, app_state->cloth.links[i]);
+	}
+
 	SDL_SetRenderDrawColor(app_state->renderer, 0, 0, 255, 255);
-	//draw_circle(renderer, *cursor_ball, 10);
+	for(int i = 0; i < app_state->cloth.ball_count; i++) {
+		draw_circle(app_state->renderer, app_state->cloth.balls[i], 25);
+	}
+
+	SDL_SetRenderDrawColor(app_state->renderer, 0, 0, 255, 255);
 
 	ball cursor;
 	SDL_GetMouseState(&app_state->mx, &app_state->my);
@@ -215,23 +225,20 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	cursor.radius = app_state->mouse_distance;
 	draw_circle(app_state->renderer, cursor, 50);
 
-	SDL_RenderLine(app_state->renderer, 0, 50, 100, 50);
 	SDL_RenderPresent(app_state->renderer);
 
 
 	app_state->frame++;
-	if(SDL_GetTicks() > app_state->fpsTicks + 1000) {
+	if(SDL_GetTicks() > app_state->fps_ticks + 1000) {
 		printf("fps: %i\n", app_state->frame/1);
-		app_state->fpsTicks = SDL_GetTicks();
+		app_state->fps_ticks = SDL_GetTicks();
 		app_state->frame = 0;
 	}
 	Uint64 time_taken = SDL_GetTicks() - start_time;
 	if(time_taken > 0)
 		time_taken -= 1;
 	if(time_taken > 1000 / framerate) time_taken = 1000 / framerate;
-	//SDL_DelayNS(1000000000/240. - time_taken);
 	SDL_Delay(1000 / framerate - time_taken);
-	//SDL_Delay(1000 / 60);
 	return SDL_APP_CONTINUE;
 }
 

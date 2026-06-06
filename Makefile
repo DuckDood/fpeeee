@@ -1,4 +1,4 @@
-all: obj/ build/ obj/main.c.o obj/types.c.o obj/physics.c.o build/physics 
+all: obj/ build/ obj/main.c.o obj/types.c.o obj/physics.c.o obj/shape_generators.c.o build/physics 
 OSMODE := l
 
 obj/: 
@@ -39,11 +39,19 @@ else
 endif
 
 
-build/physics: obj/main.c.o obj/types.c.o obj/physics.c.o 
+obj/shape_generators.c.o: src/shape_generators.c 
 ifeq (${OSMODE}, l)
-	${CXX} obj/main.c.o obj/types.c.o obj/physics.c.o -o build/physics -lSDL3
+	gcc src/shape_generators.c -c -o obj/shape_generators.c.o -Iinclude/ -O2
 else
-	${CXX} obj/main.c.o obj/types.c.o obj/physics.c.o -o build/physics -lSDL3
+	gcc src/shape_generators.c -c -o obj/shape_generators.c.o -Iinclude/ -O2
+endif
+
+
+build/physics: obj/main.c.o obj/types.c.o obj/physics.c.o obj/shape_generators.c.o 
+ifeq (${OSMODE}, l)
+	${CXX} obj/main.c.o obj/types.c.o obj/physics.c.o obj/shape_generators.c.o -o build/physics -lSDL3
+else
+	${CXX} obj/main.c.o obj/types.c.o obj/physics.c.o obj/shape_generators.c.o -o build/physics -lSDL3
 endif
 
 
@@ -69,6 +77,11 @@ ifeq (${OSMODE}, l)
 	clang src/physics.c  -Iinclude/ -O2 -MJ emmgtemp/2.json -fsyntax-only
 else
 	clang src/physics.c  -Iinclude/ -O2 -MJ emmgtemp/2.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang src/shape_generators.c  -Iinclude/ -O2 -MJ emmgtemp/3.json -fsyntax-only
+else
+	clang src/shape_generators.c  -Iinclude/ -O2 -MJ emmgtemp/3.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[
