@@ -1,17 +1,22 @@
 dir obj
 dir build
 
-compiler gcc
+compiler ${CC}
+linker ${CC}
 
 srcflag -Iinclude/
+
+buildflag -lm
 buildflag -lSDL3
 
 srcflag -O2
+srcflag -march=native
 
 # Put src here
 src main.c
 src types.c
 src physics.c
+src matrix.c
 src shape_generators.c
 
 # Put build here

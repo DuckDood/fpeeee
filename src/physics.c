@@ -11,16 +11,16 @@ void set_velocity(ball *body, vec2 velocity) {
 collision_info check_collision(ball a, wall b) {
 	vec2 relative_position = v2_sub(b.position, a.position);
 	vec2 previous_relative_position = v2_sub(b.position, a.previous_position);
-	float collision_dot = dot(relative_position, b.normal);
-	float previous_collision_dot = dot(previous_relative_position, b.normal);
+	float collision_dot = v2_dot(relative_position, b.normal);
+	float previous_collision_dot = v2_dot(previous_relative_position, b.normal);
 	collision_info info;
 
 	int side = (previous_collision_dot <= 0) * 2 - 1;
 	info.normal = v2_fmult(b.normal, side);
-	info.depth = side * -collision_dot - a.radius; // subtract a tiny amount like 0.01 if you dont want things of radius 0 to be able to fall through
+	info.depth = side * -collision_dot - a.radius; // subtract a tiny amount like 0.01 if you dont want things of radius 0 to be able to fall through, pretty hacky fix though and doesnt always work
 
 	vec2 tangent = {b.normal.y, -b.normal.x};
-	float tangent_dot = dot(previous_relative_position, tangent);
+	float tangent_dot = v2_dot(previous_relative_position, tangent);
 
 	vec2 start_position = v2_add(b.position, v2_fmult(tangent, -b.length/2));
 	vec2 end_position = v2_add(b.position, v2_fmult(tangent, b.length/2));
@@ -28,8 +28,8 @@ collision_info check_collision(ball a, wall b) {
 	vec2 relative_start_position = v2_sub(start_position, a.position);
 	vec2 relative_end_position = v2_sub(end_position, a.position);
 
-	float dist_to_start = magnitude(relative_start_position);
-	float dist_to_end = magnitude(relative_end_position);
+	float dist_to_start = v2_magnitude(relative_start_position);
+	float dist_to_end = v2_magnitude(relative_end_position);
 
 	int on_edge_start = dist_to_start < a.radius;
 	int on_edge_end = dist_to_end < a.radius;
@@ -66,12 +66,12 @@ void resolve_collision(ball *body, collision_info hit_info, float elasticity, fl
 	*/
 	if(hit_info.hit) {
 		vec2 velocity = v2_sub(body->position, body->previous_position);
-		if(dot(velocity, hit_info.normal) > 0) return; // moving in the same direction as wall i dont know why its > 0 instead of < 0 but whatever
+		if(v2_dot(velocity, hit_info.normal) > 0) return; // moving in the same direction as wall i dont know why its > 0 instead of < 0 but whatever
 		friction *= deltatime; // works for some reason, seemingly it should be squared or not at all but idk
-		float speed = magnitude(velocity);
+		float speed = v2_magnitude(velocity);
 		body->position = v2_sub(body->position, v2_fmult(hit_info.normal, hit_info.depth));
 
-		float bounce_dot = -dot(hit_info.normal, velocity);
+		float bounce_dot = -v2_dot(hit_info.normal, velocity);
 		vec2 bounce_velocity = v2_fmult(hit_info.normal, bounce_dot);
 		vec2 slide_velocity = v2_add(velocity, bounce_velocity); // this is the velocity without the speed into the wall, so its the velocity which slides along it i think if i did this right
 
@@ -93,7 +93,7 @@ void update_ball(ball *body) {
 void distance_constraint(ball *a, ball *b, float length) {
 	vec2 direction_between = v2_sub(a->position, b->position);
 	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
-	vec2 normalized_direction = normalize(direction_between);
+	vec2 normalized_direction = v2_normalize(direction_between);
 	a->position = v2_add(inbetween_point, v2_fmult(normalized_direction, length*0.5));
 	b->position = v2_add(inbetween_point, v2_fmult(normalized_direction, -length*0.5));
 }
@@ -101,7 +101,7 @@ void distance_constraint(ball *a, ball *b, float length) {
 
 void spring_constraint(ball *a, ball *b, float length, float stiffness, float deltatime) {
 	vec2 relative_position = v2_sub(b->position, a->position);
-	float relative_magnitude = magnitude(relative_position);
+	float relative_magnitude = v2_magnitude(relative_position);
 	float force = stiffness * (relative_magnitude - length);
 	vec2 normalized_relative_position = v2_fmult(relative_position, 1/relative_magnitude);
 	vec2 push = v2_fmult(normalized_relative_position, force * deltatime * deltatime);
@@ -113,7 +113,7 @@ void spring_constraint(ball *a, ball *b, float length, float stiffness, float de
 void rope_constraint(ball *a, ball *b, float length) {
 	vec2 direction_between = v2_sub(a->position, b->position);
 	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
-	float distance = magnitude(direction_between);
+	float distance = v2_magnitude(direction_between);
 	if(distance < length) return;
 	vec2 normalized_direction = v2_fmult(direction_between, 1/distance);
 	a->position = v2_add(inbetween_point, v2_fmult(normalized_direction, length*0.5));
@@ -122,7 +122,7 @@ void rope_constraint(ball *a, ball *b, float length) {
 
 void rope_spring_constraint(ball *a, ball *b, float length, float stiffness, float deltatime) {
 	vec2 relative_position = v2_sub(b->position, a->position);
-	float relative_magnitude = magnitude(relative_position);
+	float relative_magnitude = v2_magnitude(relative_position);
 	if(relative_magnitude < length) return;
 	float force = stiffness * (relative_magnitude - length);
 	vec2 normalized_relative_position = v2_fmult(relative_position, 1/relative_magnitude);
@@ -153,11 +153,11 @@ void update_linkage(linkage link, float deltatime) {
 
 // it will give information for ball a, but it should work with ball b when inverting the normal
 collision_info check_ball_collision(ball a, ball b) {
-	float distance = magnitude(v2_sub(a.position, b.position));
+	float distance = v2_magnitude(v2_sub(a.position, b.position));
 	collision_info hit_info;
 	if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
 		hit_info.hit = distance <= a.radius + b.radius;
-		hit_info.normal = normalize(v2_sub(a.position, b.position));
+		hit_info.normal = v2_normalize(v2_sub(a.position, b.position));
 		hit_info.depth = distance - a.radius - b.radius;
 	} else {
 		hit_info.hit = 0;

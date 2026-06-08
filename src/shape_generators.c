@@ -19,17 +19,17 @@ shape generate_rectangle(float width, float height, vec2 starting_position) {
 	set_velocity(rectangle.balls+2, (vec2){0,0});
 	set_velocity(rectangle.balls+3, (vec2){0,0});
 
-	rectangle.balls[0].radius = 1;
-	rectangle.balls[1].radius = 1;
-	rectangle.balls[2].radius = 1;
-	rectangle.balls[3].radius = 1;
+	rectangle.balls[0].radius = 10;
+	rectangle.balls[1].radius = 10;
+	rectangle.balls[2].radius = 10;
+	rectangle.balls[3].radius = 10;
 
 	rectangle.links[0] = (linkage){rectangle.balls+0, rectangle.balls+1, width, 0, DISTANCE};
 	rectangle.links[1] = (linkage){rectangle.balls+1, rectangle.balls+2, height, 0, DISTANCE};
 	rectangle.links[2] = (linkage){rectangle.balls+2, rectangle.balls+3, width, 0, DISTANCE};
 	rectangle.links[3] = (linkage){rectangle.balls+3, rectangle.balls+0, height, 0, DISTANCE};
 
-	float corner_distance = magnitude((vec2){width, height});
+	float corner_distance = v2_magnitude((vec2){width, height});
 	rectangle.links[4] = (linkage){rectangle.balls+0, rectangle.balls+2, corner_distance, 0, DISTANCE};
 	rectangle.links[5] = (linkage){rectangle.balls+1, rectangle.balls+3, corner_distance, 0, DISTANCE};
 
