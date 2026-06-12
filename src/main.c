@@ -205,7 +205,8 @@ typedef struct {
 	float yaw;
 	float pitch;
 
-	ball_3d b;
+	ball_3d *balls;
+	int ball_count;
 } prog_state;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
@@ -249,9 +250,23 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 	app_state->cloth = generate_cloth(200, 200, 15, 15, (vec2){WIDTH/2., HEIGHT/2.});
 
-	app_state->b.position = (vec3){0, 0.11, 0};
-	app_state->b.radius = 0.1;
-	set_velocity_3d(&app_state->b, (vec3){0,0,0});
+	app_state->ball_count = 49;
+	app_state->balls = malloc(app_state->ball_count * sizeof(ball_3d));
+
+	int x = 0, y = 0, z = 0;
+
+	int spawn_grid_limit = 6;
+	for(int i = 0; i < app_state->ball_count; ++i) {
+		x++;
+		if(x > spawn_grid_limit) x = 0, z++;
+		if(z > spawn_grid_limit) z = 0, y++;
+		ball_3d *current_ball = app_state->balls+i;
+		current_ball->position = (vec3){(x - spawn_grid_limit/2.) * 0.2, y * 0.2 +1, (z - spawn_grid_limit/2.) * 0.2};
+		current_ball->radius = 0.09;
+		//current_ball->radius = (rand() % 5 + 5) / 100.;
+		set_velocity_3d(current_ball, (vec3){0, 0, 0});
+	}
+
 	return SDL_APP_CONTINUE;
 }
 
@@ -262,10 +277,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	app_state->last_frame_time = app_state->frame_start_time;
 	app_state->frame_start_time = SDL_GetPerformanceCounter();
-	//app_state->deltatime = (double)(app_state->frameStartTime - app_state->lastFrameTime)/SDL_GetPerformanceFrequency();
+	//app_state->deltatime = (double)(app_state->frame_start_time - app_state->last_frame_time)/SDL_GetPerformanceFrequency();
 	int framerate = 60;
-	int steps_per_frame = 1;
-	app_state->deltatime = 1.0/framerate; // more consistent and basically the same to the user
+	int steps_per_frame = 3;
+	app_state->deltatime = 1.0/framerate; // more consistent and basically the same to the user if framerate stays consistent
 	app_state->deltatime*=1.0/steps_per_frame;
 
 
@@ -322,8 +337,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	app_state->mouse_down = SDL_BUTTON_LMASK & SDL_GetMouseState(&app_state->mx, &app_state->my);
 	app_state->mouse_vector = (vec2){app_state->mx, app_state->my};
 
-	update_ball_3d(&app_state->b);
-	app_state->b.position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
 
 
 	mat3 rot = generate_rotation_matrix(0, app_state->pitch, app_state->yaw);
@@ -384,41 +397,55 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	set_wall_normal(&w_4);
 	set_wall_normal(&w2_4);
 
-	collision_info_3d hit_info = check_collision_3d(app_state->b, w);
-	if(hit_info.hit) {
-		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
-	}
-	hit_info = check_collision_3d(app_state->b, w2);
-	if(hit_info.hit) {
-		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
+	wall_3d w_5;
+	w_5.vertex_a = m3_v3_mult(rot, (vec3){-1, 0, -1});
+	w_5.vertex_b = m3_v3_mult(rot, (vec3){1, 0, -1});
+	w_5.vertex_c = m3_v3_mult(rot, (vec3){1, 1, -1});
+
+	wall_3d w2_5;
+
+	w2_5.vertex_a = m3_v3_mult(rot, (vec3){1, 1, -1});
+	w2_5.vertex_b = m3_v3_mult(rot, (vec3){-1, 1, -1});
+	w2_5.vertex_c = m3_v3_mult(rot, (vec3){-1, 0, -1});
+
+	set_wall_normal(&w_5);
+	set_wall_normal(&w2_5);
+
+	collision_info_3d hit_info;
+
+	for(int step = 0; step < steps_per_frame; ++step) {
+		for(int i = 0; i < app_state->ball_count; ++i) {
+			ball_3d *current_ball = app_state->balls+i;
+			update_ball_3d(current_ball);
+			current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
+		}
+
+		for(int i = 0; i < app_state->ball_count; ++i) {
+			ball_3d *current_ball = app_state->balls+i;
+
+			check_and_resolve_3d(current_ball, w, 0.5, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2, 0.5, 0, app_state->deltatime);
+
+			check_and_resolve_3d(current_ball, w_2, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2_2, 0, 0, app_state->deltatime);
+
+			check_and_resolve_3d(current_ball, w_3, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2_3, 0, 0, app_state->deltatime);
+
+			check_and_resolve_3d(current_ball, w_4, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2_4, 0, 0, app_state->deltatime);
+
+			check_and_resolve_3d(current_ball, w_5, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2_5, 0, 0, app_state->deltatime);
+
+
+			for(int j = 0; j < app_state->ball_count; ++j) {
+				if(i == j) continue;
+				check_and_resolve_balls_3d(current_ball, app_state->balls + j);
+			}
+		}
 	}
 
-	hit_info = check_collision_3d(app_state->b, w_2);
-	if(hit_info.hit) {
-		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
-	}
-	hit_info = check_collision_3d(app_state->b, w2_2);
-	if(hit_info.hit) {
-		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
-	}
-
-	hit_info = check_collision_3d(app_state->b, w_3);
-	if(hit_info.hit) {
-		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
-	}
-	hit_info = check_collision_3d(app_state->b, w2_3);
-	if(hit_info.hit) {
-		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
-	}
-
-	hit_info = check_collision_3d(app_state->b, w_4);
-	if(hit_info.hit) {
-		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
-	}
-	hit_info = check_collision_3d(app_state->b, w2_4);
-	if(hit_info.hit) {
-		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
-	}
 
 	draw_wall_3d(app_state->renderer, w, app_state->camera_position, app_state->camera_rotation);
 	draw_wall_3d(app_state->renderer, w2, app_state->camera_position, app_state->camera_rotation);
@@ -432,8 +459,13 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	draw_wall_3d(app_state->renderer, w_4, app_state->camera_position, app_state->camera_rotation);
 	draw_wall_3d(app_state->renderer, w2_4, app_state->camera_position, app_state->camera_rotation);
 
+	draw_wall_3d(app_state->renderer, w_5, app_state->camera_position, app_state->camera_rotation);
+	draw_wall_3d(app_state->renderer, w2_5, app_state->camera_position, app_state->camera_rotation);
+
 	SDL_SetRenderDrawColor(app_state->renderer, 0, 0, 255, 255);
-	draw_circle_3d(app_state->renderer, app_state->b, 25, app_state->camera_position, app_state->camera_rotation);
+	for(int i = 0; i < app_state->ball_count; ++i) {
+		draw_circle_3d(app_state->renderer, app_state->balls[i], 25, app_state->camera_position, app_state->camera_rotation);
+	}
 
 	SDL_RenderPresent(app_state->renderer);
 

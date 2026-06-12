@@ -109,6 +109,6 @@ void rope_spring_constraint_3d(ball_3d *a, ball_3d *b, float length, float stiff
 
 void update_linkage_3d(linkage_3d link, float deltatime);
 
-collision_info check_ball_collision_3d(ball_3d a, ball_3d b);
+collision_info_3d check_ball_collision_3d(ball_3d a, ball_3d b);
 void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info);
 void check_and_resolve_balls_3d(ball_3d *a, ball_3d *b);

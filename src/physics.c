@@ -305,6 +305,7 @@ collision_info_3d check_collision_3d(ball_3d a, wall_3d b) {
 		info.hit = 1;
 		info.depth = -closest_magnitude + a.radius;
 		info.normal = v3_normalize(closest_point);
+		info.normal = v3_fmult(info.normal, 1);
 	}
 
 	float side_dot = v3_dot(relative_a_position, b.normal);
@@ -316,22 +317,113 @@ collision_info_3d check_collision_3d(ball_3d a, wall_3d b) {
 		info.normal = b.normal;
 	}
 
-
-
 	return info;
 }
 
-// 3d isn't fully done yet, these are just placeholders
-void resolve_collision_3d(ball_3d *body, collision_info_3d hit_info, float elasticity, float friction, float deltatime);
-void check_and_resolve_3d(ball_3d *body, wall_3d collider, float elasticity, float friction, float deltatime);
+void resolve_collision_3d(ball_3d *body, collision_info_3d hit_info, float elasticity, float friction, float deltatime) {
+	if(hit_info.hit) {
+		vec3 velocity = v3_sub(body->position, body->previous_position);
+		if(v3_dot(v3_normalize(velocity), hit_info.normal) < 0) {
+			//printf("hijk %f, %f, %f, \n dfsdfsf %f, %f, %f\n", velocity.x, velocity.y, velocity.z, hit_info.normal.x, hit_info.normal.y, hit_info.normal.z);
+			}
+		friction *= deltatime; // works for some reason, seemingly it should be squared or not at all but idk
+		float speed = v3_magnitude(velocity);
+		body->position = v3_sub(body->position, v3_fmult(hit_info.normal, -hit_info.depth));
 
-void distance_constraint_3d(ball_3d *a, ball_3d *b, float length);
-void spring_constraint_3d(ball_3d *a, ball_3d *b, float length, float stiffness, float deltatime);
-void rope_constraint_3d(ball_3d *a, ball_3d *b, float length);
-void rope_spring_constraint_3d(ball_3d *a, ball_3d *b, float length, float stiffness, float deltatime);
+		float bounce_dot = -v3_dot(hit_info.normal, velocity);
+		vec3 bounce_velocity = v3_fmult(hit_info.normal, bounce_dot);
+		vec3 slide_velocity = v3_add(velocity, bounce_velocity); // this is the velocity without the speed into the wall, so its the velocity which slides along it i think if i did this right
 
-void update_linkage_3d(linkage_3d link, float deltatime);
+		vec3 out_velocity = v3_add(v3_fmult(slide_velocity, 1-friction), v3_fmult(bounce_velocity, elasticity));
+		set_velocity_3d(body, out_velocity);
+	}
+}
+void check_and_resolve_3d(ball_3d *body, wall_3d collider, float elasticity, float friction, float deltatime) {
+	resolve_collision_3d(body, check_collision_3d(*body, collider), elasticity, friction, deltatime);
+}
 
-collision_info check_ball_collision_3d(ball_3d a, ball_3d b);
-void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info);
-void check_and_resolve_balls_3d(ball_3d *a, ball_3d *b);
+void distance_constraint_3d(ball_3d *a, ball_3d *b, float length) {
+	vec3 direction_between = v3_sub(a->position, b->position);
+	vec3 inbetween_point = v3_fmult(v3_add(a->position, b->position), 0.5);
+	vec3 normalized_direction = v3_normalize(direction_between);
+	a->position = v3_add(inbetween_point, v3_fmult(normalized_direction, length*0.5));
+	b->position = v3_add(inbetween_point, v3_fmult(normalized_direction, -length*0.5));
+}
+void spring_constraint_3d(ball_3d *a, ball_3d *b, float length, float stiffness, float deltatime) {
+	vec3 relative_position = v3_sub(b->position, a->position);
+	float relative_magnitude = v3_magnitude(relative_position);
+	float force = stiffness * (relative_magnitude - length);
+	vec3 normalized_relative_position = v3_fmult(relative_position, 1/relative_magnitude);
+	vec3 push = v3_fmult(normalized_relative_position, force * deltatime * deltatime);
+
+	a->position = v3_add(a->position, v3_fmult(push, 0.5));
+	b->position = v3_add(b->position, v3_fmult(push, -0.5));
+}
+
+void rope_constraint_3d(ball_3d *a, ball_3d *b, float length) {
+	vec3 direction_between = v3_sub(a->position, b->position);
+	vec3 inbetween_point = v3_fmult(v3_add(a->position, b->position), 0.5);
+	float distance = v3_magnitude(direction_between);
+	if(distance < length) return;
+	vec3 normalized_direction = v3_fmult(direction_between, 1/distance);
+	a->position = v3_add(inbetween_point, v3_fmult(normalized_direction, length*0.5));
+	b->position = v3_add(inbetween_point, v3_fmult(normalized_direction, -length*0.5));
+}
+void rope_spring_constraint_3d(ball_3d *a, ball_3d *b, float length, float stiffness, float deltatime) {
+	vec3 relative_position = v3_sub(b->position, a->position);
+	float relative_magnitude = v3_magnitude(relative_position);
+	if(relative_magnitude < length) return;
+	float force = stiffness * (relative_magnitude - length);
+	vec3 normalized_relative_position = v3_fmult(relative_position, 1/relative_magnitude);
+	vec3 push = v3_fmult(normalized_relative_position, force * deltatime * deltatime);
+
+	a->position = v3_add(a->position, v3_fmult(push, 0.5));
+	b->position = v3_add(b->position, v3_fmult(push, -0.5));
+}
+
+void update_linkage_3d(linkage_3d link, float deltatime) {
+	switch(link.type) {
+		case DISTANCE:
+			distance_constraint_3d(link.a, link.b, link.length);
+			break;
+		case SPRING:
+			spring_constraint_3d(link.a, link.b, link.length, link.stiffness, deltatime);
+			break;
+		case ROPE:
+			rope_constraint_3d(link.a, link.b, link.length);
+			break;
+		case ROPE_SPRING:
+			rope_spring_constraint_3d(link.a, link.b, link.length, link.stiffness, deltatime);
+			break;
+		default:
+			break;
+	}
+}
+
+collision_info_3d check_ball_collision_3d(ball_3d a, ball_3d b) {
+	float distance = v3_magnitude(v3_sub(a.position, b.position));
+	collision_info_3d hit_info;
+	//if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
+		hit_info.hit = distance <= a.radius + b.radius;
+		hit_info.normal = v3_normalize(v3_sub(a.position, b.position));
+		hit_info.depth = distance - a.radius - b.radius;
+	/*} else {
+		hit_info.hit = 0;
+	}*/
+
+	return hit_info;
+
+}
+void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info) {
+	if(hit_info.hit) {
+		vec3 a_velocity = v3_sub(a->position, a->previous_position);
+		vec3 b_velocity = v3_sub(b->position, b->previous_position);
+
+		a->position = v3_sub(a->position, v3_fmult(hit_info.normal, hit_info.depth * 0.5));
+		b->position = v3_sub(b->position, v3_fmult(hit_info.normal, hit_info.depth * -0.5));
+	}
+}
+void check_and_resolve_balls_3d(ball_3d *a, ball_3d *b) {
+	collision_info_3d hit_info = check_ball_collision_3d(*a, *b);
+	resolve_ball_collision_3d(a, b, hit_info);
+}
