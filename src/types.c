@@ -69,3 +69,22 @@ float v3_magnitude(vec3 a) {
 vec3 v3_normalize(vec3 a) {
 	return v3_fdiv(a, v3_magnitude(a));
 }
+
+vec3 v3_cross(vec3 a, vec3 b) {
+	vec3 crossed;
+
+	crossed.x = a.y * b.z - a.z * b.y;
+	crossed.y = a.z * b.x - a.x * b.z;
+	crossed.z = a.x * b.y - a.y * b.x;
+
+	return crossed;
+}
+
+vec3 v3_lerp(vec3 a, vec3 b, float t) {
+	vec3 c;
+	c.x = (a.x * (1-t)) + b.x * t;
+	c.y = (a.y * (1-t)) + b.y * t;
+	c.z = (a.z * (1-t)) + b.z * t;
+
+	return c;
+}

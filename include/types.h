@@ -29,3 +29,5 @@ vec3 v3_fdiv(vec3 a, float b);
 float v3_dot(vec3 a, vec3 b);
 float v3_magnitude(vec3 a);
 vec3 v3_normalize(vec3 a);
+vec3 v3_cross(vec3 a, vec3 b);
+vec3 v3_lerp(vec3 a, vec3 b, float t);

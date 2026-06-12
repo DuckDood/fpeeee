@@ -14,10 +14,14 @@
 
 //#define WIDTH 800
 //#define HEIGHT 600
-#define WIDTH 1280
-#define HEIGHT 720
+//#define WIDTH 1280
+//#define HEIGHT 720
 //#define WIDTH 400
 //#define HEIGHT 300
+//#define WIDTH 512
+//#define HEIGHT 512
+#define WIDTH 512
+#define HEIGHT 512
 
 void draw_circle(SDL_Renderer *renderer, ball b, int resolution) {
 	for(float angle = 0; angle < 3.14159*2; angle += (3.14159*2)/resolution) {
@@ -25,37 +29,30 @@ void draw_circle(SDL_Renderer *renderer, ball b, int resolution) {
 	}
 }
 
-void draw_circle_3d(SDL_Renderer *renderer, ball b, int resolution, vec3 camera_position, vec3 camera_rotation) {
-	vec3 b_position = v3_sub((vec3){b.position.x, b.position.y, 0}, camera_position);
+void draw_circle_3d(SDL_Renderer *renderer, ball_3d b, int resolution, vec3 camera_position, vec3 camera_rotation) {
+	vec3 b_position_relative = v3_sub(b.position, camera_position);
+	b_position_relative.y *= -1;
 	mat3 camera_rotation_matrix = transpose(generate_rotation_matrix(camera_rotation.x, camera_rotation.y, camera_rotation.z));
-	b_position.z /= WIDTH;
+	b_position_relative = m3_v3_mult(camera_rotation_matrix, b_position_relative);
 
-	b_position.x /= WIDTH;
-	b_position.y /= HEIGHT;
-	b_position.x -= 0.5;
-	b_position.y -= 0.5;
-	b_position.x *= 2;
-	b_position.y *= 2;
-	b_position = m3_v3_mult(camera_rotation_matrix, b_position);
+	b.radius /= b_position_relative.z;
+	if (b_position_relative.z < 0) return;
+	b_position_relative.x /= b_position_relative.z;
+	b_position_relative.y /= b_position_relative.z;
 
-	b.radius /= b_position.z;
-	if (b_position.z < 0) return;
-	b_position.x /= b_position.z;
-	b_position.y /= b_position.z;
-
-	b_position.x /= 2;
-	b_position.y /= 2;
-	b_position.x += 0.5;
-	b_position.y += 0.5;
-	b_position.x *= WIDTH;
-	b_position.y *= HEIGHT;
+	//b_position_relative.x /= 2;
+	//b_position_relative.y /= 2;
+	//b_position_relative.x += 0.5;
+	//b_position_relative.y += 0.5;
+	//b_position_relative.x *= WIDTH;
+	//b_position_relative.y *= HEIGHT;
 
 	for(float angle = 0; angle < 3.14159*2; angle += (3.14159*2)/resolution) {
 		SDL_RenderLine(renderer,
-				(b_position.x + cos(angle)*b.radius),
-				(b_position.y + sin(angle)*b.radius),
-				(b_position.x + cos(angle + (3.14159*2)/resolution)*b.radius),
-				(b_position.y + sin(angle + (3.14159*2)/resolution)*b.radius));
+				((b_position_relative.x + cos(angle)*b.radius) * 0.5 + 0.5) * WIDTH,
+				((b_position_relative.y + sin(angle)*b.radius) * 0.5 + 0.5) * HEIGHT,
+				((b_position_relative.x + cos(angle + (3.14159*2)/resolution)*b.radius) * 0.5 + 0.5) * WIDTH,
+				((b_position_relative.y + sin(angle + (3.14159*2)/resolution)*b.radius) * 0.5 + 0.5) * HEIGHT);
 	}
 }
 
@@ -68,60 +65,60 @@ void draw_wall(SDL_Renderer *renderer, wall w) {
 	 );
 }
 
-void draw_wall_3d(SDL_Renderer *renderer, wall w, vec3 camera_position, vec3 camera_rotation) {
-	vec3 first = v3_sub((vec3){
-		 w.position.x + w.normal.y * w.length/2,
-		 w.position.y + -w.normal.x * w.length/2,
-		 0}, camera_position);
-	vec3 last = v3_sub((vec3){
-		 w.position.x - w.normal.y * w.length/2,
-		 w.position.y - -w.normal.x * w.length/2,
-		 0}, camera_position);
+void draw_wall_3d(SDL_Renderer *renderer, wall_3d w, vec3 camera_position, vec3 camera_rotation) {
+	vec3 a_relative = v3_sub(w.vertex_a, camera_position);
+	vec3 b_relative = v3_sub(w.vertex_b, camera_position);
+	vec3 c_relative = v3_sub(w.vertex_c, camera_position);
+
+	a_relative.y *= -1;
+	b_relative.y *= -1;
+	c_relative.y *= -1;
 
 	mat3 camera_rotation_matrix = transpose(generate_rotation_matrix(camera_rotation.x, camera_rotation.y, camera_rotation.z));
 
-	first.z /= WIDTH;
-	last.z /= WIDTH;
+	a_relative = m3_v3_mult(camera_rotation_matrix, a_relative);
 
-	first.x /= WIDTH;
-	first.y /= HEIGHT;
-	first.x -= 0.5;
-	first.y -= 0.5;
-	first.x *= 2;
-	first.y *= 2;
-	first = m3_v3_mult(camera_rotation_matrix, first);
+	if (a_relative.z < 0) return;
+	a_relative.x /= a_relative.z;
+	a_relative.y /= a_relative.z;
 
-	if (first.z < 0) return;
-	first.x /= first.z;
-	first.y /= first.z;
+	a_relative.x /= 2;
+	a_relative.y /= 2;
+	a_relative.x += 0.5;
+	a_relative.y += 0.5;
+	a_relative.x *= WIDTH;
+	a_relative.y *= HEIGHT;
 
-	first.x /= 2;
-	first.y /= 2;
-	first.x += 0.5;
-	first.y += 0.5;
-	first.x *= WIDTH;
-	first.y *= HEIGHT;
 
-	last.x /= WIDTH;
-	last.y /= HEIGHT;
-	last.x -= 0.5;
-	last.y -= 0.5;
-	last.x *= 2;
-	last.y *= 2;
-	last = m3_v3_mult(camera_rotation_matrix, last);
+	b_relative = m3_v3_mult(camera_rotation_matrix, b_relative);
 
-	if (last.z < 0) return;
-	last.x /= last.z;
-	last.y /= last.z;
+	if (b_relative.z < 0) return;
+	b_relative.x /= b_relative.z;
+	b_relative.y /= b_relative.z;
 
-	last.x /= 2;
-	last.y /= 2;
-	last.x += 0.5;
-	last.y += 0.5;
-	last.x *= WIDTH;
-	last.y *= HEIGHT;
+	b_relative.x /= 2;
+	b_relative.y /= 2;
+	b_relative.x += 0.5;
+	b_relative.y += 0.5;
+	b_relative.x *= WIDTH;
+	b_relative.y *= HEIGHT;
 
-	SDL_RenderLine(renderer, first.x, first.y, last.x, last.y);
+	c_relative = m3_v3_mult(camera_rotation_matrix, c_relative);
+
+	if (c_relative.z < 0) return;
+	c_relative.x /= c_relative.z;
+	c_relative.y /= c_relative.z;
+
+	c_relative.x /= 2;
+	c_relative.y /= 2;
+	c_relative.x += 0.5;
+	c_relative.y += 0.5;
+	c_relative.x *= WIDTH;
+	c_relative.y *= HEIGHT;
+
+	SDL_RenderLine(renderer, a_relative.x, a_relative.y, b_relative.x, b_relative.y);
+	SDL_RenderLine(renderer, b_relative.x, b_relative.y, c_relative.x, c_relative.y);
+	SDL_RenderLine(renderer, c_relative.x, c_relative.y, a_relative.x, a_relative.y);
 }
 
 void draw_linkage(SDL_Renderer *renderer, linkage link) {
@@ -176,6 +173,12 @@ void draw_linkage_3d(SDL_Renderer *renderer, linkage link, vec3 camera_position,
 	SDL_RenderLine(renderer, first.x, first.y, last.x, last.y);
 }
 
+void set_wall_normal(wall_3d *w) {
+	vec3 a_b_edge = v3_sub(w->vertex_a, w->vertex_b);
+	vec3 b_c_edge = v3_sub(w->vertex_b, w->vertex_c);
+	w->normal = v3_normalize(v3_cross(b_c_edge, a_b_edge));
+}
+
 typedef struct {
 	SDL_Window *window;
 	SDL_Renderer *renderer;
@@ -186,13 +189,6 @@ typedef struct {
 
 	Uint64 frame_start_time;
 	Uint64 last_frame_time;
-
-	wall walls[5];
-	int wall_count;
-
-	int ball_count;
-
-	ball *balls;
 
 	float mouse_power;
 	float mouse_distance;
@@ -205,6 +201,11 @@ typedef struct {
 
 	vec3 camera_position;
 	vec3 camera_rotation;
+
+	float yaw;
+	float pitch;
+
+	ball_3d b;
 } prog_state;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
@@ -231,26 +232,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 	float a = -3.14/2.1;
 
-	app_state->wall_count = 5;
-	app_state->walls[4] = (wall){{400, 500}, {cos(a), sin(a)}, 300};
 
-	app_state->walls[0] = (wall){WIDTH/2., HEIGHT, {0, -1}, WIDTH};
-	app_state->walls[1] = (wall){WIDTH/2., 0, {0, 1}, WIDTH};
-
-	app_state->walls[2] = (wall){0, HEIGHT/2., {1, 0}, HEIGHT};
-	app_state->walls[3] = (wall){WIDTH, HEIGHT/2., {-1, 0}, HEIGHT};
-
-
-	app_state->ball_count = 100;
-	app_state->balls = malloc(app_state->ball_count * sizeof(ball));
-	for(int i = 0; i < app_state->ball_count; i++) {
-		//app_state->balls[i].position = (vec2) {rand() % WIDTH, 50};
-		app_state->balls[i].position = (vec2) {i * 40 % WIDTH, 50 + (int)((i * 40.)/WIDTH) * 40};
-		app_state->balls[i].radius = 20;
-		//app_state->balls[i].radius = rand() % 15 + 5;
-
-		set_velocity(app_state->balls+i, (vec2){0,0});
-	}
+	app_state->yaw = 0;
+	app_state->pitch = 0;
 
 	app_state->mouse_power = 1000;
 	app_state->mouse_distance = 100;
@@ -260,10 +244,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 	app_state->my = 0;
 	app_state->mouse_vector = (vec2){app_state->mx, app_state->my};
 
-	app_state->camera_position = (vec3){0, 0, -100};
+	app_state->camera_position = (vec3){0, 1, -3};
 	app_state->camera_rotation = (vec3){0, 0, 0};
 
 	app_state->cloth = generate_cloth(200, 200, 15, 15, (vec2){WIDTH/2., HEIGHT/2.});
+
+	app_state->b.position = (vec3){0, 0.11, 0};
+	app_state->b.radius = 0.1;
+	set_velocity_3d(&app_state->b, (vec3){0,0,0});
 	return SDL_APP_CONTINUE;
 }
 
@@ -276,7 +264,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	app_state->frame_start_time = SDL_GetPerformanceCounter();
 	//app_state->deltatime = (double)(app_state->frameStartTime - app_state->lastFrameTime)/SDL_GetPerformanceFrequency();
 	int framerate = 60;
-	int steps_per_frame = 3;
+	int steps_per_frame = 1;
 	app_state->deltatime = 1.0/framerate; // more consistent and basically the same to the user
 	app_state->deltatime*=1.0/steps_per_frame;
 
@@ -288,109 +276,166 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	SDL_SetRenderDrawColor(app_state->renderer, 255, 0, 0, 1);
 
 	bool const *kbd_state = SDL_GetKeyboardState(NULL);
+
 	if(kbd_state[SDL_SCANCODE_W]) {
-		app_state->camera_position.z += 10*cos(app_state->camera_rotation.y);
-		app_state->camera_position.x += 10*sin(app_state->camera_rotation.y);
+		app_state->camera_position.z += 0.2 * cos(app_state->camera_rotation.x) * cos(app_state->camera_rotation.y);
+		app_state->camera_position.x += 0.2 * sin(app_state->camera_rotation.x) * cos(app_state->camera_rotation.y);
+
+		app_state->camera_position.y += 0.2 * sin(app_state->camera_rotation.y);
 	}
 	if(kbd_state[SDL_SCANCODE_S]) {
-		app_state->camera_position.z -= 10*cos(app_state->camera_rotation.y);
-		app_state->camera_position.x -= 10*sin(app_state->camera_rotation.y);
+		app_state->camera_position.z -= 0.2 * cos(app_state->camera_rotation.x) * cos(app_state->camera_rotation.y);
+		app_state->camera_position.x -= 0.2 * sin(app_state->camera_rotation.x) * cos(app_state->camera_rotation.y);
+
+		app_state->camera_position.y -= 0.2 * sin(app_state->camera_rotation.y);
 	}
+	if(kbd_state[SDL_SCANCODE_D]) {
+		app_state->camera_position.z -= 0.2 * sin(app_state->camera_rotation.x);
+		app_state->camera_position.x += 0.2 * cos(app_state->camera_rotation.x);
+	}
+	if(kbd_state[SDL_SCANCODE_A]) {
+		app_state->camera_position.z += 0.2 * sin(app_state->camera_rotation.x);
+		app_state->camera_position.x -= 0.2 * cos(app_state->camera_rotation.x);
+	}
+
+	if(kbd_state[SDL_SCANCODE_LEFT]) {
+		app_state->yaw+=0.03;
+	}
+	if(kbd_state[SDL_SCANCODE_RIGHT]) {
+		app_state->yaw-=0.03;
+	}
+	if(kbd_state[SDL_SCANCODE_UP]) {
+		app_state->pitch+=0.03;
+	}
+	if(kbd_state[SDL_SCANCODE_DOWN]) {
+		app_state->pitch-=0.03;
+	}
+
 
 	int previous_mouse_down = app_state->mouse_down;
 	vec2 previous_mouse_vector = app_state->mouse_vector;
 	int mouse_d = SDL_BUTTON_LMASK & SDL_GetRelativeMouseState(&app_state->mx, &app_state->my);
 	if(mouse_d) {
-		app_state->camera_rotation.y += app_state->mx/ 100;
-		app_state->camera_rotation.z -= app_state->my/ 100;
+		app_state->camera_rotation.x += app_state->mx/ 100;
+		app_state->camera_rotation.y -= app_state->my/ 100;
 	}
-	//app_state->camera_rotation.z += app_state->my / 10000;
 	app_state->mouse_down = SDL_BUTTON_LMASK & SDL_GetMouseState(&app_state->mx, &app_state->my);
 	app_state->mouse_vector = (vec2){app_state->mx, app_state->my};
 
-	for(int steps = 0; steps < steps_per_frame; ++steps) {
-		for(int i = 0; i < app_state->ball_count; ++i) {
-			update_ball(app_state->balls+i);
-		}
-		for(int i = 0; i < app_state->ball_count; ++i) {
-			app_state->balls[i].position = v2_add(app_state->balls[i].position, (vec2){0, 800 * app_state->deltatime * app_state->deltatime});
+	update_ball_3d(&app_state->b);
+	app_state->b.position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
 
-			/*if(app_state->mouse_down) {
-				float dist_to_cursor = v2_magnitude(v2_sub(app_state->balls[i].position, app_state->mouse_vector)) - app_state->balls[i].radius;
-				float affect_power = ((app_state->mouse_distance - dist_to_cursor) / app_state->mouse_distance) * app_state->mouse_power;
-				if(affect_power > 0) {
-					app_state->balls[i].position = v2_add(app_state->balls[i].position, v2_fmult(v2_sub(app_state->mouse_vector,app_state->balls[i].position), app_state->deltatime * app_state->deltatime * affect_power));
-				}
-			}*/
 
-			for(int j = 0; j < app_state->wall_count; ++j) {
-				check_and_resolve(app_state->balls+i, app_state->walls[j], 0, 1, app_state->deltatime);
-			}
-			for(int j = 0; j < app_state->ball_count; ++j) {
-				if(i == j) continue;
-				check_and_resolve_balls(app_state->balls+i, app_state->balls+j);
-			}
+	mat3 rot = generate_rotation_matrix(0, app_state->pitch, app_state->yaw);
 
-		}
+	wall_3d w;
+	w.vertex_a = m3_v3_mult(rot, (vec3){-1, 0, -1});
+	w.vertex_b = m3_v3_mult(rot, (vec3){-1, 0, 1});
+	w.vertex_c = m3_v3_mult(rot, (vec3){1, 0, -1});
 
-		for(int i = 0; i < app_state->cloth.ball_count; ++i) {
-			update_ball(app_state->cloth.balls+i);
-		}
-		for(int i = 0; i < app_state->cloth.ball_count; ++i) {
-			app_state->cloth.balls[i].position = v2_add(app_state->cloth.balls[i].position, (vec2){0, 800 * app_state->deltatime * app_state->deltatime});
+	wall_3d w2;
 
-			/*if(app_state->mouse_down) {
-				float dist_to_cursor = magnitude(v2_sub(app_state->cloth.balls[i].position, app_state->mouse_vector)) - app_state->cloth.balls[i].radius;
-				float affect_power = ((app_state->mouse_distance - dist_to_cursor) / app_state->mouse_distance) * app_state->mouse_power;
-				if(affect_power > 0) {
-					app_state->cloth.balls[i].position = v2_add(app_state->cloth.balls[i].position, v2_fmult(v2_sub(app_state->mouse_vector,app_state->cloth.balls[i].position), app_state->deltatime * app_state->deltatime * affect_power));
-				}
-			}*/
+	w2.vertex_a = m3_v3_mult(rot, (vec3){1, 0, 1});
+	w2.vertex_b = m3_v3_mult(rot, (vec3){1, 0, -1});
+	w2.vertex_c = m3_v3_mult(rot, (vec3){-1, 0, 1});
 
-			for(int j = 0; j < app_state->cloth.link_count; ++j) {
-				update_linkage(app_state->cloth.links[j], app_state->deltatime);
-			}
-			for(int j = 0; j < app_state->ball_count; ++j) {
-				check_and_resolve_balls(app_state->cloth.balls+i, app_state->balls + j);
-			}
-			for(int j = 0; j < app_state->wall_count; ++j) {
-				check_and_resolve(app_state->cloth.balls+i, app_state->walls[j], 0, 1, app_state->deltatime);
-			}
-			for(int j = 0; j < 15; ++j) {
-				app_state->cloth.balls[j].position = app_state->cloth.balls[j].previous_position; // pins top row in place
-			}
-		}
+	set_wall_normal(&w);
+	set_wall_normal(&w2);
+
+	wall_3d w_2;
+	w_2.vertex_a = m3_v3_mult(rot, (vec3){-1, 1, -1});
+	w_2.vertex_b = m3_v3_mult(rot, (vec3){-1, 1, 1});
+	w_2.vertex_c = m3_v3_mult(rot, (vec3){-1, 0, -1});
+
+	wall_3d w2_2;
+
+	w2_2.vertex_a = m3_v3_mult(rot, (vec3){-1, 0, -1});
+	w2_2.vertex_b = m3_v3_mult(rot, (vec3){-1, 0, 1});
+	w2_2.vertex_c = m3_v3_mult(rot, (vec3){-1, 1, 1});
+
+	set_wall_normal(&w_2);
+	set_wall_normal(&w2_2);
+
+	wall_3d w_3;
+	w_3.vertex_a = m3_v3_mult(rot, (vec3){1, 1, -1});
+	w_3.vertex_b = m3_v3_mult(rot, (vec3){1, 1, 1});
+	w_3.vertex_c = m3_v3_mult(rot, (vec3){1, 0, -1});
+
+	wall_3d w2_3;
+
+	w2_3.vertex_a = m3_v3_mult(rot, (vec3){1, 0, -1});
+	w2_3.vertex_b = m3_v3_mult(rot, (vec3){1, 0, 1});
+	w2_3.vertex_c = m3_v3_mult(rot, (vec3){1, 1, 1});
+
+	set_wall_normal(&w_3);
+	set_wall_normal(&w2_3);
+
+	wall_3d w_4;
+	w_4.vertex_a = m3_v3_mult(rot, (vec3){-1, 0, 1});
+	w_4.vertex_b = m3_v3_mult(rot, (vec3){1, 0, 1});
+	w_4.vertex_c = m3_v3_mult(rot, (vec3){1, 1, 1});
+
+	wall_3d w2_4;
+
+	w2_4.vertex_a = m3_v3_mult(rot, (vec3){1, 1, 1});
+	w2_4.vertex_b = m3_v3_mult(rot, (vec3){-1, 1, 1});
+	w2_4.vertex_c = m3_v3_mult(rot, (vec3){-1, 0, 1});
+
+	set_wall_normal(&w_4);
+	set_wall_normal(&w2_4);
+
+	collision_info_3d hit_info = check_collision_3d(app_state->b, w);
+	if(hit_info.hit) {
+		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
+	}
+	hit_info = check_collision_3d(app_state->b, w2);
+	if(hit_info.hit) {
+		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
 	}
 
+	hit_info = check_collision_3d(app_state->b, w_2);
+	if(hit_info.hit) {
+		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
+	}
+	hit_info = check_collision_3d(app_state->b, w2_2);
+	if(hit_info.hit) {
+		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
+	}
 
-	for(int i = 0; i < app_state->wall_count; i++) {
-		draw_wall_3d(app_state->renderer, app_state->walls[i], app_state->camera_position, app_state->camera_rotation);
+	hit_info = check_collision_3d(app_state->b, w_3);
+	if(hit_info.hit) {
+		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
 	}
-	for(int i = 0; i < app_state->ball_count; i++) {
-		//draw_circle(app_state->renderer, app_state->balls[i], 25);
-		draw_circle_3d(app_state->renderer, app_state->balls[i], 25, app_state->camera_position, app_state->camera_rotation);
+	hit_info = check_collision_3d(app_state->b, w2_3);
+	if(hit_info.hit) {
+		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
 	}
 
-	for(int i = 0; i < app_state->cloth.link_count; i++) {
-		draw_linkage_3d(app_state->renderer, app_state->cloth.links[i], app_state->camera_position, app_state->camera_rotation);
+	hit_info = check_collision_3d(app_state->b, w_4);
+	if(hit_info.hit) {
+		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
 	}
+	hit_info = check_collision_3d(app_state->b, w2_4);
+	if(hit_info.hit) {
+		app_state->b.position = v3_add(app_state->b.position, v3_fmult(hit_info.normal, hit_info.depth));
+	}
+
+	draw_wall_3d(app_state->renderer, w, app_state->camera_position, app_state->camera_rotation);
+	draw_wall_3d(app_state->renderer, w2, app_state->camera_position, app_state->camera_rotation);
+
+	draw_wall_3d(app_state->renderer, w_2, app_state->camera_position, app_state->camera_rotation);
+	draw_wall_3d(app_state->renderer, w2_2, app_state->camera_position, app_state->camera_rotation);
+
+	draw_wall_3d(app_state->renderer, w_3, app_state->camera_position, app_state->camera_rotation);
+	draw_wall_3d(app_state->renderer, w2_3, app_state->camera_position, app_state->camera_rotation);
+
+	draw_wall_3d(app_state->renderer, w_4, app_state->camera_position, app_state->camera_rotation);
+	draw_wall_3d(app_state->renderer, w2_4, app_state->camera_position, app_state->camera_rotation);
 
 	SDL_SetRenderDrawColor(app_state->renderer, 0, 0, 255, 255);
-	for(int i = 0; i < app_state->cloth.ball_count; i++) {
-		//draw_circle(app_state->renderer, app_state->cloth.balls[i], 25);
-		draw_circle_3d(app_state->renderer, app_state->cloth.balls[i], 25, app_state->camera_position, app_state->camera_rotation);
-	}
-
-	SDL_SetRenderDrawColor(app_state->renderer, 0, 0, 255, 255);
-
-	ball cursor;
-	SDL_GetMouseState(&app_state->mx, &app_state->my);
-	cursor.position = (vec2){app_state->mx, app_state->my};
-	cursor.radius = app_state->mouse_distance;
-	//draw_circle_3d(app_state->renderer, cursor, 50, app_state->camera_position, app_state->camera_rotation);
+	draw_circle_3d(app_state->renderer, app_state->b, 25, app_state->camera_position, app_state->camera_rotation);
 
 	SDL_RenderPresent(app_state->renderer);
-
 
 	app_state->frame++;
 	if(SDL_GetTicks() > app_state->fps_ticks + 1000) {
@@ -408,7 +453,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
 	prog_state *app_state = appstate;
-	free(app_state->balls);
 	SDL_DestroyRenderer(app_state->renderer);
 	SDL_DestroyWindow(app_state->window);
 	SDL_Quit();

@@ -49,16 +49,16 @@ vec3 m3_v3_mult(mat3 a, vec3 b) {
 mat3 generate_rotation_matrix(float yaw, float pitch, float roll) {
 	// from wikipedia, axes corresponding strangely though, like yaw is the x axis?? ill need to change soon when making fully 3d
 	return (mat3){{
-		cos(yaw) * cos(pitch),
-		sin(yaw) * cos(pitch),
-		-sin(pitch),
+		cos(roll) * cos(yaw),
+		sin(roll) * cos(yaw),
+		-sin(yaw),
 
-		cos(yaw) * sin(pitch) * sin(roll) - sin(yaw) * cos(roll),
-		sin(yaw) * sin(pitch) * sin(roll) + cos(yaw) * cos(roll),
-		cos(pitch) * sin(roll),
+		cos(roll) * sin(yaw) * sin(pitch) - sin(roll) * cos(pitch),
+		sin(roll) * sin(yaw) * sin(pitch) + cos(roll) * cos(pitch),
+		cos(yaw) * sin(pitch),
 
-		cos(yaw) * sin(pitch) * cos(roll) + sin(yaw) * sin(roll),
-		sin(yaw) * sin(pitch) * cos(roll) - cos(yaw) * sin(roll),
-		cos(pitch) * cos(roll)
+		cos(roll) * sin(yaw) * cos(pitch) + sin(roll) * sin(pitch),
+		sin(roll) * sin(yaw) * cos(pitch) - cos(roll) * sin(pitch),
+		cos(yaw) * cos(pitch)
 	}};
 }
