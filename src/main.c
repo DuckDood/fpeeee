@@ -18,10 +18,10 @@
 //#define HEIGHT 720
 //#define WIDTH 400
 //#define HEIGHT 300
-//#define WIDTH 512
-//#define HEIGHT 512
 #define WIDTH 512
 #define HEIGHT 512
+//#define WIDTH 1024
+//#define HEIGHT 1024
 
 void draw_circle(SDL_Renderer *renderer, ball b, int resolution) {
 	for(float angle = 0; angle < 3.14159*2; angle += (3.14159*2)/resolution) {
@@ -125,11 +125,13 @@ void draw_linkage(SDL_Renderer *renderer, linkage link) {
 	SDL_RenderLine(renderer, link.a->position.x, link.a->position.y, link.b->position.x, link.b->position.y);
 }
 
-void draw_linkage_3d(SDL_Renderer *renderer, linkage link, vec3 camera_position, vec3 camera_rotation) {
-	vec3 first = v3_sub((vec3){link.a->position.x, link.a->position.y, 0}, camera_position);
-	vec3 last = v3_sub((vec3){link.b->position.x, link.b->position.y, 0}, camera_position);
+void draw_linkage_3d(SDL_Renderer *renderer, linkage_3d link, vec3 camera_position, vec3 camera_rotation) {
+	vec3 first = v3_sub(link.a->position, camera_position);
+	vec3 last = v3_sub(link.b->position, camera_position);
+	first.y *=-1;
+	last.y *=-1;
 	mat3 camera_rotation_matrix = transpose(generate_rotation_matrix(camera_rotation.x, camera_rotation.y, camera_rotation.z));
-	first.z /= WIDTH;
+	/*first.z /= WIDTH;
 	last.z /= WIDTH;
 
 	first.x /= WIDTH;
@@ -137,7 +139,7 @@ void draw_linkage_3d(SDL_Renderer *renderer, linkage link, vec3 camera_position,
 	first.x -= 0.5;
 	first.y -= 0.5;
 	first.x *= 2;
-	first.y *= 2;
+	first.y *= 2;*/
 	first = m3_v3_mult(camera_rotation_matrix, first);
 
 	if (first.z < 0) return;
@@ -151,12 +153,12 @@ void draw_linkage_3d(SDL_Renderer *renderer, linkage link, vec3 camera_position,
 	first.x *= WIDTH;
 	first.y *= HEIGHT;
 
-	last.x /= WIDTH;
+	/*last.x /= WIDTH;
 	last.y /= HEIGHT;
 	last.x -= 0.5;
 	last.y -= 0.5;
 	last.x *= 2;
-	last.y *= 2;
+	last.y *= 2;*/
 	last = m3_v3_mult(camera_rotation_matrix, last);
 
 	if (last.z < 0) return;
@@ -197,8 +199,6 @@ typedef struct {
 	float mx, my;
 	vec2 mouse_vector;
 
-	shape cloth;
-
 	vec3 camera_position;
 	vec3 camera_rotation;
 
@@ -207,6 +207,8 @@ typedef struct {
 
 	ball_3d *balls;
 	int ball_count;
+
+	shape_3d cloth;
 } prog_state;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
@@ -248,9 +250,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 	app_state->camera_position = (vec3){0, 1, -3};
 	app_state->camera_rotation = (vec3){0, 0, 0};
 
-	app_state->cloth = generate_cloth(200, 200, 15, 15, (vec2){WIDTH/2., HEIGHT/2.});
-
-	app_state->ball_count = 49;
+	//app_state->ball_count = 49;
+	app_state->ball_count = 0;
+	//app_state->ball_count = 49*9;
 	app_state->balls = malloc(app_state->ball_count * sizeof(ball_3d));
 
 	int x = 0, y = 0, z = 0;
@@ -266,6 +268,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 		//current_ball->radius = (rand() % 5 + 5) / 100.;
 		set_velocity_3d(current_ball, (vec3){0, 0, 0});
 	}
+	app_state->cloth = generate_cloth_3d(1, 1, 15, 15, (vec3){0, 1, 0});
 
 	return SDL_APP_CONTINUE;
 }
@@ -282,6 +285,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	int steps_per_frame = 3;
 	app_state->deltatime = 1.0/framerate; // more consistent and basically the same to the user if framerate stays consistent
 	app_state->deltatime*=1.0/steps_per_frame;
+	app_state->deltatime/=2;
 
 
 
@@ -339,7 +343,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 
 
-	mat3 rot = generate_rotation_matrix(0, app_state->pitch, app_state->yaw);
+	//mat3 rot = generate_rotation_matrix(0, app_state->pitch, app_state->yaw);
+	mat3 rot = generate_rotation_matrix(0, 0, 0);
 
 	wall_3d w;
 	w.vertex_a = m3_v3_mult(rot, (vec3){-1, 0, -1});
@@ -444,9 +449,47 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				check_and_resolve_balls_3d(current_ball, app_state->balls + j);
 			}
 		}
+
+
+
+		for(int i = 0; i < app_state->cloth.ball_count; ++i) {
+			ball_3d *current_ball = app_state->cloth.balls+i;
+			update_ball_3d(current_ball);
+			current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
+		}
+
+		for(int i = 0; i < app_state->cloth.ball_count; ++i) {
+			ball_3d *current_ball = app_state->cloth.balls+i;
+
+			
+			check_and_resolve_3d(current_ball, w, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2, 0, 0, app_state->deltatime);
+
+			check_and_resolve_3d(current_ball, w_2, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2_2, 0, 0, app_state->deltatime);
+
+			check_and_resolve_3d(current_ball, w_3, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2_3, 0, 0, app_state->deltatime);
+
+			check_and_resolve_3d(current_ball, w_4, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2_4, 0, 0, app_state->deltatime);
+
+			check_and_resolve_3d(current_ball, w_5, 0, 0, app_state->deltatime);
+			check_and_resolve_3d(current_ball, w2_5, 0, 0, app_state->deltatime);
+
+			for(int j = 0; j < 15; j++) {
+				float relative_top_position = (j-6) / 12. * 1;
+					app_state->cloth.balls[j].position = (vec3){cos(app_state->yaw) * relative_top_position, 1.5, sin(app_state->yaw) * relative_top_position};
+			}
+
+			for(int j = 0; j < app_state->cloth.link_count; ++j) {
+				update_linkage_3d(app_state->cloth.links[j], app_state->deltatime);
+			}
+		}
 	}
 
 
+	/*
 	draw_wall_3d(app_state->renderer, w, app_state->camera_position, app_state->camera_rotation);
 	draw_wall_3d(app_state->renderer, w2, app_state->camera_position, app_state->camera_rotation);
 
@@ -460,11 +503,20 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	draw_wall_3d(app_state->renderer, w2_4, app_state->camera_position, app_state->camera_rotation);
 
 	draw_wall_3d(app_state->renderer, w_5, app_state->camera_position, app_state->camera_rotation);
-	draw_wall_3d(app_state->renderer, w2_5, app_state->camera_position, app_state->camera_rotation);
+	draw_wall_3d(app_state->renderer, w2_5, app_state->camera_position, app_state->camera_rotation);*/
 
 	SDL_SetRenderDrawColor(app_state->renderer, 0, 0, 255, 255);
 	for(int i = 0; i < app_state->ball_count; ++i) {
 		draw_circle_3d(app_state->renderer, app_state->balls[i], 25, app_state->camera_position, app_state->camera_rotation);
+	}
+
+	//SDL_SetRenderDrawColor(app_state->renderer, 255, 0, 255, 255);
+	for(int i = 0; i < app_state->cloth.ball_count; ++i) {
+		draw_circle_3d(app_state->renderer, app_state->cloth.balls[i], 25, app_state->camera_position, app_state->camera_rotation);
+	}
+
+	for(int i = 0; i < app_state->cloth.link_count; ++i) {
+		draw_linkage_3d(app_state->renderer, app_state->cloth.links[i], app_state->camera_position, app_state->camera_rotation);
 	}
 
 	SDL_RenderPresent(app_state->renderer);

@@ -78,3 +78,117 @@ shape generate_cloth(float width, float height, int width_resolution, int height
 	cloth.self_collision = 0;
 	return cloth;
 }
+
+shape_3d generate_cube_3d(float width, float height, float depth, vec3 starting_position) {
+	shape_3d cube;
+	cube.balls = malloc(8 * sizeof(ball_3d));
+	cube.ball_count = 8;
+	cube.links = malloc(16 * sizeof(linkage_3d));
+	cube.link_count = 16;
+
+	cube.balls[0].position = v3_add((vec3){-width/2, -height/2, -depth/2}, starting_position);
+	cube.balls[1].position = v3_add((vec3){width/2, -height/2, -depth/2}, starting_position);
+	cube.balls[2].position = v3_add((vec3){width/2, height/2, -depth/2}, starting_position);
+	cube.balls[3].position = v3_add((vec3){-width/2, height/2, -depth/2}, starting_position);
+
+	cube.balls[4].position = v3_add((vec3){-width/2, -height/2, depth/2}, starting_position);
+	cube.balls[5].position = v3_add((vec3){width/2, -height/2, depth/2}, starting_position);
+	cube.balls[6].position = v3_add((vec3){width/2, height/2, depth/2}, starting_position);
+	cube.balls[7].position = v3_add((vec3){-width/2, height/2, depth/2}, starting_position);
+
+	set_velocity_3d(cube.balls+0, (vec3){0,0,0});
+	set_velocity_3d(cube.balls+1, (vec3){0,0,0});
+	set_velocity_3d(cube.balls+2, (vec3){0,0,0});
+	set_velocity_3d(cube.balls+3, (vec3){0,0,0});
+	set_velocity_3d(cube.balls+4, (vec3){0,0,0});
+	set_velocity_3d(cube.balls+5, (vec3){0,0,0});
+	set_velocity_3d(cube.balls+6, (vec3){0,0,0});
+	set_velocity_3d(cube.balls+7, (vec3){0,0,0});
+
+	cube.balls[0].radius = 0.1;
+	cube.balls[1].radius = 0.1;
+	cube.balls[2].radius = 0.1;
+	cube.balls[3].radius = 0.1;
+
+	cube.balls[4].radius = 0.1;
+	cube.balls[5].radius = 0.1;
+	cube.balls[6].radius = 0.1;
+	cube.balls[7].radius = 0.1;
+
+	/*
+	cube.links[0] = (linkage){cube.balls+0, cube.balls+1, width, 0, DISTANCE};
+	cube.links[1] = (linkage){cube.balls+1, cube.balls+2, height, 0, DISTANCE};
+	cube.links[2] = (linkage){cube.balls+2, cube.balls+3, width, 0, DISTANCE};
+	cube.links[3] = (linkage){cube.balls+3, cube.balls+0, height, 0, DISTANCE};
+	*/
+	cube.links[0] = (linkage_3d){cube.balls+0, cube.balls+1, width, 0, DISTANCE};
+	cube.links[1] = (linkage_3d){cube.balls+1, cube.balls+2, height, 0, DISTANCE};
+	cube.links[2] = (linkage_3d){cube.balls+2, cube.balls+3, width, 0, DISTANCE};
+	cube.links[3] = (linkage_3d){cube.balls+3, cube.balls+0, height, 0, DISTANCE};
+
+	cube.links[4] = (linkage_3d){cube.balls+4, cube.balls+5, width, 0, DISTANCE};
+	cube.links[5] = (linkage_3d){cube.balls+5, cube.balls+6, height, 0, DISTANCE};
+	cube.links[6] = (linkage_3d){cube.balls+6, cube.balls+7, width, 0, DISTANCE};
+	cube.links[7] = (linkage_3d){cube.balls+7, cube.balls+4, height, 0, DISTANCE};
+
+	cube.links[8] = (linkage_3d){cube.balls+0, cube.balls+4, depth, 0, DISTANCE};
+	cube.links[9] = (linkage_3d){cube.balls+1, cube.balls+5, depth, 0, DISTANCE};
+	cube.links[10] = (linkage_3d){cube.balls+2, cube.balls+6, depth, 0, DISTANCE};
+	cube.links[11] = (linkage_3d){cube.balls+3, cube.balls+7, depth, 0, DISTANCE};
+
+	float corner_distance = v3_magnitude((vec3){width, height, depth});
+
+	cube.links[12] = (linkage_3d){cube.balls+0, cube.balls+6, corner_distance, 0, DISTANCE};
+	cube.links[13] = (linkage_3d){cube.balls+1, cube.balls+7, corner_distance, 0, DISTANCE};
+	cube.links[14] = (linkage_3d){cube.balls+2, cube.balls+4, corner_distance, 0, DISTANCE};
+	cube.links[15] = (linkage_3d){cube.balls+3, cube.balls+5, corner_distance, 0, DISTANCE};
+
+	/*float corner_distance = v2_magnitude((vec2){width, height});
+	cube.links[4] = (linkage){cube.balls+0, cube.balls+2, corner_distance, 0, DISTANCE};
+	cube.links[5] = (linkage){cube.balls+1, cube.balls+3, corner_distance, 0, DISTANCE};*/
+
+	cube.self_collision = 1;
+	return cube;
+}
+shape_3d generate_cloth_3d(float width, float height, int width_resolution, int height_resolution, vec3 starting_position) {
+	shape_3d cloth;
+
+	cloth.ball_count = width_resolution * height_resolution;
+	cloth.balls = malloc(cloth.ball_count * sizeof(ball_3d));
+	//cloth.link_count = (width_resolution-1) * height_resolution + (height_resolution-1) * width_resolution;
+	//2hw - w - h it simplifies down to this
+	cloth.link_count = 2 * height_resolution * width_resolution - width_resolution - height_resolution;
+	cloth.links = malloc(cloth.link_count * sizeof(linkage_3d));
+	int cloth_link_count = 0;
+
+	for(int row = 0; row < height_resolution; ++row) {
+		for(int column = 0; column < width_resolution; ++column) {
+			ball_3d *active_ball = &cloth.balls[row * width_resolution + column];
+			active_ball->position = v3_add((vec3){(column-width_resolution/2.) * width/(width_resolution-1), (row-height_resolution/2.) * height/(height_resolution-1), 0}, starting_position);
+			set_velocity_3d(active_ball, (vec3){0,0,0});
+			active_ball->radius = 0.01;
+			if(column < width_resolution - 1) {
+				cloth.links[cloth_link_count++] = (linkage_3d){
+					.a = active_ball,
+					.b = active_ball + 1,
+					.length = width/(width_resolution-1),
+					.stiffness = 100,
+					.type = ROPE_SPRING
+				};
+			}
+			if(row < height_resolution - 1) {
+				cloth.links[cloth_link_count++] = (linkage_3d){
+					.a = active_ball,
+					.b = active_ball + width_resolution,
+					.length = height/(height_resolution-1),
+					.stiffness = 100,
+					.type = ROPE_SPRING
+				};
+			}
+		}
+	}
+	
+	cloth.self_collision = 0;
+	return cloth;
+
+}
