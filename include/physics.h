@@ -39,7 +39,6 @@ typedef struct {
 	int ball_count;
 	linkage *links;
 	int link_count;
-	int self_collision;
 } shape;
 
 void set_velocity(ball *body, vec2 velocity);
@@ -93,7 +92,6 @@ typedef struct {
 	int ball_count;
 	linkage_3d *links;
 	int link_count;
-	int self_collision;
 } shape_3d;
 
 void set_velocity_3d(ball_3d *body, vec3 velocity);

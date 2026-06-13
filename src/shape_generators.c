@@ -33,11 +33,10 @@ shape generate_rectangle(float width, float height, vec2 starting_position) {
 	rectangle.links[4] = (linkage){rectangle.balls+0, rectangle.balls+2, corner_distance, 0, DISTANCE};
 	rectangle.links[5] = (linkage){rectangle.balls+1, rectangle.balls+3, corner_distance, 0, DISTANCE};
 
-	rectangle.self_collision = 1;
 	return rectangle;
 }
 
-shape generate_cloth(float width, float height, int width_resolution, int height_resolution, vec2 starting_position) {
+shape generate_cloth(float width, float height, int width_resolution, int height_resolution, float stiffness, vec2 starting_position) {
 	shape cloth;
 
 	cloth.ball_count = width_resolution * height_resolution;
@@ -59,7 +58,7 @@ shape generate_cloth(float width, float height, int width_resolution, int height
 					.a = active_ball,
 					.b = active_ball + 1,
 					.length = width/(width_resolution-1),
-					.stiffness = 100,
+					.stiffness = stiffness,
 					.type = ROPE_SPRING
 				};
 			}
@@ -68,14 +67,13 @@ shape generate_cloth(float width, float height, int width_resolution, int height
 					.a = active_ball,
 					.b = active_ball + width_resolution,
 					.length = height/(height_resolution-1),
-					.stiffness = 100,
+					.stiffness = stiffness,
 					.type = ROPE_SPRING
 				};
 			}
 		}
 	}
 	
-	cloth.self_collision = 0;
 	return cloth;
 }
 
@@ -147,10 +145,9 @@ shape_3d generate_cube_3d(float width, float height, float depth, vec3 starting_
 	cube.links[4] = (linkage){cube.balls+0, cube.balls+2, corner_distance, 0, DISTANCE};
 	cube.links[5] = (linkage){cube.balls+1, cube.balls+3, corner_distance, 0, DISTANCE};*/
 
-	cube.self_collision = 1;
 	return cube;
 }
-shape_3d generate_cloth_3d(float width, float height, int width_resolution, int height_resolution, vec3 starting_position) {
+shape_3d generate_cloth_3d(float width, float height, int width_resolution, int height_resolution, float stiffness, vec3 starting_position) {
 	shape_3d cloth;
 
 	cloth.ball_count = width_resolution * height_resolution;
@@ -172,7 +169,7 @@ shape_3d generate_cloth_3d(float width, float height, int width_resolution, int 
 					.a = active_ball,
 					.b = active_ball + 1,
 					.length = width/(width_resolution-1),
-					.stiffness = 100,
+					.stiffness = stiffness,
 					.type = ROPE_SPRING
 				};
 			}
@@ -181,14 +178,13 @@ shape_3d generate_cloth_3d(float width, float height, int width_resolution, int 
 					.a = active_ball,
 					.b = active_ball + width_resolution,
 					.length = height/(height_resolution-1),
-					.stiffness = 100,
+					.stiffness = stiffness,
 					.type = ROPE_SPRING
 				};
 			}
 		}
 	}
 	
-	cloth.self_collision = 0;
 	return cloth;
 
 }

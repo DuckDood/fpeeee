@@ -268,7 +268,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 		//current_ball->radius = (rand() % 5 + 5) / 100.;
 		set_velocity_3d(current_ball, (vec3){0, 0, 0});
 	}
-	app_state->cloth = generate_cloth_3d(1, 1, 15, 15, (vec3){0, 1, 0});
+	app_state->cloth = generate_cloth_3d(1, 1, 15, 15, 100, (vec3){0, 1, 0});
 
 	return SDL_APP_CONTINUE;
 }
@@ -478,7 +478,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			check_and_resolve_3d(current_ball, w2_5, 0, 0, app_state->deltatime);
 
 			for(int j = 0; j < 15; j++) {
-				float relative_top_position = (j-6) / 12. * 1;
+				float relative_top_position = (j-7.5) / 15. * 1;
 					app_state->cloth.balls[j].position = (vec3){cos(app_state->yaw) * relative_top_position, 1.5, sin(app_state->yaw) * relative_top_position};
 			}
 
