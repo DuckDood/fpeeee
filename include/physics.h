@@ -63,6 +63,7 @@ typedef struct {
 	vec3 position;
 	vec3 previous_position;
 	float radius;
+	float mass;
 } ball_3d;
 
 typedef struct {

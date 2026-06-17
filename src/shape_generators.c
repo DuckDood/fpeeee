@@ -113,6 +113,16 @@ shape_3d generate_cube_3d(float width, float height, float depth, vec3 starting_
 	cube.balls[6].radius = 0.1;
 	cube.balls[7].radius = 0.1;
 
+	cube.balls[0].mass = 1;
+	cube.balls[1].mass = 1;
+	cube.balls[2].mass = 1;
+	cube.balls[3].mass = 1;
+
+	cube.balls[4].mass = 1;
+	cube.balls[5].mass = 1;
+	cube.balls[6].mass = 1;
+	cube.balls[7].mass = 1;
+
 	/*
 	cube.links[0] = (linkage){cube.balls+0, cube.balls+1, width, 0, DISTANCE};
 	cube.links[1] = (linkage){cube.balls+1, cube.balls+2, height, 0, DISTANCE};
@@ -147,6 +157,8 @@ shape_3d generate_cube_3d(float width, float height, float depth, vec3 starting_
 
 	return cube;
 }
+
+// stiffness should be low because there are a lot of springs and the balls are real light!
 shape_3d generate_cloth_3d(float width, float height, int width_resolution, int height_resolution, float stiffness, vec3 starting_position) {
 	shape_3d cloth;
 
@@ -163,7 +175,10 @@ shape_3d generate_cloth_3d(float width, float height, int width_resolution, int 
 			ball_3d *active_ball = &cloth.balls[row * width_resolution + column];
 			active_ball->position = v3_add((vec3){(column-width_resolution/2.) * width/(width_resolution-1), (row-height_resolution/2.) * height/(height_resolution-1), 0}, starting_position);
 			set_velocity_3d(active_ball, (vec3){0,0,0});
-			active_ball->radius = 0.01;
+			//active_ball->radius = 1.0 / (width_resolution*height_resolution) * width * height;
+			//active_ball->radius = (((width) * (height)) / ((width_resolution) * (height_resolution)));
+			active_ball->radius = (((width) * (height)) / ((width_resolution + height_resolution)/2.) * 0.33);
+			active_ball->mass = 1.0 / (width_resolution*height_resolution);
 			if(column < width_resolution - 1) {
 				cloth.links[cloth_link_count++] = (linkage_3d){
 					.a = active_ball,

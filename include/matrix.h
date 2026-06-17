@@ -11,3 +11,4 @@ mat3 m3_mult(mat3 a, mat3 b);
 vec3 m3_v3_mult(mat3 a, vec3 b);
 
 mat3 generate_rotation_matrix(float yaw, float pitch, float roll);
+mat3 generate_scale_matrix(vec3 scale);
