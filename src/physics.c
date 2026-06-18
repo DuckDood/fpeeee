@@ -91,15 +91,26 @@ void update_ball(ball *body) {
 }
 
 void distance_constraint(ball *a, ball *b, float length) {
+	/*
 	vec2 direction_between = v2_sub(a->position, b->position);
 	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
 	vec2 normalized_direction = v2_normalize(direction_between);
 	a->position = v2_add(inbetween_point, v2_fmult(normalized_direction, length*0.5));
 	b->position = v2_add(inbetween_point, v2_fmult(normalized_direction, -length*0.5));
+	*/
+	// from the 'Advanced Character Physics' paper by Thomas Jakobson
+	float inverse_mass_a = 1/a->mass;
+	float inverse_mass_b = 1/b->mass;
+	vec2 delta = v2_sub(b->position, a->position);
+	float deltalength = v2_magnitude(delta);
+	float diff = (deltalength - length) / (deltalength*(inverse_mass_a + inverse_mass_b));
+	a->position = v2_add(a->position, v2_fmult(delta, inverse_mass_a * diff));
+	b->position = v2_sub(b->position, v2_fmult(delta, inverse_mass_b * diff));
 }
 
 
 void spring_constraint(ball *a, ball *b, float length, float stiffness, float deltatime) {
+	/*
 	vec2 relative_position = v2_sub(b->position, a->position);
 	float relative_magnitude = v2_magnitude(relative_position);
 	float force = stiffness * (relative_magnitude - length);
@@ -108,9 +119,25 @@ void spring_constraint(ball *a, ball *b, float length, float stiffness, float de
 
 	a->position = v2_add(a->position, v2_fmult(push, 0.5));
 	b->position = v2_add(b->position, v2_fmult(push, -0.5));
+	*/
+	float inverse_mass_a = 1/a->mass;
+	float inverse_mass_b = 1/b->mass;
+	vec2 delta = v2_sub(a->position, b->position);
+	float deltalength = v2_magnitude(delta);
+	// F = -kx (Hooke's law)
+	// k = stiffness
+	// x = deltalength - length
+	float force = -stiffness * (deltalength-length);
+
+	vec2 delta_norm = v2_fdiv(delta, deltalength);
+
+	// F = ma
+	// a = F/m
+	a->position = v2_add(a->position, v2_fmult(delta_norm, force * inverse_mass_a * deltatime*deltatime));
+	b->position = v2_sub(b->position, v2_fmult(delta_norm, force * inverse_mass_b * deltatime*deltatime));
 }
 
-void rope_constraint(ball *a, ball *b, float length) {
+void rope_constraint(ball *a, ball *b, float length) {/*
 	vec2 direction_between = v2_sub(a->position, b->position);
 	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
 	float distance = v2_magnitude(direction_between);
@@ -118,9 +145,15 @@ void rope_constraint(ball *a, ball *b, float length) {
 	vec2 normalized_direction = v2_fmult(direction_between, 1/distance);
 	a->position = v2_add(inbetween_point, v2_fmult(normalized_direction, length*0.5));
 	b->position = v2_add(inbetween_point, v2_fmult(normalized_direction, -length*0.5));
+	*/
+	vec2 relative_position = v2_sub(b->position, a->position);
+	float relative_magnitude = v2_magnitude(relative_position);
+	if(relative_magnitude < length) return;
+	distance_constraint(a, b, length);
 }
 
 void rope_spring_constraint(ball *a, ball *b, float length, float stiffness, float deltatime) {
+	/*
 	vec2 relative_position = v2_sub(b->position, a->position);
 	float relative_magnitude = v2_magnitude(relative_position);
 	if(relative_magnitude < length) return;
@@ -130,6 +163,11 @@ void rope_spring_constraint(ball *a, ball *b, float length, float stiffness, flo
 
 	a->position = v2_add(a->position, v2_fmult(push, 0.5));
 	b->position = v2_add(b->position, v2_fmult(push, -0.5));
+	*/
+	vec2 relative_position = v2_sub(b->position, a->position);
+	float relative_magnitude = v2_magnitude(relative_position);
+	if(relative_magnitude < length) return;
+	spring_constraint(a, b, length, stiffness, deltatime);
 }
 
 void update_linkage(linkage link, float deltatime) {
@@ -172,12 +210,26 @@ void check_and_resolve_balls(ball *a, ball *b) {
 }
 
 void resolve_ball_collision(ball *a, ball *b, collision_info hit_info) {
+	/*
 	if(hit_info.hit) {
 		vec2 a_velocity = v2_sub(a->position, a->previous_position);
 		vec2 b_velocity = v2_sub(b->position, b->previous_position);
 
 		a->position = v2_sub(a->position, v2_fmult(hit_info.normal, hit_info.depth * 0.5));
 		b->position = v2_sub(b->position, v2_fmult(hit_info.normal, hit_info.depth * -0.5));
+	}*/
+	// not 100 percent sure if this is the best way
+	if(hit_info.hit) {
+		vec2 a_velocity = v2_sub(a->position, a->previous_position);
+		vec2 b_velocity = v2_sub(b->position, b->previous_position);
+
+		float inverse_mass_a = 1/a->mass;
+		float inverse_mass_b = 1/b->mass;
+
+		float inverse_inverse_mass_total = 1/(inverse_mass_b + inverse_mass_b);
+
+		a->position = v2_sub(a->position, v2_fmult(hit_info.normal, hit_info.depth * inverse_mass_a * inverse_inverse_mass_total));
+		b->position = v2_sub(b->position, v2_fmult(hit_info.normal, hit_info.depth * -inverse_mass_b * inverse_inverse_mass_total));
 	}
 }
 
@@ -416,6 +468,7 @@ collision_info_3d check_ball_collision_3d(ball_3d a, ball_3d b) {
 
 }
 void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info) {
+	// not 100 percent sure if this is the best way
 	if(hit_info.hit) {
 		vec3 a_velocity = v3_sub(a->position, a->previous_position);
 		vec3 b_velocity = v3_sub(b->position, b->previous_position);

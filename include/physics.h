@@ -5,6 +5,7 @@ typedef struct {
 	vec2 position;
 	vec2 previous_position;
 	float radius;
+	float mass;
 } ball;
 
 typedef struct {
