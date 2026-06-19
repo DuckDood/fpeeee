@@ -1,4 +1,4 @@
-all: obj/ build/ obj/main.c.o obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o build/physics 
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/2d_3d_scene.c.o build/physics 
 OSMODE := l
 
 obj/: 
@@ -15,51 +15,51 @@ else
 	mkdir build
 endif
 
-obj/main.c.o: src/main.c 
+obj/types.c.o: engine/src/types.c 
 ifeq (${OSMODE}, l)
-	${CC} src/main.c -c -o obj/main.c.o -Iinclude/ -O2 -march=native
+	${CC} engine/src/types.c -c -o obj/types.c.o -Iengine/include/ -O2 -march=native
 else
-	${CC} src/main.c -c -o obj/main.c.o -Iinclude/ -O2 -march=native
+	${CC} engine/src/types.c -c -o obj/types.c.o -Iengine/include/ -O2 -march=native
 endif
 
 
-obj/types.c.o: src/types.c 
+obj/physics.c.o: engine/src/physics.c 
 ifeq (${OSMODE}, l)
-	${CC} src/types.c -c -o obj/types.c.o -Iinclude/ -O2 -march=native
+	${CC} engine/src/physics.c -c -o obj/physics.c.o -Iengine/include/ -O2 -march=native
 else
-	${CC} src/types.c -c -o obj/types.c.o -Iinclude/ -O2 -march=native
+	${CC} engine/src/physics.c -c -o obj/physics.c.o -Iengine/include/ -O2 -march=native
 endif
 
 
-obj/physics.c.o: src/physics.c 
+obj/matrix.c.o: engine/src/matrix.c 
 ifeq (${OSMODE}, l)
-	${CC} src/physics.c -c -o obj/physics.c.o -Iinclude/ -O2 -march=native
+	${CC} engine/src/matrix.c -c -o obj/matrix.c.o -Iengine/include/ -O2 -march=native
 else
-	${CC} src/physics.c -c -o obj/physics.c.o -Iinclude/ -O2 -march=native
+	${CC} engine/src/matrix.c -c -o obj/matrix.c.o -Iengine/include/ -O2 -march=native
 endif
 
 
-obj/matrix.c.o: src/matrix.c 
+obj/shape_generators.c.o: engine/src/shape_generators.c 
 ifeq (${OSMODE}, l)
-	${CC} src/matrix.c -c -o obj/matrix.c.o -Iinclude/ -O2 -march=native
+	${CC} engine/src/shape_generators.c -c -o obj/shape_generators.c.o -Iengine/include/ -O2 -march=native
 else
-	${CC} src/matrix.c -c -o obj/matrix.c.o -Iinclude/ -O2 -march=native
+	${CC} engine/src/shape_generators.c -c -o obj/shape_generators.c.o -Iengine/include/ -O2 -march=native
 endif
 
 
-obj/shape_generators.c.o: src/shape_generators.c 
+obj/2d_3d_scene.c.o: demos/2d_3d_scene.c 
 ifeq (${OSMODE}, l)
-	${CC} src/shape_generators.c -c -o obj/shape_generators.c.o -Iinclude/ -O2 -march=native
+	${CC} demos/2d_3d_scene.c -c -o obj/2d_3d_scene.c.o -Iengine/include/ -O2 -march=native
 else
-	${CC} src/shape_generators.c -c -o obj/shape_generators.c.o -Iinclude/ -O2 -march=native
+	${CC} demos/2d_3d_scene.c -c -o obj/2d_3d_scene.c.o -Iengine/include/ -O2 -march=native
 endif
 
 
-build/physics: obj/main.c.o obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o 
+build/physics: obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/2d_3d_scene.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/main.c.o obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o -o build/physics -lm -lSDL3
+	${CC} obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/2d_3d_scene.c.o -o build/physics -lm -lSDL3
 else
-	${CC} obj/main.c.o obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o -o build/physics -lm -lSDL3
+	${CC} obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/2d_3d_scene.c.o -o build/physics -lm -lSDL3
 endif
 
 
@@ -72,29 +72,29 @@ clean:
 gencommands:
 	mkdir emmgtemp
 ifeq (${OSMODE}, l)
-	clang src/main.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/0.json -fsyntax-only
+	clang engine/src/types.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/0.json -fsyntax-only
 else
-	clang src/main.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/0.json -fsyntax-only
+	clang engine/src/types.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/0.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang src/types.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/1.json -fsyntax-only
+	clang engine/src/physics.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/1.json -fsyntax-only
 else
-	clang src/types.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/1.json -fsyntax-only
+	clang engine/src/physics.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/1.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang src/physics.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/2.json -fsyntax-only
+	clang engine/src/matrix.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/2.json -fsyntax-only
 else
-	clang src/physics.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/2.json -fsyntax-only
+	clang engine/src/matrix.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/2.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang src/matrix.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/3.json -fsyntax-only
+	clang engine/src/shape_generators.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/3.json -fsyntax-only
 else
-	clang src/matrix.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/3.json -fsyntax-only
+	clang engine/src/shape_generators.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/3.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang src/shape_generators.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/4.json -fsyntax-only
+	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/4.json -fsyntax-only
 else
-	clang src/shape_generators.c  -Iinclude/ -O2 -march=native -MJ emmgtemp/4.json -fsyntax-only
+	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/4.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[
