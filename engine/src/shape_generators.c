@@ -15,10 +15,10 @@ shape generate_rectangle(float width, float height, vec2 starting_position) {
 	rectangle.balls[2].position = v2_add((vec2){width/2, height/2}, starting_position);
 	rectangle.balls[3].position = v2_add((vec2){-width/2, height/2}, starting_position);
 
-	set_velocity(rectangle.balls+0, (vec2){0,0});
-	set_velocity(rectangle.balls+1, (vec2){0,0});
-	set_velocity(rectangle.balls+2, (vec2){0,0});
-	set_velocity(rectangle.balls+3, (vec2){0,0});
+	set_velocity_2d(rectangle.balls+0, (vec2){0,0});
+	set_velocity_2d(rectangle.balls+1, (vec2){0,0});
+	set_velocity_2d(rectangle.balls+2, (vec2){0,0});
+	set_velocity_2d(rectangle.balls+3, (vec2){0,0});
 
 	/*rectangle.balls[0].radius = 10;
 	rectangle.balls[1].radius = 10;
@@ -62,7 +62,7 @@ shape generate_cloth(float width, float height, int width_resolution, int height
 		for(int column = 0; column < width_resolution; ++column) {
 			ball *active_ball = &cloth.balls[row * width_resolution + column];
 			active_ball->position = v2_add((vec2){(column-width_resolution/2.) * width/(width_resolution-1), (row-height_resolution/2.) * height/(height_resolution-1)}, starting_position);
-			set_velocity(active_ball, (vec2){0,0});
+			set_velocity_2d(active_ball, (vec2){0,0});
 			active_ball->radius = fmax(width/width_resolution, height/height_resolution) * 0.5; // insures that it will fill the space, but some balls might overlap if the dimensions arent square
 			active_ball->mass = 1. / (width_resolution * height_resolution);
 			if(column < width_resolution - 1) {
@@ -99,7 +99,7 @@ shape generate_rope(float length, int resolution, float stiffness, vec2 starting
 
 	for(int i = 0; i < resolution; i++) {
 		rope.balls[i].position = v2_add((vec2){0, length * ((float)(i-resolution/2.)/(resolution-1))}, starting_position);
-		set_velocity(rope.balls + i, (vec2){0,0});
+		set_velocity_2d(rope.balls + i, (vec2){0,0});
 		rope.balls[i].radius = length/resolution * 0.5;
 		rope.balls[i].mass = 1./resolution;
 		if(i < resolution-1) {
