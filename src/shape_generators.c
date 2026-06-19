@@ -1,3 +1,4 @@
+#include <math.h>
 #include <shape_generators.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,9 +63,8 @@ shape generate_cloth(float width, float height, int width_resolution, int height
 			ball *active_ball = &cloth.balls[row * width_resolution + column];
 			active_ball->position = v2_add((vec2){(column-width_resolution/2.) * width/(width_resolution-1), (row-height_resolution/2.) * height/(height_resolution-1)}, starting_position);
 			set_velocity(active_ball, (vec2){0,0});
-			//active_ball->radius = 5;
-			active_ball->radius = 0.01;
-			active_ball->mass = 1;
+			active_ball->radius = fmax(width/width_resolution, height/height_resolution) * 0.5; // insures that it will fill the space, but some balls might overlap if the dimensions arent square
+			active_ball->mass = 1. / (width_resolution * height_resolution);
 			if(column < width_resolution - 1) {
 				cloth.links[cloth_link_count++] = (linkage){
 					.a = active_ball,
@@ -90,24 +90,22 @@ shape generate_cloth(float width, float height, int width_resolution, int height
 }
 
 shape generate_rope(float length, int resolution, float stiffness, vec2 starting_position) {
-	shape cloth;
+	shape rope;
 
-	cloth.ball_count = resolution;
-	cloth.balls = malloc(cloth.ball_count * sizeof(ball));
-	//cloth.link_count = (width_resolution-1) * height_resolution + (height_resolution-1) * width_resolution;
-	//2hw - w - h it simplifies down to this
-	//cloth.link_count = 2 * height_resolution * width_resolution - width_resolution - height_resolution;
-	cloth.link_count = resolution-1;
-	cloth.links = malloc(cloth.link_count * sizeof(linkage));
+	rope.ball_count = resolution;
+	rope.balls = malloc(rope.ball_count * sizeof(ball));
+	rope.link_count = resolution-1;
+	rope.links = malloc(rope.link_count * sizeof(linkage));
 
 	for(int i = 0; i < resolution; i++) {
-		cloth.balls[i].position = v2_add((vec2){0, length * ((float)(i-resolution/2.)/(resolution-1))}, starting_position);
-		cloth.balls[i].radius = length/resolution * 0.5;
-		cloth.balls[i].mass = 1./resolution;
+		rope.balls[i].position = v2_add((vec2){0, length * ((float)(i-resolution/2.)/(resolution-1))}, starting_position);
+		set_velocity(rope.balls + i, (vec2){0,0});
+		rope.balls[i].radius = length/resolution * 0.5;
+		rope.balls[i].mass = 1./resolution;
 		if(i < resolution-1) {
-			cloth.links[i] = (linkage) {
-				.a = cloth.balls + i,
-				.b = cloth.balls + i + 1,
+			rope.links[i] = (linkage) {
+				.a = rope.balls + i,
+				.b = rope.balls + i + 1,
 				.length = length/(resolution-1),
 				.stiffness = stiffness,
 				.type = ROPE_SPRING
@@ -116,7 +114,7 @@ shape generate_rope(float length, int resolution, float stiffness, vec2 starting
 	}
 
 	
-	return cloth;
+	return rope;
 }
 
 shape_3d generate_cube_3d(float width, float height, float depth, vec3 starting_position) {
@@ -217,9 +215,7 @@ shape_3d generate_cloth_3d(float width, float height, int width_resolution, int 
 			ball_3d *active_ball = &cloth.balls[row * width_resolution + column];
 			active_ball->position = v3_add((vec3){(column-width_resolution/2.) * width/(width_resolution-1), (row-height_resolution/2.) * height/(height_resolution-1), 0}, starting_position);
 			set_velocity_3d(active_ball, (vec3){0,0,0});
-			//active_ball->radius = 1.0 / (width_resolution*height_resolution) * width * height;
-			//active_ball->radius = (((width) * (height)) / ((width_resolution) * (height_resolution)));
-			active_ball->radius = (((width) * (height)) / ((width_resolution + height_resolution)/2.) * 0.33);
+			active_ball->radius = fmax(width/width_resolution, height/height_resolution) * 0.5; // insures that it will fill the space, but some balls might overlap if the dimensions arent square
 			active_ball->mass = 1.0 / (width_resolution*height_resolution);
 			if(column < width_resolution - 1) {
 				cloth.links[cloth_link_count++] = (linkage_3d){
