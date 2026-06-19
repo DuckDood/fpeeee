@@ -22,6 +22,8 @@ src shape_generators.c
 # Put build here
 
 srcdir demos
+src helpers.c
+
 src 2d_3d_scene.c
 build physics
 

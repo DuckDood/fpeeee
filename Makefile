@@ -1,4 +1,4 @@
-all: obj/ build/ obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/2d_3d_scene.c.o build/physics 
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/helpers.c.o obj/2d_3d_scene.c.o build/physics 
 OSMODE := l
 
 obj/: 
@@ -47,6 +47,14 @@ else
 endif
 
 
+obj/helpers.c.o: demos/helpers.c 
+ifeq (${OSMODE}, l)
+	${CC} demos/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O2 -march=native
+else
+	${CC} demos/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O2 -march=native
+endif
+
+
 obj/2d_3d_scene.c.o: demos/2d_3d_scene.c 
 ifeq (${OSMODE}, l)
 	${CC} demos/2d_3d_scene.c -c -o obj/2d_3d_scene.c.o -Iengine/include/ -O2 -march=native
@@ -55,11 +63,11 @@ else
 endif
 
 
-build/physics: obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/2d_3d_scene.c.o 
+build/physics: obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/helpers.c.o obj/2d_3d_scene.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/2d_3d_scene.c.o -o build/physics -lm -lSDL3
+	${CC} obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/helpers.c.o obj/2d_3d_scene.c.o -o build/physics -lm -lSDL3
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/2d_3d_scene.c.o -o build/physics -lm -lSDL3
+	${CC} obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/helpers.c.o obj/2d_3d_scene.c.o -o build/physics -lm -lSDL3
 endif
 
 
@@ -92,9 +100,14 @@ else
 	clang engine/src/shape_generators.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/3.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/4.json -fsyntax-only
+	clang demos/helpers.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/4.json -fsyntax-only
 else
-	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/4.json -fsyntax-only
+	clang demos/helpers.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/4.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/5.json -fsyntax-only
+else
+	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -MJ emmgtemp/5.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[
