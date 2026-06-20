@@ -1,0 +1,116 @@
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/helpers.c.o obj/2d_3d_scene.c.o build/index.html 
+OSMODE := l
+
+obj/: 
+ifeq (${OSMODE}, l)
+	mkdir -p obj
+else
+	mkdir obj
+endif
+
+build/: 
+ifeq (${OSMODE}, l)
+	mkdir -p build
+else
+	mkdir build
+endif
+
+obj/types.c.o: engine/src/types.c 
+ifeq (${OSMODE}, l)
+	${CC} engine/src/types.c -c -o obj/types.c.o -Iengine/include/ -O2
+else
+	${CC} engine/src/types.c -c -o obj/types.c.o -Iengine/include/ -O2
+endif
+
+
+obj/physics.c.o: engine/src/physics.c 
+ifeq (${OSMODE}, l)
+	${CC} engine/src/physics.c -c -o obj/physics.c.o -Iengine/include/ -O2
+else
+	${CC} engine/src/physics.c -c -o obj/physics.c.o -Iengine/include/ -O2
+endif
+
+
+obj/matrix.c.o: engine/src/matrix.c 
+ifeq (${OSMODE}, l)
+	${CC} engine/src/matrix.c -c -o obj/matrix.c.o -Iengine/include/ -O2
+else
+	${CC} engine/src/matrix.c -c -o obj/matrix.c.o -Iengine/include/ -O2
+endif
+
+
+obj/shape_generators.c.o: engine/src/shape_generators.c 
+ifeq (${OSMODE}, l)
+	${CC} engine/src/shape_generators.c -c -o obj/shape_generators.c.o -Iengine/include/ -O2
+else
+	${CC} engine/src/shape_generators.c -c -o obj/shape_generators.c.o -Iengine/include/ -O2
+endif
+
+
+obj/helpers.c.o: demos/helpers.c 
+ifeq (${OSMODE}, l)
+	${CC} demos/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O2
+else
+	${CC} demos/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O2
+endif
+
+
+obj/2d_3d_scene.c.o: demos/2d_3d_scene.c 
+ifeq (${OSMODE}, l)
+	${CC} demos/2d_3d_scene.c -c -o obj/2d_3d_scene.c.o -Iengine/include/ -O2
+else
+	${CC} demos/2d_3d_scene.c -c -o obj/2d_3d_scene.c.o -Iengine/include/ -O2
+endif
+
+
+clean:
+	rm -r obj
+	rm -r build
+.PHONY: clean
+
+build/index.html: obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/helpers.c.o obj/2d_3d_scene.c.o 
+ifeq (${OSMODE}, l)
+	${CC} obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/helpers.c.o obj/2d_3d_scene.c.o -o build/index.html -lm -lSDL3
+else
+	${CC} obj/types.c.o obj/physics.c.o obj/matrix.c.o obj/shape_generators.c.o obj/helpers.c.o obj/2d_3d_scene.c.o -o build/index.html -lm -lSDL3
+endif
+
+
+
+gencommands:
+	mkdir emmgtemp
+ifeq (${OSMODE}, l)
+	clang engine/src/types.c  -Iengine/include/ -O2 -MJ emmgtemp/0.json -fsyntax-only
+else
+	clang engine/src/types.c  -Iengine/include/ -O2 -MJ emmgtemp/0.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang engine/src/physics.c  -Iengine/include/ -O2 -MJ emmgtemp/1.json -fsyntax-only
+else
+	clang engine/src/physics.c  -Iengine/include/ -O2 -MJ emmgtemp/1.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang engine/src/matrix.c  -Iengine/include/ -O2 -MJ emmgtemp/2.json -fsyntax-only
+else
+	clang engine/src/matrix.c  -Iengine/include/ -O2 -MJ emmgtemp/2.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang engine/src/shape_generators.c  -Iengine/include/ -O2 -MJ emmgtemp/3.json -fsyntax-only
+else
+	clang engine/src/shape_generators.c  -Iengine/include/ -O2 -MJ emmgtemp/3.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang demos/helpers.c  -Iengine/include/ -O2 -MJ emmgtemp/4.json -fsyntax-only
+else
+	clang demos/helpers.c  -Iengine/include/ -O2 -MJ emmgtemp/4.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -MJ emmgtemp/5.json -fsyntax-only
+else
+	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -MJ emmgtemp/5.json -fsyntax-only
+endif
+# not cross platform here sad i think
+	echo [ > emmgtemp/[
+	echo ] > emmgtemp/]
+	cat emmgtemp/[ emmgtemp/*.json emmgtemp/] > compile_commands.json
+	rm -r emmgtemp

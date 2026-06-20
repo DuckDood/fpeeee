@@ -25,7 +25,7 @@
 //#define WIDTH 1024
 //#define HEIGHT 1024
 
-#define ROPE_DIMENSIONS 20
+#define ROPE_DIMENSIONS 50
 #define CLOTH_DIMENSIONS 10
 
 typedef struct {
@@ -122,8 +122,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 	}
 
 	float aspect_ratio = (float)WIDTH/HEIGHT;
-	app_state->rope = generate_rope(1 * aspect_ratio, ROPE_DIMENSIONS, 250, (vec2){0, -0.2});
-	app_state->cloth = generate_cloth_3d(1 * aspect_ratio, 1 * aspect_ratio, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 5, (vec3){0, 0, -2});
+	app_state->rope = generate_rope(1, ROPE_DIMENSIONS, 2500, (vec2){0, -0.2});
+	app_state->cloth = generate_cloth_3d(1 * aspect_ratio, 1 * aspect_ratio, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 250, (vec3){0, 0, -2});
 
 	return SDL_APP_CONTINUE;
 }
@@ -140,7 +140,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	int steps_per_frame = 10;
 	app_state->deltatime = 1.0/framerate;
 	app_state->deltatime*=1.0/steps_per_frame;
-	//steps_per_frame = 0;
 
 
 
@@ -287,13 +286,26 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	wall w4_2d; w4_2d.length = 2 * aspect_ratio; w4_2d.normal = (vec2){sin(3.14159), -cos(3.14159)}; w4_2d.position = (vec2){0, 1};
 
 	for(int step = 0; step < steps_per_frame; ++step) {
+		// 2d stuff
 		{
+			// updating balls
 			for(int i = 0; i < app_state->ball_count; ++i) {
 				ball *current_ball = app_state->balls+i;
 				update_ball_2d(current_ball);
 				current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
 			}
+			for(int i = 0; i < app_state->rope.ball_count; ++i) {
+				ball *current_ball = app_state->rope.balls+i;
+				update_ball_2d(current_ball);
+				current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
+			}
 
+			// updating rope springs
+			for(int j = 0; j < app_state->rope.link_count; ++j) {
+				update_linkage_2d(app_state->rope.links[j], app_state->deltatime);
+			}
+
+			// checking for collisions
 			for(int i = 0; i < app_state->ball_count; ++i) {
 				ball *current_ball = app_state->balls+i;
 
@@ -306,17 +318,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 					if(i == j) continue;
 					check_and_resolve_balls_2d(current_ball, app_state->balls + j);
 				}
-
 			
 				for(int j = 0; j < app_state->rope.ball_count; ++j) {
 					check_and_resolve_balls_2d(current_ball, app_state->rope.balls + j);
 				}
-			}
-
-			for(int i = 0; i < app_state->rope.ball_count; ++i) {
-				ball *current_ball = app_state->rope.balls+i;
-				update_ball_2d(current_ball);
-				current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
 			}
 
 			for(int i = 0; i < app_state->rope.ball_count; ++i) {
@@ -327,23 +332,33 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				check_and_resolve_2d(current_ball, w3_2d, 0, 0, app_state->deltatime);
 				check_and_resolve_2d(current_ball, w4_2d, 0, 0, app_state->deltatime);
 
-				app_state->rope.balls[0].position = (vec2){-0.5 * aspect_ratio, -0.25
-				};
-				app_state->rope.balls[ROPE_DIMENSIONS-1].position = (vec2){0.5 * aspect_ratio, -0.25};
 
-				for(int j = 0; j < app_state->rope.link_count; ++j) {
-					update_linkage_2d(app_state->rope.links[j], app_state->deltatime);
-				}
+
 			}
+			// pinning the rope in place
+			app_state->rope.balls[0].position = (vec2){-0.5 * aspect_ratio, -0.25};
+			app_state->rope.balls[ROPE_DIMENSIONS-1].position = (vec2){0.5 * aspect_ratio, -0.25};
 		}
 
+		// 3d stuff
 		{
+			// updating balls
 			for(int i = 0; i < app_state->ball_count; ++i) {
 				ball_3d *current_ball = app_state->balls_3d+i;
 				update_ball_3d(current_ball);
 				current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
 			}
+			for(int i = 0; i < app_state->cloth.ball_count; ++i) {
+				ball_3d *current_ball = app_state->cloth.balls+i;
+				update_ball_3d(current_ball);
+				current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
+			}
+			// updating cloth springs
+			for(int j = 0; j < app_state->cloth.link_count; ++j) {
+				update_linkage_3d(app_state->cloth.links[j], app_state->deltatime);
+			}
 
+			// checking for collisions
 			for(int i = 0; i < app_state->ball_count; ++i) {
 				ball_3d *current_ball = app_state->balls_3d+i;
 
@@ -379,12 +394,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 			for(int i = 0; i < app_state->cloth.ball_count; ++i) {
 				ball_3d *current_ball = app_state->cloth.balls+i;
-				update_ball_3d(current_ball);
-				current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
-			}
-
-			for(int i = 0; i < app_state->cloth.ball_count; ++i) {
-				ball_3d *current_ball = app_state->cloth.balls+i;
 
 				
 				/*
@@ -405,14 +414,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				*/
 				
 
-				for(int j = 0; j < app_state->cloth.link_count; ++j) {
-					update_linkage_3d(app_state->cloth.links[j], app_state->deltatime);
-				}
 			}
 
-			/*for(int j = 0; j < CLOTH_DIMENSIONS; ++j) {
-				app_state->cloth.balls[j].position = (vec3){0.5*(j-CLOTH_DIMENSIONS/2.)/CLOTH_DIMENSIONS, 0, -2};
-			}*/
+			// pinning the cloth in place
 			app_state->cloth.balls[0].position = (vec3){-0.5 * aspect_ratio, 0, -2 * aspect_ratio};
 			app_state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){0.5 * aspect_ratio, 0, -2 * aspect_ratio};
 
@@ -483,14 +487,14 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			app_state->balls[app_state->ball_count-1].position = (vec2){0, 0.5};
 			app_state->balls[app_state->ball_count-1].radius = 0.1;
 			app_state->balls[app_state->ball_count-1].mass = 1;
-			set_velocity_2d(app_state->balls+app_state->ball_count-1, (vec2){0, -0.01});
+			set_velocity_2d(app_state->balls+app_state->ball_count-1, (vec2){0, -0.001});
 
 			app_state->fps_ticks[1] = SDL_GetTicks();
 			app_state->balls_3d = realloc(app_state->balls_3d, app_state->ball_count * sizeof(ball_3d));
 			app_state->balls_3d[app_state->ball_count-1].position = (vec3){0, 1, -2.5 * aspect_ratio};
 			app_state->balls_3d[app_state->ball_count-1].radius = 0.15;
 			app_state->balls_3d[app_state->ball_count-1].mass = 1;
-			set_velocity_3d(app_state->balls_3d+app_state->ball_count-1, (vec3){0, -0.01, 0});
+			set_velocity_3d(app_state->balls_3d+app_state->ball_count-1, (vec3){0, -0.001, 0});
 		}
 	}
 
