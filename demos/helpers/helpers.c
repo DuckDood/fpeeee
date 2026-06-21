@@ -2,7 +2,7 @@
 #include <matrix.h>
 #include <math.h>
 
-void draw_circle(SDL_Renderer *renderer, ball b, int resolution, camera cam) {
+void draw_circle(SDL_Renderer *renderer, ball_2d b, int resolution, camera cam) {
 	int WIDTH = cam.width;
 	int HEIGHT = cam.height;
 	vec3 camera_position = cam.position;
@@ -89,7 +89,7 @@ void draw_circle_3d(SDL_Renderer *renderer, ball_3d b, int resolution, camera ca
 	}
 }
 
-void draw_wall(SDL_Renderer *renderer, wall w, camera cam) {
+void draw_wall(SDL_Renderer *renderer, wall_2d w, camera cam) {
 	int WIDTH = cam.width;
 	int HEIGHT = cam.height;
 	vec3 camera_position = cam.position;
@@ -209,7 +209,7 @@ void draw_wall_3d(SDL_Renderer *renderer, wall_3d w, camera cam) {
 	SDL_RenderLine(renderer, c_relative.x, c_relative.y, a_relative.x, a_relative.y);
 }
 
-void draw_linkage(SDL_Renderer *renderer, linkage link, camera cam) {
+void draw_linkage(SDL_Renderer *renderer, linkage_2d link, camera cam) {
 	int WIDTH = cam.width;
 	int HEIGHT = cam.height;
 	vec3 camera_position = cam.position;

@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "helpers.h"
+#include <helpers.h>
 
 //#define WIDTH 800
 //#define HEIGHT 600
@@ -25,7 +25,6 @@
 //#define WIDTH 1024
 //#define HEIGHT 1024
 
-#define ROPE_DIMENSIONS 50
 #define CLOTH_DIMENSIONS 10
 
 typedef struct {
@@ -33,6 +32,7 @@ typedef struct {
 	SDL_Renderer *renderer;
 
 	Uint64 fps_ticks[3];
+	Uint64 new_ticks;
 	int frame;
 	float deltatime;
 
@@ -51,10 +51,10 @@ typedef struct {
 	float yaw;
 	float pitch;
 
-	ball *balls;
+	ball_2d *balls;
 	int ball_count;
 
-	shape rope;
+	shape_2d shape;
 	
 	ball_3d *balls_3d;
 
@@ -70,14 +70,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 		return SDL_APP_FAILURE;
 	}
 
-	if(!SDL_CreateWindowAndRenderer("physics", WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE, &app_state->window, &app_state->renderer)) {
+	if(!SDL_CreateWindowAndRenderer("physics", WIDTH, HEIGHT, 0, &app_state->window, &app_state->renderer)) {
 		printf("Failed to create window or renderer: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
 	}
 
 
 	app_state->fps_ticks[0] = SDL_GetTicks();
-	app_state->fps_ticks[1] = SDL_GetTicks();
 	app_state->fps_ticks[2] = SDL_GetTicks();
 	app_state->frame = 0;
 	app_state->deltatime = 0;
@@ -98,32 +97,19 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 	app_state->my = 0;
 	app_state->mouse_vector = (vec2){app_state->mx, app_state->my};
 
-	app_state->cam.position = (vec3){0, 0, -1};
+	app_state->cam.position = (vec3){0, 0, -1.5};
 	app_state->cam.rotation = (vec3){0, 0, 0};
 
 	app_state->cam.width = WIDTH;
 	app_state->cam.height = HEIGHT;
 
 	app_state->ball_count = 0;
-	app_state->balls = malloc(app_state->ball_count * sizeof(ball_3d));
-
-	int x = 0, y = 0, z = 0;
-
-	int spawn_grid_limit = 6;
-	for(int i = 0; i < app_state->ball_count; ++i) {
-		x++;
-		if(x > spawn_grid_limit) x = 0, z++;
-		if(z > spawn_grid_limit) z = 0, y++;
-		ball *current_ball = app_state->balls+i;
-		current_ball->position = (vec2){0, 0};
-		current_ball->radius = 0.05;
-		current_ball->mass = 1;
-		set_velocity_2d(current_ball, (vec2){0, 0});
-	}
+	app_state->balls = malloc(app_state->ball_count * sizeof(ball_2d));
+	app_state->balls_3d = malloc(app_state->ball_count * sizeof(ball_3d));
 
 	float aspect_ratio = (float)WIDTH/HEIGHT;
-	app_state->rope = generate_rope(1, ROPE_DIMENSIONS, 2500, (vec2){0, -0.2});
-	app_state->cloth = generate_cloth_3d(1 * aspect_ratio, 1 * aspect_ratio, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 250, (vec3){0, 0, -2});
+	app_state->shape = generate_wheel(0.25, 10, (vec2){0,0});
+	app_state->cloth = generate_cloth_3d(1 * aspect_ratio, 1 * aspect_ratio, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 500, (vec3){0, 0, -2});
 
 	return SDL_APP_CONTINUE;
 }
@@ -140,6 +126,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	int steps_per_frame = 10;
 	app_state->deltatime = 1.0/framerate;
 	app_state->deltatime*=1.0/steps_per_frame;
+	//steps_per_frame = (rand() % 200) / 199;
+	//steps_per_frame = 0;
 
 
 
@@ -196,118 +184,124 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	app_state->mouse_vector = (vec2){app_state->mx, app_state->my};
 
 
+	if(kbd_state[SDL_SCANCODE_H]) {
+		ball_2d *current_ball = app_state->shape.balls + app_state->shape.ball_count-1;
+		current_ball->position = v2_add(current_ball->position, (vec2){-0.001, 0});
+	}
+	if(kbd_state[SDL_SCANCODE_L]) {
+		ball_2d *current_ball = app_state->shape.balls + app_state->shape.ball_count-1;
+		current_ball->position = v2_add(current_ball->position, (vec2){0.001, 0});
+	}
 	
-	/*
+	
 	mat3 scale = generate_scale_matrix((vec3){2, 2, 2});
 	mat3 rot = generate_rotation_matrix(0, app_state->yaw, app_state->pitch);
 	mat3 transform = m3_mult(rot, scale);
+	vec3 position = (vec3){0, -2, -4.5};
 
 	wall_3d w;
-	w.vertex_a = m3_v3_mult(transform, (vec3){-1, 0, -1});
-	w.vertex_b = m3_v3_mult(transform, (vec3){-1, 0, 1});
-	w.vertex_c = m3_v3_mult(transform, (vec3){1, 0, -1});
+	w.vertex_a = v3_add(m3_v3_mult(transform, (vec3){-1, 0, -1}), position);
+	w.vertex_b = v3_add(m3_v3_mult(transform, (vec3){-1, 0, 1}), position);
+	w.vertex_c = v3_add(m3_v3_mult(transform, (vec3){1, 0, -1}), position);
 
 	wall_3d w2;
 
-	w2.vertex_a = m3_v3_mult(transform, (vec3){1, 0, 1});
-	w2.vertex_b = m3_v3_mult(transform, (vec3){1, 0, -1});
-	w2.vertex_c = m3_v3_mult(transform, (vec3){-1, 0, 1});
+	w2.vertex_a = v3_add(m3_v3_mult(transform, (vec3){1, 0, 1}), position);
+	w2.vertex_b = v3_add(m3_v3_mult(transform, (vec3){1, 0, -1}), position);
+	w2.vertex_c = v3_add(m3_v3_mult(transform, (vec3){-1, 0, 1}), position);
 
 	set_wall_normal(&w);
 	set_wall_normal(&w2);
 
 	wall_3d w_2;
-	w_2.vertex_a = m3_v3_mult(transform, (vec3){-1, 1, -1});
-	w_2.vertex_b = m3_v3_mult(transform, (vec3){-1, 1, 1});
-	w_2.vertex_c = m3_v3_mult(transform, (vec3){-1, 0, -1});
+	w_2.vertex_a = v3_add(m3_v3_mult(transform, (vec3){-1, 1, -1}), position);
+	w_2.vertex_b = v3_add(m3_v3_mult(transform, (vec3){-1, 1, 1}), position);
+	w_2.vertex_c = v3_add(m3_v3_mult(transform, (vec3){-1, 0, -1}), position);
 
 	wall_3d w2_2;
 
-	w2_2.vertex_a = m3_v3_mult(transform, (vec3){-1, 0, -1});
-	w2_2.vertex_b = m3_v3_mult(transform, (vec3){-1, 0, 1});
-	w2_2.vertex_c = m3_v3_mult(transform, (vec3){-1, 1, 1});
+	w2_2.vertex_a = v3_add(m3_v3_mult(transform, (vec3){-1, 0, -1}), position);
+	w2_2.vertex_b = v3_add(m3_v3_mult(transform, (vec3){-1, 0, 1}), position);
+	w2_2.vertex_c = v3_add(m3_v3_mult(transform, (vec3){-1, 1, 1}), position);
 
 	set_wall_normal(&w_2);
 	set_wall_normal(&w2_2);
 
 	wall_3d w_3;
-	w_3.vertex_a = m3_v3_mult(transform, (vec3){1, 1, -1});
-	w_3.vertex_b = m3_v3_mult(transform, (vec3){1, 1, 1});
-	w_3.vertex_c = m3_v3_mult(transform, (vec3){1, 0, -1});
+	w_3.vertex_a = v3_add(m3_v3_mult(transform, (vec3){1, 1, -1}), position);
+	w_3.vertex_b = v3_add(m3_v3_mult(transform, (vec3){1, 1, 1}), position);
+	w_3.vertex_c = v3_add(m3_v3_mult(transform, (vec3){1, 0, -1}), position);
 
 	wall_3d w2_3;
 
-	w2_3.vertex_a = m3_v3_mult(transform, (vec3){1, 0, -1});
-	w2_3.vertex_b = m3_v3_mult(transform, (vec3){1, 0, 1});
-	w2_3.vertex_c = m3_v3_mult(transform, (vec3){1, 1, 1});
+	w2_3.vertex_a = v3_add(m3_v3_mult(transform, (vec3){1, 0, -1}), position);
+	w2_3.vertex_b = v3_add(m3_v3_mult(transform, (vec3){1, 0, 1}), position);
+	w2_3.vertex_c = v3_add(m3_v3_mult(transform, (vec3){1, 1, 1}), position);
 
 	set_wall_normal(&w_3);
 	set_wall_normal(&w2_3);
 
 	wall_3d w_4;
-	w_4.vertex_a = m3_v3_mult(transform, (vec3){-1, 0, 1});
-	w_4.vertex_b = m3_v3_mult(transform, (vec3){1, 0, 1});
-	w_4.vertex_c = m3_v3_mult(transform, (vec3){1, 1, 1});
+	w_4.vertex_a = v3_add(m3_v3_mult(transform, (vec3){-1, 0, 1}), position);
+	w_4.vertex_b = v3_add(m3_v3_mult(transform, (vec3){1, 0, 1}), position);
+	w_4.vertex_c = v3_add(m3_v3_mult(transform, (vec3){1, 1, 1}), position);
 
 	wall_3d w2_4;
 
-	w2_4.vertex_a = m3_v3_mult(transform, (vec3){1, 1, 1});
-	w2_4.vertex_b = m3_v3_mult(transform, (vec3){-1, 1, 1});
-	w2_4.vertex_c = m3_v3_mult(transform, (vec3){-1, 0, 1});
+	w2_4.vertex_a = v3_add(m3_v3_mult(transform, (vec3){1, 1, 1}), position);
+	w2_4.vertex_b = v3_add(m3_v3_mult(transform, (vec3){-1, 1, 1}), position);
+	w2_4.vertex_c = v3_add(m3_v3_mult(transform, (vec3){-1, 0, 1}), position);
 
 	set_wall_normal(&w_4);
 	set_wall_normal(&w2_4);
 
 	wall_3d w_5;
-	w_5.vertex_a = m3_v3_mult(transform, (vec3){-1, 0, -1});
-	w_5.vertex_b = m3_v3_mult(transform, (vec3){1, 0, -1});
-	w_5.vertex_c = m3_v3_mult(transform, (vec3){1, 1, -1});
+	w_5.vertex_a = v3_add(m3_v3_mult(transform, (vec3){-1, 0, -1}), position);
+	w_5.vertex_b = v3_add(m3_v3_mult(transform, (vec3){1, 0, -1}), position);
+	w_5.vertex_c = v3_add(m3_v3_mult(transform, (vec3){1, 1, -1}), position);
 
 	wall_3d w2_5;
 
-	w2_5.vertex_a = m3_v3_mult(transform, (vec3){1, 1, -1});
-	w2_5.vertex_b = m3_v3_mult(transform, (vec3){-1, 1, -1});
-	w2_5.vertex_c = m3_v3_mult(transform, (vec3){-1, 0, -1});
+	w2_5.vertex_a = v3_add(m3_v3_mult(transform, (vec3){1, 1, -1}), position);
+	w2_5.vertex_b = v3_add(m3_v3_mult(transform, (vec3){-1, 1, -1}), position);
+	w2_5.vertex_c = v3_add(m3_v3_mult(transform, (vec3){-1, 0, -1}), position);
 
 	set_wall_normal(&w_5);
 	set_wall_normal(&w2_5);
-*/
+
 
 	//collision_info_3d hit_info;
-	collision_info hit_info;
+	collision_info_2d hit_info;
 	float aspect_ratio = (float)WIDTH/HEIGHT;
 
-	wall w_2d; w_2d.length = 2; w_2d.normal = (vec2){sin(3.14159/2), -cos(3.14159/2)}; w_2d.position = (vec2){-1 * aspect_ratio, 0};
+	wall_2d w_2d; w_2d.length = 2; w_2d.normal = (vec2){sin(3.14159/2), -cos(3.14159/2)}; w_2d.position = (vec2){-1 * aspect_ratio, 0};
 
-	wall w2_2d; w2_2d.length = 2; w2_2d.normal = (vec2){sin(-3.14159/2), -cos(-3.14159/2)}; w2_2d.position = (vec2){1 * aspect_ratio, 0};
+	wall_2d w2_2d; w2_2d.length = 2; w2_2d.normal = (vec2){sin(-3.14159/2), -cos(-3.14159/2)}; w2_2d.position = (vec2){1 * aspect_ratio, 0};
 
-	wall w3_2d; w3_2d.length = 2 * aspect_ratio; w3_2d.normal = (vec2){sin(-3.14159), -cos(-3.14159)}; w3_2d.position = (vec2){0, -1};
+	wall_2d w3_2d; w3_2d.length = 2 * aspect_ratio; w3_2d.normal = (vec2){sin(-3.14159), -cos(-3.14159)}; w3_2d.position = (vec2){0, -1};
 
-	wall w4_2d; w4_2d.length = 2 * aspect_ratio; w4_2d.normal = (vec2){sin(3.14159), -cos(3.14159)}; w4_2d.position = (vec2){0, 1};
+	wall_2d w4_2d; w4_2d.length = 2 * aspect_ratio; w4_2d.normal = (vec2){sin(3.14159), -cos(3.14159)}; w4_2d.position = (vec2){0, 1};
 
 	for(int step = 0; step < steps_per_frame; ++step) {
 		// 2d stuff
 		{
 			// updating balls
 			for(int i = 0; i < app_state->ball_count; ++i) {
-				ball *current_ball = app_state->balls+i;
+				ball_2d *current_ball = app_state->balls+i;
 				update_ball_2d(current_ball);
 				current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
 			}
-			for(int i = 0; i < app_state->rope.ball_count; ++i) {
-				ball *current_ball = app_state->rope.balls+i;
+			for(int i = 0; i < app_state->shape.ball_count; ++i) {
+				ball_2d *current_ball = app_state->shape.balls+i;
 				update_ball_2d(current_ball);
 				current_ball->position.y -= 60 * 0.98 * 0.1 * app_state->deltatime * app_state->deltatime;
 			}
 
-			// updating rope springs
-			for(int j = 0; j < app_state->rope.link_count; ++j) {
-				update_linkage_2d(app_state->rope.links[j], app_state->deltatime);
-			}
 
+				//distance_constraint_2d(app_state->balls, app_state->balls + 1, 0.3);
 			// checking for collisions
 			for(int i = 0; i < app_state->ball_count; ++i) {
-				ball *current_ball = app_state->balls+i;
+				ball_2d *current_ball = app_state->balls+i;
 
 				check_and_resolve_2d(current_ball, w_2d, 0, 0, app_state->deltatime);
 				check_and_resolve_2d(current_ball, w2_2d, 0, 0, app_state->deltatime);
@@ -318,26 +312,35 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 					if(i == j) continue;
 					check_and_resolve_balls_2d(current_ball, app_state->balls + j);
 				}
-			
-				for(int j = 0; j < app_state->rope.ball_count; ++j) {
-					check_and_resolve_balls_2d(current_ball, app_state->rope.balls + j);
+			}
+				//distance_constraint_2d(app_state->balls, app_state->balls + 1, 0.3);
+
+			// pinning the rope in place
+			//app_state->rope.balls[0].position = (vec2){-0.5 * aspect_ratio, -0.25};
+			//app_state->rope.balls[ROPE_DIMENSIONS-1].position = (vec2){0.5 * aspect_ratio, -0.25};
+			/*for(int i = 0; i < app_state->shape.link_count; ++i) {
+				update_linkage_2d(app_state->shape.links[i], app_state->deltatime);
+			}*/
+			for(int i = 0; i < app_state->shape.link_count; ++i) {
+				update_linkage_2d(app_state->shape.links[i], app_state->deltatime);
+			}
+			for(int i = 0; i < app_state->shape.ball_count; ++i) {
+				ball_2d *current_ball = app_state->shape.balls+i;
+
+				check_and_resolve_2d(current_ball, w_2d, 0, 500, app_state->deltatime);
+				check_and_resolve_2d(current_ball, w2_2d, 0, 500, app_state->deltatime);
+				check_and_resolve_2d(current_ball, w3_2d, 0, 500, app_state->deltatime);
+				check_and_resolve_2d(current_ball, w4_2d, 0, 500, app_state->deltatime);
+
+				for(int j = 0; j < app_state->ball_count; ++j) {
+					if(i == j) continue;
+					check_and_resolve_balls_2d(current_ball, app_state->balls + j);
 				}
 			}
 
-			for(int i = 0; i < app_state->rope.ball_count; ++i) {
-				ball *current_ball = app_state->rope.balls+i;
-
-				check_and_resolve_2d(current_ball, w_2d, 0, 0, app_state->deltatime);
-				check_and_resolve_2d(current_ball, w2_2d, 0, 0, app_state->deltatime);
-				check_and_resolve_2d(current_ball, w3_2d, 0, 0, app_state->deltatime);
-				check_and_resolve_2d(current_ball, w4_2d, 0, 0, app_state->deltatime);
 
 
 
-			}
-			// pinning the rope in place
-			app_state->rope.balls[0].position = (vec2){-0.5 * aspect_ratio, -0.25};
-			app_state->rope.balls[ROPE_DIMENSIONS-1].position = (vec2){0.5 * aspect_ratio, -0.25};
 		}
 
 		// 3d stuff
@@ -363,7 +366,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				ball_3d *current_ball = app_state->balls_3d+i;
 
 				
-				/*
 				check_and_resolve_3d(current_ball, w, 0, 0, app_state->deltatime);
 				check_and_resolve_3d(current_ball, w2, 0, 0, app_state->deltatime);
 
@@ -378,7 +380,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 				check_and_resolve_3d(current_ball, w_5, 0, 0, app_state->deltatime);
 				check_and_resolve_3d(current_ball, w2_5, 0, 0, app_state->deltatime);
-				*/
 				
 
 				for(int j = 0; j < app_state->ball_count; ++j) {
@@ -396,7 +397,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				ball_3d *current_ball = app_state->cloth.balls+i;
 
 				
-				/*
 				check_and_resolve_3d(current_ball, w, 0, 0, app_state->deltatime);
 				check_and_resolve_3d(current_ball, w2, 0, 0, app_state->deltatime);
 
@@ -411,7 +411,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 				check_and_resolve_3d(current_ball, w_5, 0, 0, app_state->deltatime);
 				check_and_resolve_3d(current_ball, w2_5, 0, 0, app_state->deltatime);
-				*/
 				
 
 			}
@@ -427,7 +426,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 
 	
-	/*
 	draw_wall_3d(app_state->renderer, w, app_state->cam);
 	draw_wall_3d(app_state->renderer, w2, app_state->cam);
 
@@ -442,7 +440,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	draw_wall_3d(app_state->renderer, w_5, app_state->cam);
 	draw_wall_3d(app_state->renderer, w2_5, app_state->cam);
-	*/
 
 	draw_wall(app_state->renderer, w_2d, app_state->cam);
 	draw_wall(app_state->renderer, w2_2d, app_state->cam);
@@ -454,11 +451,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	for(int i = 0; i < app_state->ball_count; ++i) {
 		draw_circle(app_state->renderer, app_state->balls[i], 25, app_state->cam);
 	}
-	for(int i = 0; i < app_state->rope.ball_count; ++i) {
-		draw_circle(app_state->renderer, app_state->rope.balls[i], 25, app_state->cam);
-	}
-	for(int i = 0; i < app_state->rope.link_count; ++i) {
-		draw_linkage(app_state->renderer, app_state->rope.links[i], app_state->cam);
+	for(int i = 0; i < app_state->shape.ball_count; ++i) {
+		draw_circle(app_state->renderer, app_state->shape.balls[i], 25, app_state->cam);
 	}
 
 	for(int i = 0; i < app_state->ball_count; ++i) {
@@ -480,21 +474,23 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		app_state->frame = 0;
 	}
 
+	// probably better to be frame independent rather than time
+	app_state->new_ticks++;
+
 	if(kbd_state[SDL_SCANCODE_C]) {
-		if(SDL_GetTicks() > app_state->fps_ticks[1] + 250) {
-			app_state->fps_ticks[1] = SDL_GetTicks();
-			app_state->balls = realloc(app_state->balls, ++app_state->ball_count * sizeof(ball));
+		if(app_state->new_ticks > app_state->fps_ticks[1] + 6) {
+			app_state->fps_ticks[1] = app_state->new_ticks;
+			app_state->balls = realloc(app_state->balls, ++app_state->ball_count * sizeof(ball_2d));
 			app_state->balls[app_state->ball_count-1].position = (vec2){0, 0.5};
 			app_state->balls[app_state->ball_count-1].radius = 0.1;
 			app_state->balls[app_state->ball_count-1].mass = 1;
-			set_velocity_2d(app_state->balls+app_state->ball_count-1, (vec2){0, -0.001});
+			set_velocity_2d(app_state->balls+app_state->ball_count-1, (vec2){0, -3 * app_state->deltatime});
 
-			app_state->fps_ticks[1] = SDL_GetTicks();
 			app_state->balls_3d = realloc(app_state->balls_3d, app_state->ball_count * sizeof(ball_3d));
 			app_state->balls_3d[app_state->ball_count-1].position = (vec3){0, 1, -2.5 * aspect_ratio};
 			app_state->balls_3d[app_state->ball_count-1].radius = 0.15;
 			app_state->balls_3d[app_state->ball_count-1].mass = 1;
-			set_velocity_3d(app_state->balls_3d+app_state->ball_count-1, (vec3){0, -0.001, 0});
+			set_velocity_3d(app_state->balls_3d+app_state->ball_count-1, (vec3){0, -3 * app_state->deltatime, 0});
 		}
 	}
 

@@ -6,13 +6,13 @@ typedef struct {
 	vec2 previous_position;
 	float radius;
 	float mass;
-} ball;
+} ball_2d;
 
 typedef struct {
 	vec2 position;
 	vec2 normal;
 	float length;
-} wall;
+} wall_2d;
 
 typedef enum {
 	DISTANCE,
@@ -22,42 +22,42 @@ typedef enum {
 } linkage_types;
 
 typedef struct {
-	ball *a;
-	ball *b;
+	ball_2d *a;
+	ball_2d *b;
 	float length;
 	float stiffness;
 	linkage_types type;
-} linkage;
+} linkage_2d;
 
 typedef struct {
 	float depth;
 	vec2 normal;
 	int hit;
-} collision_info;
+} collision_info_2d;
 
 typedef struct {
-	ball *balls;
+	ball_2d *balls;
 	int ball_count;
-	linkage *links;
+	linkage_2d *links;
 	int link_count;
-} shape;
+} shape_2d;
 
-void set_velocity_2d(ball *body, vec2 velocity);
-collision_info check_collision_2d(ball a, wall b);
-void resolve_collision_2d(ball *body, collision_info hit_info, float elasticity, float friction, float deltatime);
-void check_and_resolve_2d(ball *body, wall collider, float elasticity, float friction, float deltatime);
-void update_ball_2d(ball *body);
+void set_velocity_2d(ball_2d *body, vec2 velocity);
+collision_info_2d check_collision_2d(ball_2d a, wall_2d b);
+void resolve_collision_2d(ball_2d *body, collision_info_2d hit_info, float elasticity, float friction, float deltatime);
+void check_and_resolve_2d(ball_2d *body, wall_2d collider, float elasticity, float friction, float deltatime);
+void update_ball_2d(ball_2d *body);
 
-void distance_constraint_2d(ball *a, ball *b, float length);
-void spring_constraint_2d(ball *a, ball *b, float length, float stiffness, float deltatime);
-void rope_constraint_2d(ball *a, ball *b, float length);
-void rope_spring_constraint_2d(ball *a, ball *b, float length, float stiffness, float deltatime);
+void distance_constraint_2d(ball_2d *a, ball_2d *b, float length);
+void spring_constraint_2d(ball_2d *a, ball_2d *b, float length, float stiffness, float deltatime);
+void rope_constraint_2d(ball_2d *a, ball_2d *b, float length);
+void rope_spring_constraint_2d(ball_2d *a, ball_2d *b, float length, float stiffness, float deltatime);
 
-void update_linkage_2d(linkage link, float deltatime);
+void update_linkage_2d(linkage_2d link, float deltatime);
 
-collision_info check_ball_collision_2d(ball a, ball b);
-void resolve_ball_collision_2d(ball *a, ball *b, collision_info hit_info);
-void check_and_resolve_balls_2d(ball *a, ball *b);
+collision_info_2d check_ball_collision_2d(ball_2d a, ball_2d b);
+void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_info);
+void check_and_resolve_balls_2d(ball_2d *a, ball_2d *b);
 
 
 typedef struct {

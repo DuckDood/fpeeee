@@ -16,13 +16,17 @@ srcflag -march=native
 # Put src here
 src types.c
 src physics.c
-src matrix.c
 src shape_generators.c
 
 # Put build here
 
-srcdir demos
+srcdir demos/helpers
+srcflag -Idemos/helpers/
+
 src helpers.c
+src matrix.c
+
+srcdir demos
 
 src 2d_3d_scene.c
 build physics

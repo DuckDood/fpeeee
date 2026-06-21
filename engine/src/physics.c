@@ -1,17 +1,17 @@
 #include <physics.h>
 
 
-void set_velocity_2d(ball *body, vec2 velocity) {
+void set_velocity_2d(ball_2d *body, vec2 velocity) {
 	body->previous_position = v2_sub(body->position, velocity);
 }
 
 
-collision_info check_collision_2d(ball a, wall b) {
+collision_info_2d check_collision_2d(ball_2d a, wall_2d b) {
 	vec2 relative_position = v2_sub(b.position, a.position);
 	vec2 previous_relative_position = v2_sub(b.position, a.previous_position);
 	float collision_dot = v2_dot(relative_position, b.normal);
 	float previous_collision_dot = v2_dot(previous_relative_position, b.normal);
-	collision_info info;
+	collision_info_2d info;
 
 	int side = (previous_collision_dot <= 0) * 2 - 1;
 	info.normal = v2_fmult(b.normal, side);
@@ -57,7 +57,7 @@ collision_info check_collision_2d(ball a, wall b) {
 	return info;
 }
 
-void resolve_collision_2d(ball *body, collision_info hit_info, float elasticity, float friction, float deltatime) {
+void resolve_collision_2d(ball_2d *body, collision_info_2d hit_info, float elasticity, float friction, float deltatime) {
 	/* note for future if i add moving walls: if the wall is kinematic, 
 	body->position = v2_sub(body->position, v2_fmult(hit_info.normal, hit_info.depth));
 	is all you need to do (not really, it makes particles on top a bit jumpy and they clip through pretty easily)
@@ -78,17 +78,17 @@ void resolve_collision_2d(ball *body, collision_info hit_info, float elasticity,
 	}
 }
 
-void check_and_resolve_2d(ball *body, wall collider, float elasticity, float friction, float deltatime) {
+void check_and_resolve_2d(ball_2d *body, wall_2d collider, float elasticity, float friction, float deltatime) {
 	resolve_collision_2d(body, check_collision_2d(*body, collider), elasticity, friction, deltatime);
 }
 
-void update_ball_2d(ball *body) {
+void update_ball_2d(ball_2d *body) {
 	vec2 new_position = v2_sub(v2_fmult(body->position, 2), body->previous_position);
 	body->previous_position = body->position;
 	body->position = new_position;
 }
 
-void distance_constraint_2d(ball *a, ball *b, float length) {
+void distance_constraint_2d(ball_2d *a, ball_2d *b, float length) {
 	/*
 	vec2 direction_between = v2_sub(a->position, b->position);
 	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
@@ -97,17 +97,20 @@ void distance_constraint_2d(ball *a, ball *b, float length) {
 	b->position = v2_add(inbetween_point, v2_fmult(normalized_direction, -length*0.5));
 	*/
 	// from the 'Advanced Character Physics' paper by Thomas Jakobson
+	
 	float inverse_mass_a = 1/a->mass;
 	float inverse_mass_b = 1/b->mass;
 	vec2 delta = v2_sub(b->position, a->position);
 	float deltalength = v2_magnitude(delta);
 	float diff = (deltalength - length) / (deltalength*(inverse_mass_a + inverse_mass_b));
+	diff *= 1;
+
 	a->position = v2_add(a->position, v2_fmult(delta, inverse_mass_a * diff));
 	b->position = v2_sub(b->position, v2_fmult(delta, inverse_mass_b * diff));
 }
 
 
-void spring_constraint_2d(ball *a, ball *b, float length, float stiffness, float deltatime) {
+void spring_constraint_2d(ball_2d *a, ball_2d *b, float length, float stiffness, float deltatime) {
 	/*
 	vec2 relative_position = v2_sub(b->position, a->position);
 	float relative_magnitude = v2_magnitude(relative_position);
@@ -135,7 +138,7 @@ void spring_constraint_2d(ball *a, ball *b, float length, float stiffness, float
 	b->position = v2_sub(b->position, v2_fmult(delta_norm, force * inverse_mass_b * deltatime*deltatime));
 }
 
-void rope_constraint_2d(ball *a, ball *b, float length) {/*
+void rope_constraint_2d(ball_2d *a, ball_2d *b, float length) {/*
 	vec2 direction_between = v2_sub(a->position, b->position);
 	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
 	float distance = v2_magnitude(direction_between);
@@ -150,7 +153,7 @@ void rope_constraint_2d(ball *a, ball *b, float length) {/*
 	distance_constraint_2d(a, b, length);
 }
 
-void rope_spring_constraint_2d(ball *a, ball *b, float length, float stiffness, float deltatime) {
+void rope_spring_constraint_2d(ball_2d *a, ball_2d *b, float length, float stiffness, float deltatime) {
 	/*
 	vec2 relative_position = v2_sub(b->position, a->position);
 	float relative_magnitude = v2_magnitude(relative_position);
@@ -168,7 +171,7 @@ void rope_spring_constraint_2d(ball *a, ball *b, float length, float stiffness, 
 	spring_constraint_2d(a, b, length, stiffness, deltatime);
 }
 
-void update_linkage_2d(linkage link, float deltatime) {
+void update_linkage_2d(linkage_2d link, float deltatime) {
 	switch(link.type) {
 		case DISTANCE:
 			distance_constraint_2d(link.a, link.b, link.length);
@@ -188,9 +191,9 @@ void update_linkage_2d(linkage link, float deltatime) {
 }
 
 // it will give information for ball a, but it should work with ball b when inverting the normal
-collision_info check_ball_collision_2d(ball a, ball b) {
+collision_info_2d check_ball_collision_2d(ball_2d a, ball_2d b) {
 	float distance = v2_magnitude(v2_sub(a.position, b.position));
-	collision_info hit_info;
+	collision_info_2d hit_info;
 	if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
 		hit_info.hit = distance <= a.radius + b.radius;
 		hit_info.normal = v2_normalize(v2_sub(a.position, b.position));
@@ -202,12 +205,12 @@ collision_info check_ball_collision_2d(ball a, ball b) {
 	return hit_info;
 }
 
-void check_and_resolve_balls_2d(ball *a, ball *b) {
-	collision_info hit_info = check_ball_collision_2d(*a, *b);
+void check_and_resolve_balls_2d(ball_2d *a, ball_2d *b) {
+	collision_info_2d hit_info = check_ball_collision_2d(*a, *b);
 	resolve_ball_collision_2d(a, b, hit_info);
 }
 
-void resolve_ball_collision_2d(ball *a, ball *b, collision_info hit_info) {
+void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_info) {
 	/*
 	if(hit_info.hit) {
 		vec2 a_velocity = v2_sub(a->position, a->previous_position);
