@@ -1,0 +1,52 @@
+name: "Deploy to GitHub Pages"
+on: [push]
+
+jobs:
+  build:
+  
+    # add caching
+    runs-on: ubuntu-latest
+    steps:
+      - uses: emscripten-core/setup-emsdk@v15
+
+      - name: Verify
+        run: emcc -v
+        
+      - uses: actions/checkout@v7
+      - run: |
+          ls
+          embuilder build sdl3
+          emmake make -f Makefile_emscripten
+          ls
+          ls build
+          
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-files
+          path: build
+  commit:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: DuckDood/duckdood.github.io
+      
+      - uses: actions/download-artifact@v5
+        with:
+          name: build-files
+          path: build/
+      - run: |
+          ls
+          mkdir -p physics_demo
+          mv build/* physics_demo
+          
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add physics_demo/
+          git commit -m "push physics demo"
+          git push
