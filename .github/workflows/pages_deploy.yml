@@ -34,6 +34,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: DuckDood/duckdood.github.io
+          token: ${{ secrets.PAGES_ACCESS_TOKEN }}
       
       - uses: actions/download-artifact@v5
         with:
