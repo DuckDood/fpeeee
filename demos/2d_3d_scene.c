@@ -333,13 +333,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				check_and_resolve_2d(current_ball, w4_2d, 0, 500, app_state->deltatime);
 
 				for(int j = 0; j < app_state->ball_count; ++j) {
-					if(i == j) continue;
 					check_and_resolve_balls_2d(current_ball, app_state->balls + j);
 				}
 			}
-
-
-
 
 		}
 
