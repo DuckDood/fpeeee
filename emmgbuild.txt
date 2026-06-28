@@ -28,8 +28,15 @@ src matrix.c
 
 srcdir demos
 
+src fluid.c
+build fluid
+
+rmbuild obj/fluid.c.o
+
 src 2d_3d_scene.c
-build physics
+build 2d_3d_scene
+
+rmbuild obj/2d_3d_scene.c.o
 
 embedmake
 clean:

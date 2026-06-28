@@ -1,4 +1,4 @@
-all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o build/physics 
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/fluid obj/2d_3d_scene.c.o build/2d_3d_scene 
 OSMODE := l
 
 obj/: 
@@ -55,6 +55,22 @@ else
 endif
 
 
+obj/fluid.c.o: demos/fluid.c 
+ifeq (${OSMODE}, l)
+	${CC} demos/fluid.c -c -o obj/fluid.c.o -Iengine/include/ -O2 -march=native -Idemos/helpers/
+else
+	${CC} demos/fluid.c -c -o obj/fluid.c.o -Iengine/include/ -O2 -march=native -Idemos/helpers/
+endif
+
+
+build/fluid: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o 
+ifeq (${OSMODE}, l)
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3
+else
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3
+endif
+
+
 obj/2d_3d_scene.c.o: demos/2d_3d_scene.c 
 ifeq (${OSMODE}, l)
 	${CC} demos/2d_3d_scene.c -c -o obj/2d_3d_scene.c.o -Iengine/include/ -O2 -march=native -Idemos/helpers/
@@ -63,11 +79,11 @@ else
 endif
 
 
-build/physics: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o 
+build/2d_3d_scene: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/physics -lm -lSDL3
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene -lm -lSDL3
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/physics -lm -lSDL3
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene -lm -lSDL3
 endif
 
 
@@ -105,9 +121,14 @@ else
 	clang demos/helpers/matrix.c  -Iengine/include/ -O2 -march=native -Idemos/helpers/ -MJ emmgtemp/4.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
+	clang demos/fluid.c  -Iengine/include/ -O2 -march=native -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
 else
-	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
+	clang demos/fluid.c  -Iengine/include/ -O2 -march=native -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -Idemos/helpers/ -MJ emmgtemp/6.json -fsyntax-only
+else
+	clang demos/2d_3d_scene.c  -Iengine/include/ -O2 -march=native -Idemos/helpers/ -MJ emmgtemp/6.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[

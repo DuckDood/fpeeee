@@ -103,12 +103,23 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 	app_state->cam.width = WIDTH;
 	app_state->cam.height = HEIGHT;
 
-	app_state->ball_count = 0;
+	app_state->ball_count = 2;
 	app_state->balls = malloc(app_state->ball_count * sizeof(ball_2d));
 	app_state->balls_3d = malloc(app_state->ball_count * sizeof(ball_3d));
 
+	app_state->balls[0].position = (vec2){-0, 0.5};
+	app_state->balls[0].mass = 1;
+	app_state->balls[0].radius = 0.1;
+	set_velocity_2d(app_state->balls + 0, (vec2){0, -0.002});
+
+	app_state->balls[1].position = (vec2){0, -0.5};
+	app_state->balls[1].mass = 1;
+	app_state->balls[1].radius = 0.1;
+	set_velocity_2d(app_state->balls + 1, (vec2){0, 0});
+
 	float aspect_ratio = (float)WIDTH/HEIGHT;
 	app_state->shape = generate_wheel(0.25, 10, (vec2){0,0});
+	app_state->shape.ball_count = 0;
 	app_state->cloth = generate_cloth_3d(1 * aspect_ratio, 1 * aspect_ratio, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 500, (vec3){0, 0, -2});
 
 	return SDL_APP_CONTINUE;
@@ -303,10 +314,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			for(int i = 0; i < app_state->ball_count; ++i) {
 				ball_2d *current_ball = app_state->balls+i;
 
-				check_and_resolve_2d(current_ball, w_2d, 0, 0, app_state->deltatime);
-				check_and_resolve_2d(current_ball, w2_2d, 0, 0, app_state->deltatime);
-				check_and_resolve_2d(current_ball, w3_2d, 0, 0, app_state->deltatime);
-				check_and_resolve_2d(current_ball, w4_2d, 0, 0, app_state->deltatime);
+				check_and_resolve_2d(current_ball, w_2d, 1, 0, app_state->deltatime);
+				check_and_resolve_2d(current_ball, w2_2d, 1, 0, app_state->deltatime);
+				check_and_resolve_2d(current_ball, w3_2d, 1, 0, app_state->deltatime);
+				check_and_resolve_2d(current_ball, w4_2d, 1, 0, app_state->deltatime);
 
 				for(int j = 0; j < app_state->ball_count; ++j) {
 					if(i == j) continue;
@@ -465,7 +476,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	app_state->frame++;
 	if(SDL_GetTicks() > app_state->fps_ticks[0] + 1000) {
-		printf("fps: %i\n", app_state->frame);
+		//printf("fps: %i\n", app_state->frame);
 		app_state->fps_ticks[0] = SDL_GetTicks();
 		app_state->frame = 0;
 	}
@@ -518,6 +529,19 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		time_taken -= 1;
 	if(time_taken > 1000 / framerate) time_taken = 1000 / framerate;
 	SDL_Delay(1000 / framerate - time_taken);
+
+	float total_kinetic_energy = 0;
+	for(int i = 0; i < app_state->ball_count; ++i) {
+		float velocity = v2_magnitude(v2_sub(app_state->balls[i].position, app_state->balls[i].previous_position));
+		float velocity_squared = velocity * velocity;
+		float kinetic_energy = velocity_squared * app_state->balls[i].mass * 0.5;
+
+		total_kinetic_energy += kinetic_energy;
+
+	}
+	printf("2d kinetic_energy: %.15f\r", total_kinetic_energy);
+	fflush(stdout);
+
 	return SDL_APP_CONTINUE;
 }
 

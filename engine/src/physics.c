@@ -221,16 +221,51 @@ void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_inf
 	}*/
 	// not 100 percent sure if this is the best way
 	if(hit_info.hit) {
+		// failed elasticity stuff, cant figure out mass
+		// ill add if/when i figure it out
+		/*
 		vec2 a_velocity = v2_sub(a->position, a->previous_position);
 		vec2 b_velocity = v2_sub(b->position, b->previous_position);
-
+		*/
 		float inverse_mass_a = 1/a->mass;
 		float inverse_mass_b = 1/b->mass;
 
-		float inverse_inverse_mass_total = 1/(inverse_mass_b + inverse_mass_b);
+		float inverse_inverse_mass_total = 1/(inverse_mass_a + inverse_mass_b);
+		
+		a->position = v2_sub(a->position, v2_fmult(hit_info.normal, hit_info.depth * inverse_mass_a * inverse_inverse_mass_total * 1));
+		b->position = v2_sub(b->position, v2_fmult(hit_info.normal, hit_info.depth * -inverse_mass_b * inverse_inverse_mass_total * 1));
+		// elastic collisions helped by my sister
+		// more not working with mass elastic stuff
+		/*
 
-		a->position = v2_sub(a->position, v2_fmult(hit_info.normal, hit_info.depth * inverse_mass_a * inverse_inverse_mass_total));
-		b->position = v2_sub(b->position, v2_fmult(hit_info.normal, hit_info.depth * -inverse_mass_b * inverse_inverse_mass_total));
+		float a_bounce_dot = -v2_dot(hit_info.normal, a_velocity);
+		vec2 a_normal_bounce_velocity = v2_fmult(hit_info.normal, a_bounce_dot * a->mass);
+		vec2 a_slide_velocity = v2_add(a_velocity, a_normal_bounce_velocity);
+
+		float b_bounce_dot = -v2_dot(hit_info.normal, b_velocity);
+		vec2 b_normal_bounce_velocity = v2_fmult(hit_info.normal, b_bounce_dot * b->mass); // minus because hit_info.normal should be reversed
+		vec2 b_slide_velocity = v2_add(b_velocity, b_normal_bounce_velocity);
+		
+		float elasticity = 1;
+
+		elasticity = elasticity * 0.5 + 0.5; // to make it 0.5 - 1 for 0.5 being the average between the two (no elasticity but not stopping instantly)
+
+		vec2 a_bounce_velocity = v2_add(v2_fmult(b_normal_bounce_velocity, -(elasticity)), v2_fmult(a_normal_bounce_velocity, -(1-elasticity)));
+		vec2 b_bounce_velocity = v2_add(v2_fmult(a_normal_bounce_velocity, -(elasticity)), v2_fmult(b_normal_bounce_velocity, -(1-elasticity)));
+
+		//a_bounce_velocity = v2_fmult(a_bounce_velocity, inverse_mass_a);
+		//b_bounce_velocity = v2_fmult(b_bounce_velocity, inverse_mass_b);
+
+		vec2 a_out_velocity = v2_add(a_bounce_velocity, a_slide_velocity);
+		vec2 b_out_velocity = v2_add(b_bounce_velocity, b_slide_velocity);
+
+		// move it a little bit so it wont get stuck
+		//a->position = v2_sub(a->position, v2_fmult(a_out_velocity, 0.01));
+		//b->position = v2_sub(b->position, v2_fmult(a_out_velocity, 0.01));
+
+		set_velocity_2d(a, a_out_velocity);
+		set_velocity_2d(b, b_out_velocity);*/
+		
 	}
 }
 

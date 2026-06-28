@@ -61,6 +61,54 @@ void draw_circle(SDL_Renderer *renderer, ball_2d b, int resolution, camera cam) 
 				segment_2_relative.y
 				);
 	}
+	// shows velocity
+	/*
+	vec2 segment_1;
+	segment_1 = b.position;
+
+	vec2 segment_2;
+	segment_2 = v2_add(b.position, v2_fmult(v2_sub(b.position, b.previous_position), 100));
+
+	vec3 segment_1_relative = v3_sub((vec3){segment_1.x, segment_1.y, 0}, camera_position);
+	segment_1_relative.y *= -1;
+	mat3 camera_rotation_matrix = transpose(generate_rotation_matrix(camera_rotation.x, camera_rotation.y, camera_rotation.z));
+	segment_1_relative = m3_v3_mult(camera_rotation_matrix, segment_1_relative);
+
+	vec3 segment_2_relative = v3_sub((vec3){segment_2.x, segment_2.y, 0}, camera_position);
+	segment_2_relative.y *= -1;
+	segment_2_relative = m3_v3_mult(camera_rotation_matrix, segment_2_relative);
+
+	if (segment_1_relative.z < 0) return;
+	segment_1_relative.x /= segment_1_relative.z;
+	segment_1_relative.y /= segment_1_relative.z;
+
+	segment_1_relative.x *= inverse_aspect_ratio;
+
+	segment_1_relative.x /= 2;
+	segment_1_relative.y /= 2;
+	segment_1_relative.x += 0.5;
+	segment_1_relative.y += 0.5;
+	segment_1_relative.x *= WIDTH;
+	segment_1_relative.y *= HEIGHT;
+
+	if (segment_2_relative.z < 0) return;
+	segment_2_relative.x /= segment_2_relative.z;
+	segment_2_relative.y /= segment_2_relative.z;
+	
+	segment_2_relative.x *= inverse_aspect_ratio;
+
+	segment_2_relative.x /= 2;
+	segment_2_relative.y /= 2;
+	segment_2_relative.x += 0.5;
+	segment_2_relative.y += 0.5;
+	segment_2_relative.x *= WIDTH;
+	segment_2_relative.y *= HEIGHT;
+	SDL_RenderLine(renderer,
+			segment_1_relative.x,
+			segment_1_relative.y,
+
+			segment_2_relative.x,
+			segment_2_relative.y);*/
 }
 
 void draw_circle_3d(SDL_Renderer *renderer, ball_3d b, int resolution, camera cam) {
