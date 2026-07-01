@@ -28,6 +28,10 @@ typedef struct {
 	ball_2d *balls;
 	int ball_count;
 
+	spatial_grid_2d grid;
+
+	Uint64 tick_count;
+	int frame_count;
 } prog_state;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
@@ -53,11 +57,14 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 	state->deltatime = 0;
 
-	state->ball_count = 250;
+	state->ball_count = 1000;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
+	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
+
+	state->grid = construct_grid_2d(5, 5, 1000, 0.5);
 
 	int horizontal_max_spawn = 15;
-	float ball_radius = 0.01;
+	float ball_radius = 0.005;
 	float spawn_height = -0.5;
 
 	for(int i = 0; i < state->ball_count; ++i) {
@@ -66,6 +73,11 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 		state->balls[i].mass = 1;
 		state->balls[i].radius = ball_radius;
 	}
+
+	state->balls[0].position.x += 0.001;
+
+	state->tick_count = SDL_GetTicks();
+	state->frame_count = 0;
 
 	return SDL_APP_CONTINUE;
 }
@@ -100,7 +112,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	Uint64 start_time = SDL_GetTicks();
 
 	int framerate = 60;
-	int steps_per_frame = 10;
+	int steps_per_frame = 5;
 	state->deltatime = 1.0/framerate/steps_per_frame;
 
 	SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
@@ -148,6 +160,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	vec2 mouse_position = (vec2){mouse_x, mouse_y};
 
+	update_grid_2d(&state->grid, state->balls, state->ball_count);
+
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_2d *current_ball = state->balls + i;
@@ -172,12 +186,15 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
 		}
 
+		
+		/*
 		for(int i = 0; i < state->ball_count; ++i) {
 			for(int j = 0; j < state->ball_count; ++j) {
 				if(i == j) continue;
 				check_and_resolve_balls_2d(state->balls + i, state->balls+j);
 			}
-		}
+		}*/
+		spatial_collision_2d(&state->grid, state->balls, state->ball_count);
 	}
 
 	for(int i = 0; i < state->ball_count; ++i) {
@@ -199,6 +216,14 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	Uint64 time_taken = SDL_GetTicks() - start_time;
 	if(time_taken > 1000 / framerate) time_taken = 1000 / framerate;
 	SDL_Delay(1000 / framerate - time_taken);
+
+	state->frame_count++;
+
+	if(SDL_GetTicks() > state->tick_count + 1000) {
+		state->tick_count = SDL_GetTicks();
+		printf("framerate: %i\n", state->frame_count);
+		state->frame_count = 0;
+	}
 
 	return SDL_APP_CONTINUE;
 }

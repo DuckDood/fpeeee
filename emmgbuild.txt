@@ -10,7 +10,7 @@ srcdir engine/src
 buildflag -lm
 buildflag -lSDL3
 
-srcflag -O2
+srcflag -O3
 srcflag -march=native
 
 # Put src here

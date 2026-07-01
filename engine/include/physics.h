@@ -42,6 +42,25 @@ typedef struct {
 	int link_count;
 } shape_2d;
 
+
+// do not do this
+// really
+// REALLY
+// memory
+// inefficient
+typedef struct {
+	ball_2d **ball_list;
+	int ball_list_count;
+} spatial_partition_2d;
+
+typedef struct {
+		float element_size; // should be about the diameter of the biggest ball that will be in this grid
+		int grid_width;
+		int grid_height;
+
+		spatial_partition_2d *partitions;
+} spatial_grid_2d;
+
 void set_velocity_2d(ball_2d *body, vec2 velocity);
 collision_info_2d check_collision_2d(ball_2d a, wall_2d b);
 void resolve_collision_2d(ball_2d *body, collision_info_2d hit_info, float elasticity, float friction, float deltatime);
@@ -59,6 +78,11 @@ collision_info_2d check_ball_collision_2d(ball_2d a, ball_2d b);
 void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_info);
 void check_and_resolve_balls_2d(ball_2d *a, ball_2d *b);
 
+spatial_grid_2d construct_grid_2d(int grid_width, int grid_height, int partition_max_particles, float element_size);
+
+void update_grid_2d(spatial_grid_2d *grid, ball_2d *balls, int ball_count);
+
+void spatial_collision_2d(spatial_grid_2d *grid, ball_2d *balls, int ball_count);
 
 typedef struct {
 	vec3 position;
