@@ -14,6 +14,9 @@
 
 #include <helpers.h>
 
+#include <spatial.h>
+
+
 #define WIDTH 1280
 #define HEIGHT 720
 
@@ -57,11 +60,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 	state->deltatime = 0;
 
-	state->ball_count = 1000;
+	state->ball_count = 2000;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
-
-	state->grid = construct_grid_2d(5, 5, 1000, 0.5);
+	state->grid = construct_grid_2d(20, 20, 15, 0.1);
 
 	int horizontal_max_spawn = 15;
 	float ball_radius = 0.005;
@@ -114,6 +116,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	int framerate = 60;
 	int steps_per_frame = 5;
 	state->deltatime = 1.0/framerate/steps_per_frame;
+	//state->deltatime = 0;
 
 	SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
 	SDL_RenderClear(state->renderer);
@@ -156,7 +159,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	mouse_y *= 2;
 
 	float mouse_radius = 0.5;
-	float mouse_power = 5;
+	float mouse_power = 10;
 
 	vec2 mouse_position = (vec2){mouse_x, mouse_y};
 
@@ -186,6 +189,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
 		}
 
+		
+		
+		
+		update_grid_2d(&state->grid, state->balls, state->ball_count);
 		
 		/*
 		for(int i = 0; i < state->ball_count; ++i) {

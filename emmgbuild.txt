@@ -17,6 +17,7 @@ srcflag -march=native
 src types.c
 src physics.c
 src shape_generators.c
+src spatial.c
 
 # Put build here
 
