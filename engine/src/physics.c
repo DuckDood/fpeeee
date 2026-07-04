@@ -516,7 +516,7 @@ void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_inf
 		float inverse_mass_a = 1/a->mass;
 		float inverse_mass_b = 1/b->mass;
 
-		float inverse_inverse_mass_total = 1/(inverse_mass_b + inverse_mass_b);
+		float inverse_inverse_mass_total = 1/(inverse_mass_a + inverse_mass_b);
 
 		a->position = v3_sub(a->position, v3_fmult(hit_info.normal, hit_info.depth * inverse_mass_a * inverse_inverse_mass_total));
 		b->position = v3_sub(b->position, v3_fmult(hit_info.normal, hit_info.depth * -inverse_mass_b * inverse_inverse_mass_total));
