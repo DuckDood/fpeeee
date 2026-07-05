@@ -60,13 +60,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 	state->deltatime = 0;
 
-	state->ball_count = 2000;
+	state->ball_count = 1500;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
-	state->grid = construct_grid_2d(20, 20, 15, 0.1);
+	state->grid = construct_grid_2d(500,300, 15, 0.02);
 
-	int horizontal_max_spawn = 15;
-	float ball_radius = 0.005;
+	int horizontal_max_spawn = 25;
+	float ball_radius = 0.01;
 	float spawn_height = -0.5;
 
 	for(int i = 0; i < state->ball_count; ++i) {
@@ -114,7 +114,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	Uint64 start_time = SDL_GetTicks();
 
 	int framerate = 60;
-	int steps_per_frame = 5;
+	int steps_per_frame = 15;
 	state->deltatime = 1.0/framerate/steps_per_frame;
 	//state->deltatime = 0;
 
@@ -161,9 +161,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	float mouse_radius = 0.5;
 	float mouse_power = 10;
 
-	vec2 mouse_position = (vec2){mouse_x, mouse_y};
+	vec2 mouse_position = (vec2){mouse_x * aspect_ratio, mouse_y};
 
-	update_grid_2d(&state->grid, state->balls, state->ball_count);
+	//update_grid_2d(&state->grid, state->balls, state->ball_count);
 
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
 		for(int i = 0; i < state->ball_count; ++i) {
@@ -194,9 +194,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		
 		update_grid_2d(&state->grid, state->balls, state->ball_count);
 		
-		/*
-		for(int i = 0; i < state->ball_count; ++i) {
-			for(int j = 0; j < state->ball_count; ++j) {
+		
+		/*for(int i = 0; i < state->ball_count; ++i) {
+			for(int j = i; j < state->ball_count; ++j) {
 				if(i == j) continue;
 				check_and_resolve_balls_2d(state->balls + i, state->balls+j);
 			}
@@ -217,8 +217,30 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	mouse_ball.radius = mouse_radius;
 	draw_circle(state->renderer, mouse_ball, 25, state->cam);
 
+	
+	aspect_ratio = 1/aspect_ratio;
+	
+	/*
+	for(int i = 0; i < state->grid.height; ++i) {
+		for(int j = 0; j < state->grid.width; ++j) {
+			SDL_RenderLine(state->renderer,
+					 (-state->grid.element_size*0.5 + state->grid.element_size * (j - state->grid.width * 0.5) * aspect_ratio * 0.5 + 0.5) * state->cam.width ,
+					 (state->grid.element_size * (i - state->grid.height * 0.5) * 0.5 + 0.5) * state->cam.height,
+					 (state->grid.element_size*0.5 + state->grid.element_size * (j - state->grid.width * 0.5) * aspect_ratio * 0.5 + 0.5) * state->cam.width,
+					 (state->grid.element_size * (i - state->grid.height * 0.5) * 0.5 + 0.5) * state->cam.height 
+					 );
+			SDL_RenderLine(state->renderer,
+					 (state->grid.element_size * (j - state->grid.width * 0.5) * aspect_ratio * 0.5 + 0.5) * state->cam.width,
+					 (-state->grid.element_size*0.5 + state->grid.element_size * (i - state->grid.height * 0.5) * 0.5 + 0.5) * state->cam.height,
+					 (state->grid.element_size * (j - state->grid.width * 0.5) * aspect_ratio * 0.5 + 0.5) * state->cam.width,
+					 (state->grid.element_size*0.5 + state->grid.element_size * (i - state->grid.height * 0.5) * 0.5 + 0.5) * state->cam.height 
+					 );
+		}
+	}
+	*/
 
 	SDL_RenderPresent(state->renderer);
+
 
 	Uint64 time_taken = SDL_GetTicks() - start_time;
 	if(time_taken > 1000 / framerate) time_taken = 1000 / framerate;

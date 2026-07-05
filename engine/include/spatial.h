@@ -3,9 +3,8 @@
 
 
 typedef struct {
-	ball_2d **ball_list;
 	int ball_count;
-	int ball_capacity;
+	int ball_offset;
 } spatial_partition_2d;
 
 typedef struct {
