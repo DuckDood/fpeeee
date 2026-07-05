@@ -60,13 +60,15 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 	state->deltatime = 0;
 
-	state->ball_count = 1500;
+	//state->ball_count = 1500;
+	state->ball_count = 3000;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
-	state->grid = construct_grid_2d(500,300, 15, 0.02);
+	printf("ball size: %zu\n", sizeof(ball_2d));
+	state->grid = construct_grid_2d(500,300, 0.01);
 
-	int horizontal_max_spawn = 25;
-	float ball_radius = 0.01;
+	int horizontal_max_spawn = 75;
+	float ball_radius = 0.005;
 	float spawn_height = -0.5;
 
 	for(int i = 0; i < state->ball_count; ++i) {
@@ -84,7 +86,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 	return SDL_APP_CONTINUE;
 }
 
-void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+void SDL_AppQuit(void *appstate, [[maybe_unused]] SDL_AppResult result) {
 	prog_state *app_state = appstate;
 	SDL_DestroyRenderer(app_state->renderer);
 	SDL_DestroyWindow(app_state->window);
@@ -163,6 +165,24 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	vec2 mouse_position = (vec2){mouse_x * aspect_ratio, mouse_y};
 
+	linkage_2d link = (linkage_2d){
+		.a = state->balls+0,
+		.b = state->balls+1,
+		.length = 0.25,
+		.type = DISTANCE
+	};
+	linkage_2d link2 = (linkage_2d){
+		.a = state->balls+0,
+		.b = state->balls+2,
+		.length = 0.25,
+		.type = DISTANCE
+	};
+	linkage_2d link3 = (linkage_2d){
+		.a = state->balls+1,
+		.b = state->balls+2,
+		.length = 0.25,
+		.type = DISTANCE
+	};
 	//update_grid_2d(&state->grid, state->balls, state->ball_count);
 
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
@@ -180,6 +200,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				}
 			}
 		}
+
+		update_linkage_2d(link, state->deltatime);
+		update_linkage_2d(link2, state->deltatime);
+		update_linkage_2d(link3, state->deltatime);
 
 
 		for(int i = 0; i < state->ball_count; ++i) {
@@ -204,9 +228,14 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		spatial_collision_2d(&state->grid, state->balls, state->ball_count);
 	}
 
-	for(int i = 0; i < state->ball_count; ++i) {
-		draw_circle(state->renderer, state->balls[i], 25, state->cam);
-	}
+	
+	/*
+	for(int i = 0; i < state->ball_count; i+=10) {
+		draw_circle(state->renderer, state->balls[i], 5, state->cam);
+	}*/
+	draw_linkage(state->renderer, link, state->cam);
+	draw_linkage(state->renderer, link2, state->cam);
+	draw_linkage(state->renderer, link3, state->cam);
 	draw_wall(state->renderer, floor, state->cam);
 	draw_wall(state->renderer, ceiling, state->cam);
 	draw_wall(state->renderer, left, state->cam);
@@ -220,24 +249,25 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	
 	aspect_ratio = 1/aspect_ratio;
 	
-	/*
-	for(int i = 0; i < state->grid.height; ++i) {
+	
+	for(int i = 0; i <= state->grid.height; ++i) {
 		for(int j = 0; j < state->grid.width; ++j) {
+			if(state->grid.partitions[i * state->grid.width + j].ball_count == 0) continue;
 			SDL_RenderLine(state->renderer,
 					 (-state->grid.element_size*0.5 + state->grid.element_size * (j - state->grid.width * 0.5) * aspect_ratio * 0.5 + 0.5) * state->cam.width ,
-					 (state->grid.element_size * (i - state->grid.height * 0.5) * 0.5 + 0.5) * state->cam.height,
+					 (state->grid.element_size * (i - state->grid.height * 0.5) * -0.5 + 0.5) * state->cam.height,
 					 (state->grid.element_size*0.5 + state->grid.element_size * (j - state->grid.width * 0.5) * aspect_ratio * 0.5 + 0.5) * state->cam.width,
-					 (state->grid.element_size * (i - state->grid.height * 0.5) * 0.5 + 0.5) * state->cam.height 
+					 (state->grid.element_size * (i - state->grid.height * 0.5) * -0.5 + 0.5) * state->cam.height 
 					 );
 			SDL_RenderLine(state->renderer,
 					 (state->grid.element_size * (j - state->grid.width * 0.5) * aspect_ratio * 0.5 + 0.5) * state->cam.width,
-					 (-state->grid.element_size*0.5 + state->grid.element_size * (i - state->grid.height * 0.5) * 0.5 + 0.5) * state->cam.height,
+					 (-state->grid.element_size*0.5 + state->grid.element_size * (i - state->grid.height * 0.5) * -0.5 + 0.5) * state->cam.height,
 					 (state->grid.element_size * (j - state->grid.width * 0.5) * aspect_ratio * 0.5 + 0.5) * state->cam.width,
-					 (state->grid.element_size*0.5 + state->grid.element_size * (i - state->grid.height * 0.5) * 0.5 + 0.5) * state->cam.height 
+					 (state->grid.element_size*0.5 + state->grid.element_size * (i - state->grid.height * 0.5) * -0.5 + 0.5) * state->cam.height 
 					 );
 		}
 	}
-	*/
+	
 
 	SDL_RenderPresent(state->renderer);
 

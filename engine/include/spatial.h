@@ -13,9 +13,11 @@ typedef struct {
 		int height;
 
 		spatial_partition_2d *partitions;
+		int *ball_map;
+		int ball_count;
 } spatial_grid_2d;
 
-spatial_grid_2d construct_grid_2d(int grid_width, int grid_height, int partition_max_particles, float element_size);
+spatial_grid_2d construct_grid_2d(int grid_width, int grid_height, float element_size);
 void destroy_grid_2d(spatial_grid_2d *grid);
 void update_grid_2d(spatial_grid_2d *grid, ball_2d *balls, int ball_count);
 void spatial_collision_2d(spatial_grid_2d *grid, ball_2d *balls, int ball_count);
