@@ -37,7 +37,7 @@ typedef struct {
 	int frame_count;
 } prog_state;
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
+SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 	*appstate = malloc(sizeof(prog_state));
 	prog_state *state = *appstate;
 
@@ -87,9 +87,12 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 }
 
 void SDL_AppQuit(void *appstate, [[maybe_unused]] SDL_AppResult result) {
-	prog_state *app_state = appstate;
-	SDL_DestroyRenderer(app_state->renderer);
-	SDL_DestroyWindow(app_state->window);
+	prog_state *state = appstate;
+	destroy_grid_2d(&state->grid);
+	free(state->balls);
+
+	SDL_DestroyRenderer(state->renderer);
+	SDL_DestroyWindow(state->window);
 	free(appstate);
 	SDL_Quit();
 }
@@ -250,7 +253,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	aspect_ratio = 1/aspect_ratio;
 	
 	
-	for(int i = 0; i <= state->grid.height; ++i) {
+	for(int i = 0; i < state->grid.height; ++i) {
 		for(int j = 0; j < state->grid.width; ++j) {
 			if(state->grid.partitions[i * state->grid.width + j].ball_count == 0) continue;
 			SDL_RenderLine(state->renderer,
@@ -273,7 +276,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 
 	Uint64 time_taken = SDL_GetTicks() - start_time;
-	if(time_taken > 1000 / framerate) time_taken = 1000 / framerate;
+	if(time_taken > (Uint64)1000 / framerate) time_taken = 1000 / framerate;
 	SDL_Delay(1000 / framerate - time_taken);
 
 	state->frame_count++;

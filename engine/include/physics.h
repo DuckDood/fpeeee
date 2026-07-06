@@ -55,9 +55,9 @@ void rope_spring_constraint_2d(ball_2d *a, ball_2d *b, float length, float stiff
 
 void update_linkage_2d(linkage_2d link, float deltatime);
 
-collision_info_2d check_ball_collision_2d(ball_2d a, ball_2d b);
-void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_info);
-void check_and_resolve_balls_2d(ball_2d *a, ball_2d *b);
+collision_info_2d check_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b);
+void resolve_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b, collision_info_2d hit_info);
+void check_and_resolve_balls_2d(ball_2d * restrict a, ball_2d * restrict b);
 
 typedef struct {
 	vec3 position;

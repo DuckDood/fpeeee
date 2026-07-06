@@ -68,7 +68,6 @@ void resolve_collision_2d(ball_2d *body, collision_info_2d hit_info, float elast
 		vec2 velocity = v2_sub(body->position, body->previous_position);
 		if(v2_dot(velocity, hit_info.normal) > 0) return; // moving in the same direction as wall i dont know why its > 0 instead of < 0 but whatever
 		friction *= deltatime; // works for some reason, seemingly it should be squared or not at all but idk
-		float speed = v2_magnitude(velocity);
 		body->position = v2_sub(body->position, v2_fmult(hit_info.normal, hit_info.depth));
 
 		float bounce_dot = -v2_dot(hit_info.normal, velocity);
@@ -193,26 +192,26 @@ void update_linkage_2d(linkage_2d link, float deltatime) {
 }
 
 // it will give information for ball a, but it should work with ball b when inverting the normal
-collision_info_2d check_ball_collision_2d(ball_2d a, ball_2d b) {
-	float distance = v2_magnitude(v2_sub(a.position, b.position));
+collision_info_2d check_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b) {
+	float distance = v2_magnitude(v2_sub(a->position, b->position));
 	collision_info_2d hit_info;
-	if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
-		hit_info.hit = distance <= a.radius + b.radius;
-		hit_info.normal = v2_normalize(v2_sub(a.position, b.position));
-		hit_info.depth = distance - a.radius - b.radius;
-	} else {
-		hit_info.hit = 0;
-	}
+	//if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
+		hit_info.hit = distance <= a->radius + b->radius;
+		hit_info.normal = v2_normalize(v2_sub(a->position, b->position));
+		hit_info.depth = distance - a->radius - b->radius;
+	//} else {
+		//hit_info.hit = 0;
+	//}
 
 	return hit_info;
 }
 
-void check_and_resolve_balls_2d(ball_2d *a, ball_2d *b) {
-	collision_info_2d hit_info = check_ball_collision_2d(*a, *b);
+void check_and_resolve_balls_2d(ball_2d * restrict a, ball_2d * restrict b) { // if they pass the same ball its not gonna work anyway so restrict will always be satisfied, or something else will go wrong as well
+	collision_info_2d hit_info = check_ball_collision_2d(a, b);
 	resolve_ball_collision_2d(a, b, hit_info);
 }
 
-void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_info) {
+void resolve_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b, collision_info_2d hit_info) {
 	/*
 	if(hit_info.hit) {
 		vec2 a_velocity = v2_sub(a->position, a->previous_position);
@@ -222,13 +221,14 @@ void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_inf
 		b->position = v2_sub(b->position, v2_fmult(hit_info.normal, hit_info.depth * -0.5));
 	}*/
 	// not 100 percent sure if this is the best way
-	if(hit_info.hit) {
+	if(!hit_info.hit) return;
 		// failed elasticity stuff, cant figure out mass
 		// ill add if/when i figure it out
 		/*
 		vec2 a_velocity = v2_sub(a->position, a->previous_position);
 		vec2 b_velocity = v2_sub(b->position, b->previous_position);
 		*/
+
 		float inverse_mass_a = 1/a->mass;
 		float inverse_mass_b = 1/b->mass;
 
@@ -236,6 +236,7 @@ void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_inf
 		
 		a->position = v2_sub(a->position, v2_fmult(hit_info.normal, hit_info.depth * inverse_mass_a * inverse_inverse_mass_total * 1));
 		b->position = v2_sub(b->position, v2_fmult(hit_info.normal, hit_info.depth * -inverse_mass_b * inverse_inverse_mass_total * 1));
+
 		// elastic collisions helped by my sister
 		// more not working with mass elastic stuff
 		/*
@@ -268,7 +269,7 @@ void resolve_ball_collision_2d(ball_2d *a, ball_2d *b, collision_info_2d hit_inf
 		set_velocity_2d(a, a_out_velocity);
 		set_velocity_2d(b, b_out_velocity);*/
 		
-	}
+
 }
 
 // 3d functions
@@ -294,9 +295,6 @@ collision_info_3d check_collision_3d(ball_3d a, wall_3d b) {
 	float a_position_magnitude = v3_magnitude(relative_a_position);
 	float b_position_magnitude = v3_magnitude(relative_b_position);
 	float c_position_magnitude = v3_magnitude(relative_c_position);
-	int intersecting_a = a_position_magnitude < a.radius;
-	int intersecting_b = b_position_magnitude < a.radius;
-	int intersecting_c = c_position_magnitude < a.radius;
 
 	// the edge will do the corners as well
 	/*
@@ -417,7 +415,6 @@ void resolve_collision_3d(ball_3d *body, collision_info_3d hit_info, float elast
 		vec3 velocity = v3_sub(body->position, body->previous_position);
 
 		friction *= deltatime; // works for some reason, seemingly it should be squared or not at all but idk
-		float speed = v3_magnitude(velocity);
 		body->position = v3_sub(body->position, v3_fmult(hit_info.normal, -hit_info.depth));
 
 		float bounce_dot = -v3_dot(hit_info.normal, velocity);
@@ -510,9 +507,6 @@ collision_info_3d check_ball_collision_3d(ball_3d a, ball_3d b) {
 void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info) {
 	// not 100 percent sure if this is the best way
 	if(hit_info.hit) {
-		vec3 a_velocity = v3_sub(a->position, a->previous_position);
-		vec3 b_velocity = v3_sub(b->position, b->previous_position);
-
 		float inverse_mass_a = 1/a->mass;
 		float inverse_mass_b = 1/b->mass;
 

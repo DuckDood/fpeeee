@@ -9,8 +9,12 @@ srcdir engine/src
 
 buildflag -lm
 buildflag -lSDL3
+buildflag -g
 
 srcflag -O3
+srcflag -std=c23
+srcflag -Wall -Wextra -Wpedantic -Werror
+srcflag -g
 srcflag -march=native
 
 # Put src here

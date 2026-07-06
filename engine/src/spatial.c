@@ -40,16 +40,21 @@ void destroy_grid_2d(spatial_grid_2d *grid) {
 		grid->partitions[i].ball_offset = -1;
 	}
 	free(grid->partitions);
+	free(grid->ball_map);
+	grid->ball_count = -1;
 }
 
 void update_grid_2d(spatial_grid_2d *grid, ball_2d *balls, int ball_count) {
 
 	int *ball_counts = calloc(grid->width * grid->height + 1, sizeof(int));
-	// ball map shenanigans so that every ball in the original array will stay in its same position (so constraints stay between the same balls)
+	// ball map shenanigans so that the memory positions of balls are stable
 
-	free(grid->ball_map); // should be null on first run so
-	grid->ball_map = malloc(sizeof(int) * ball_count);
-	grid->ball_count = ball_count;
+	if(grid->ball_count != ball_count) {
+		free(grid->ball_map); // should be null on first run so
+		grid->ball_map = malloc(sizeof(int) * ball_count);
+		grid->ball_count = ball_count;
+	}
+
 	for(int i = 0; i < ball_count; ++i) {
 		ball_2d *ball = balls + i;
 		int ball_column = ball->position.x / grid->element_size + grid->width * 0.5;

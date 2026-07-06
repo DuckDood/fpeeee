@@ -61,7 +61,7 @@ typedef struct {
 	shape_3d cloth;
 } prog_state;
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
+SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 	*appstate = malloc(sizeof(prog_state));
 	prog_state *app_state = *appstate;
 
@@ -184,8 +184,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	}
 
 
-	int previous_mouse_down = app_state->mouse_down;
-	vec2 previous_mouse_vector = app_state->mouse_vector;
 	int mouse_d = SDL_BUTTON_LMASK & SDL_GetRelativeMouseState(&app_state->mx, &app_state->my);
 	if(mouse_d) {
 		app_state->cam.rotation.x += app_state->mx/ 100;
@@ -282,7 +280,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 
 	//collision_info_3d hit_info;
-	collision_info_2d hit_info;
 	float aspect_ratio = (float)WIDTH/HEIGHT;
 
 	wall_2d w_2d; w_2d.length = 2; w_2d.normal = (vec2){sin(3.14159/2), -cos(3.14159/2)}; w_2d.position = (vec2){-1 * aspect_ratio, 0};
@@ -527,7 +524,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	Uint64 time_taken = SDL_GetTicks() - start_time;
 	if(time_taken > 0)
 		time_taken -= 1;
-	if(time_taken > 1000 / framerate) time_taken = 1000 / framerate;
+	if(time_taken > (Uint64)1000 / framerate) time_taken = 1000 / framerate;
 	SDL_Delay(1000 / framerate - time_taken);
 
 	fflush(stdout);
@@ -535,7 +532,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	return SDL_APP_CONTINUE;
 }
 
-void SDL_AppQuit(void *appstate, SDL_AppResult result) {
+void SDL_AppQuit(void *appstate, [[maybe_unused]] SDL_AppResult result) {
 	prog_state *app_state = appstate;
 	SDL_DestroyRenderer(app_state->renderer);
 	SDL_DestroyWindow(app_state->window);
