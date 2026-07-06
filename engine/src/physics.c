@@ -195,13 +195,13 @@ void update_linkage_2d(linkage_2d link, float deltatime) {
 collision_info_2d check_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b) {
 	float distance = v2_magnitude(v2_sub(a->position, b->position));
 	collision_info_2d hit_info;
-	//if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
+	if(a->position.x + a->radius > b->position.x - b->radius && a->position.x - a->radius < b->position.x + b->radius /* x */ && a->position.y + a->radius > b->position.y - b->radius && a->position.y - a->radius < b->position.y + b->radius) {
 		hit_info.hit = distance <= a->radius + b->radius;
 		hit_info.normal = v2_normalize(v2_sub(a->position, b->position));
 		hit_info.depth = distance - a->radius - b->radius;
-	//} else {
-		//hit_info.hit = 0;
-	//}
+	} else {
+		hit_info.hit = 0;
+	}
 
 	return hit_info;
 }
