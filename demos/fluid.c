@@ -1,5 +1,6 @@
 #include <SDL3/SDL_oldnames.h>
 #include <math.h>
+#include <sys/types.h>
 #define SDL_MAIN_USE_CALLBACKS 1
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_init.h>
@@ -33,8 +34,12 @@ typedef struct {
 
 	spatial_grid_2d grid;
 
-	Uint64 tick_count;
+	Uint64 frame_tick_count;
+	Uint64 spawn_tick_count;
 	int frame_count;
+
+	float spawn_delay;
+	vec2 spawn_position;
 } prog_state;
 
 SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
@@ -60,14 +65,14 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	//state->ball_count = 1500;
-	state->ball_count = 3000;
+	state->ball_count = 1000;
+	//state->ball_count = 130;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
 	printf("ball size: %zu\n", sizeof(ball_2d));
 	state->grid = construct_grid_2d(500,300, 0.01);
 
-	int horizontal_max_spawn = 75;
+	int horizontal_max_spawn = 100;
 	float ball_radius = 0.005;
 	float spawn_height = -0.5;
 
@@ -78,10 +83,13 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 		state->balls[i].radius = ball_radius;
 	}
 
-	state->balls[0].position.x += 0.001;
+	//state->balls[0].position.x += 0.001;
 
-	state->tick_count = SDL_GetTicks();
+	state->frame_tick_count = SDL_GetTicks();
+	state->spawn_tick_count = SDL_GetTicks();
 	state->frame_count = 0;
+	state->spawn_delay = 250;
+	state->spawn_position = (vec2){0,0};
 
 	return SDL_APP_CONTINUE;
 }
@@ -98,15 +106,19 @@ void SDL_AppQuit(void *appstate, [[maybe_unused]] SDL_AppResult result) {
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-	prog_state *app_state = appstate;
+	prog_state *state = appstate;
 	switch(event->type) {
 		case SDL_EVENT_QUIT:
 			return SDL_APP_SUCCESS;
 			break;
+
 		case SDL_EVENT_WINDOW_RESIZED:
-			app_state->cam.width = event->window.data1;
-			app_state->cam.height = event->window.data2;
+			state->cam.width = event->window.data1;
+			state->cam.height = event->window.data2;
 			break;
+
+		case SDL_EVENT_MOUSE_WHEEL:
+			state->spawn_delay += event->wheel.y*5;
 		default: 
 			break;
 	}
@@ -117,6 +129,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	prog_state *state = appstate;
 
 	Uint64 start_time = SDL_GetTicks();
+
+	const bool * const key_states = SDL_GetKeyboardState(NULL);
 
 	int framerate = 60;
 	int steps_per_frame = 15;
@@ -150,6 +164,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	right.normal = (vec2){1, 0};
 	right.position = (vec2){aspect_ratio, 0};
 
+	wall_2d another;
+	another.length = 1;
+	another.normal = (vec2){cos(1.7), sin(1.7)};
+	another.position = (vec2){0.75, 0.1};
 	float mouse_x, mouse_y;
 
 	bool mouse_down = SDL_BUTTON_LMASK & SDL_GetMouseState(&mouse_x, &mouse_y);
@@ -167,28 +185,23 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	float mouse_power = 10;
 
 	vec2 mouse_position = (vec2){mouse_x * aspect_ratio, mouse_y};
-
-	linkage_2d link = (linkage_2d){
-		.a = state->balls+0,
-		.b = state->balls+1,
-		.length = 0.25,
-		.type = DISTANCE
-	};
-	linkage_2d link2 = (linkage_2d){
-		.a = state->balls+0,
-		.b = state->balls+2,
-		.length = 0.25,
-		.type = DISTANCE
-	};
-	linkage_2d link3 = (linkage_2d){
-		.a = state->balls+1,
-		.b = state->balls+2,
-		.length = 0.25,
-		.type = DISTANCE
-	};
-	//update_grid_2d(&state->grid, state->balls, state->ball_count);
+	if(key_states[SDL_SCANCODE_P]) {
+		state->spawn_position = mouse_position;
+	}
 
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
+	if(key_states[SDL_SCANCODE_RETURN]) {
+		if(SDL_GetTicks() > state->spawn_tick_count + state->spawn_delay) {
+			state->spawn_tick_count = SDL_GetTicks();
+			state->balls = realloc(state->balls, ++state->ball_count * sizeof(ball_2d));
+			state->balls[state->ball_count-1].previous_position = state->spawn_position;
+			state->balls[state->ball_count-1].position = mouse_position;
+			vec2 velocity = v2_sub(state->spawn_position, mouse_position);
+			set_velocity_2d(&state->balls[state->ball_count-1], v2_fdiv(velocity, 100));
+			state->balls[state->ball_count-1].mass = 1;
+			state->balls[state->ball_count-1].radius = 0.005;
+		}
+	}
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_2d *current_ball = state->balls + i;
 			update_ball_2d(current_ball);
@@ -203,17 +216,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				}
 			}
 		}
-
-		update_linkage_2d(link, state->deltatime);
-		update_linkage_2d(link2, state->deltatime);
-		update_linkage_2d(link3, state->deltatime);
-
-
 		for(int i = 0; i < state->ball_count; ++i) {
 			check_and_resolve_2d(state->balls+i, floor, 0, 0, state->deltatime);
 			check_and_resolve_2d(state->balls+i, ceiling, 0, 0, state->deltatime);
 			check_and_resolve_2d(state->balls+i, left, 0, 0, state->deltatime);
 			check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
+			check_and_resolve_2d(state->balls+i, another, 0, 0, state->deltatime);
 		}
 
 		
@@ -232,25 +240,31 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	}
 
 	
+	
+	
 	/*
-	for(int i = 0; i < state->ball_count; i+=10) {
-		draw_circle(state->renderer, state->balls[i], 5, state->cam);
+	for(int i = 0; i < state->ball_count; i+=1) {
+		draw_circle(state->renderer, state->balls[i], 3, state->cam);
 	}*/
-	draw_linkage(state->renderer, link, state->cam);
-	draw_linkage(state->renderer, link2, state->cam);
-	draw_linkage(state->renderer, link3, state->cam);
 	draw_wall(state->renderer, floor, state->cam);
 	draw_wall(state->renderer, ceiling, state->cam);
 	draw_wall(state->renderer, left, state->cam);
 	draw_wall(state->renderer, right, state->cam);
+	draw_wall(state->renderer, another, state->cam);
 
 	ball_2d mouse_ball;
 	mouse_ball.position = mouse_position;
 	mouse_ball.radius = mouse_radius;
 	draw_circle(state->renderer, mouse_ball, 25, state->cam);
+	ball_2d spawn_ball;
+	spawn_ball.position = state->spawn_position;
+	spawn_ball.radius = 0.001;
+	draw_circle(state->renderer, spawn_ball, 25, state->cam);
 
 	
 	aspect_ratio = 1/aspect_ratio;
+	
+	
 	
 	
 	for(int i = 0; i < state->grid.height; ++i) {
@@ -281,11 +295,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	state->frame_count++;
 
-	if(SDL_GetTicks() > state->tick_count + 1000) {
-		state->tick_count = SDL_GetTicks();
-		printf("framerate: %i\n", state->frame_count);
+	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
+		state->frame_tick_count = SDL_GetTicks();
+		printf("framerate: %i\nball count: %i\n", state->frame_count, state->ball_count);
 		state->frame_count = 0;
 	}
+
 
 	return SDL_APP_CONTINUE;
 }
