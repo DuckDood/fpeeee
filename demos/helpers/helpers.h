@@ -10,6 +10,8 @@ typedef struct {
 	int height;
 } camera;
 
+vec3 point_to_screen(vec3 position, camera cam);
+
 void draw_circle(SDL_Renderer *renderer, ball_2d b, int resolution, camera cam);
 void draw_circle_3d(SDL_Renderer *renderer, ball_3d b, int resolution, camera cam);
 void draw_wall(SDL_Renderer *renderer, wall_2d w, camera cam);

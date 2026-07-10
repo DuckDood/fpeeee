@@ -9,13 +9,21 @@ srcdir engine/src
 
 buildflag -lm
 buildflag -lSDL3
+
 buildflag -g
 
 srcflag -O3
 srcflag -std=c23
 srcflag -Wall -Wextra -Wpedantic -Werror
-srcflag -g
 srcflag -march=native
+
+srcflag -g
+
+#srcflag -fsanitize=address
+#buildflag -fsanitize=address
+
+#srcflag -pg
+#buildflag -pg
 
 # Put src here
 src types.c
@@ -37,6 +45,11 @@ src fluid.c
 build fluid
 
 rmbuild obj/fluid.c.o
+
+src fluid_3d.c
+build fluid_3d
+
+rmbuild obj/fluid_3d.c.o
 
 src 2d_3d_scene.c
 build 2d_3d_scene

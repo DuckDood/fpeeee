@@ -2,13 +2,36 @@
 #include <matrix.h>
 #include <math.h>
 
-void draw_circle(SDL_Renderer *renderer, ball_2d b, int resolution, camera cam) {
+vec3 point_to_screen(vec3 position, camera cam) {
 	int WIDTH = cam.width;
 	int HEIGHT = cam.height;
 	vec3 camera_position = cam.position;
 	vec3 camera_rotation = cam.rotation;
 	float inverse_aspect_ratio = (float)HEIGHT/WIDTH;
+		
+	vec3 position_relative = v3_sub(position, camera_position);
 
+	position_relative.y *= -1;
+	mat3 camera_rotation_matrix = transpose(generate_rotation_matrix(camera_rotation.x, camera_rotation.y, camera_rotation.z));
+	position_relative = m3_v3_mult(camera_rotation_matrix, position_relative);
+
+	//if (position_relative.z < 0) return;
+	position_relative.x /= position_relative.z;
+	position_relative.y /= position_relative.z;
+
+	position_relative.x *= inverse_aspect_ratio;
+
+	position_relative.x /= 2;
+	position_relative.y /= 2;
+	position_relative.x += 0.5;
+	position_relative.y += 0.5;
+	position_relative.x *= WIDTH;
+	position_relative.y *= HEIGHT;
+
+	return position_relative;
+}
+
+void draw_circle(SDL_Renderer *renderer, ball_2d b, int resolution, camera cam) {
 	for(float angle = 0; angle < 3.14159*2; angle += (3.14159*2)/resolution) {
 		vec2 segment_1;
 		segment_1.x = b.position.x + cos(angle)*b.radius;
@@ -17,7 +40,7 @@ void draw_circle(SDL_Renderer *renderer, ball_2d b, int resolution, camera cam) 
 		vec2 segment_2;
 		segment_2.x = b.position.x + cos(angle + (3.14159*2)/resolution)*b.radius;
 		segment_2.y = b.position.y + sin(angle + (3.14159*2)/resolution)*b.radius;
-
+/*
 		vec3 segment_1_relative = v3_sub((vec3){segment_1.x, segment_1.y, 0}, camera_position);
 		segment_1_relative.y *= -1;
 		mat3 camera_rotation_matrix = transpose(generate_rotation_matrix(camera_rotation.x, camera_rotation.y, camera_rotation.z));
@@ -51,7 +74,13 @@ void draw_circle(SDL_Renderer *renderer, ball_2d b, int resolution, camera cam) 
 		segment_2_relative.x += 0.5;
 		segment_2_relative.y += 0.5;
 		segment_2_relative.x *= WIDTH;
-		segment_2_relative.y *= HEIGHT;
+		segment_2_relative.y *= HEIGHT;*/
+		vec3 segment_1_relative = point_to_screen((vec3){segment_1.x, segment_1.y, 0}, cam);
+		vec3 segment_2_relative = point_to_screen((vec3){segment_2.x, segment_2.y, 0}, cam);
+
+		if(segment_1_relative.z < 0) return;
+		if(segment_2_relative.z < 0) return;
+
 
 		SDL_RenderLine(renderer,
 				segment_1_relative.x,
@@ -138,119 +167,23 @@ void draw_circle_3d(SDL_Renderer *renderer, ball_3d b, int resolution, camera ca
 }
 
 void draw_wall(SDL_Renderer *renderer, wall_2d w, camera cam) {
-	int WIDTH = cam.width;
-	int HEIGHT = cam.height;
-	vec3 camera_position = cam.position;
-	vec3 camera_rotation = cam.rotation;
 
-	float inverse_aspect_ratio = (float)HEIGHT/WIDTH;
+	vec3 vertex_a = (vec3){w.position.x + w.normal.y * w.length/2, w.position.y + -w.normal.x * w.length/2, 0};
+	vec3 vertex_b = (vec3){w.position.x - w.normal.y * w.length/2, w.position.y - -w.normal.x * w.length/2, 0};
 
-	vec3 vertex_a = v3_sub((vec3){w.position.x + w.normal.y * w.length/2, w.position.y + -w.normal.x * w.length/2, 0}, camera_position);
-	vec3 vertex_b = v3_sub((vec3){w.position.x - w.normal.y * w.length/2, w.position.y - -w.normal.x * w.length/2, 0}, camera_position);
-
-	vec3 a_relative = vertex_a;
-	vec3 b_relative = vertex_b;
-
-	a_relative.y *= -1;
-	b_relative.y *= -1;
-
-	mat3 camera_rotation_matrix = transpose(generate_rotation_matrix(camera_rotation.x, camera_rotation.y, camera_rotation.z));
-
-	a_relative = m3_v3_mult(camera_rotation_matrix, a_relative);
-
-	if (a_relative.z < 0) return;
-	a_relative.x /= a_relative.z;
-	a_relative.y /= a_relative.z;
-
-	a_relative.x *= inverse_aspect_ratio;
-
-	a_relative.x /= 2;
-	a_relative.y /= 2;
-	a_relative.x += 0.5;
-	a_relative.y += 0.5;
-	a_relative.x *= WIDTH;
-	a_relative.y *= HEIGHT;
-
-	b_relative = m3_v3_mult(camera_rotation_matrix, b_relative);
-
-	if (b_relative.z < 0) return;
-	b_relative.x /= b_relative.z;
-	b_relative.y /= b_relative.z;
-
-	b_relative.x *= inverse_aspect_ratio;
-
-	b_relative.x /= 2;
-	b_relative.y /= 2;
-	b_relative.x += 0.5;
-	b_relative.y += 0.5;
-	b_relative.x *= WIDTH;
-	b_relative.y *= HEIGHT;
+	vec3 a_relative = point_to_screen(vertex_a, cam);
+	vec3 b_relative = point_to_screen(vertex_b, cam);
+	if(a_relative.z < 0) return;
+	if(b_relative.z < 0) return;
 
 	SDL_RenderLine(renderer, a_relative.x, a_relative.y, b_relative.x, b_relative.y);
 }
 
 void draw_wall_3d(SDL_Renderer *renderer, wall_3d w, camera cam) {
-	int WIDTH = cam.width;
-	int HEIGHT = cam.height;
-	vec3 camera_position = cam.position;
-	vec3 camera_rotation = cam.rotation;
 
-	float inverse_aspect_ratio = (float)HEIGHT/WIDTH;
-
-	vec3 a_relative = v3_sub(w.vertex_a, camera_position);
-	vec3 b_relative = v3_sub(w.vertex_b, camera_position);
-	vec3 c_relative = v3_sub(w.vertex_c, camera_position);
-
-	a_relative.y *= -1;
-	b_relative.y *= -1;
-	c_relative.y *= -1;
-
-	mat3 camera_rotation_matrix = transpose(generate_rotation_matrix(camera_rotation.x, camera_rotation.y, camera_rotation.z));
-
-	a_relative = m3_v3_mult(camera_rotation_matrix, a_relative);
-
-	if (a_relative.z < 0) return;
-	a_relative.x /= a_relative.z;
-	a_relative.y /= a_relative.z;
-
-	a_relative.x *= inverse_aspect_ratio;
-
-	a_relative.x /= 2;
-	a_relative.y /= 2;
-	a_relative.x += 0.5;
-	a_relative.y += 0.5;
-	a_relative.x *= WIDTH;
-	a_relative.y *= HEIGHT;
-
-	b_relative = m3_v3_mult(camera_rotation_matrix, b_relative);
-
-	if (b_relative.z < 0) return;
-	b_relative.x /= b_relative.z;
-	b_relative.y /= b_relative.z;
-
-	b_relative.x *= inverse_aspect_ratio;
-
-	b_relative.x /= 2;
-	b_relative.y /= 2;
-	b_relative.x += 0.5;
-	b_relative.y += 0.5;
-	b_relative.x *= WIDTH;
-	b_relative.y *= HEIGHT;
-
-	c_relative = m3_v3_mult(camera_rotation_matrix, c_relative);
-
-	if (c_relative.z < 0) return;
-	c_relative.x /= c_relative.z;
-	c_relative.y /= c_relative.z;
-
-	c_relative.x *= inverse_aspect_ratio;
-
-	c_relative.x /= 2;
-	c_relative.y /= 2;
-	c_relative.x += 0.5;
-	c_relative.y += 0.5;
-	c_relative.x *= WIDTH;
-	c_relative.y *= HEIGHT;
+	vec3 a_relative = point_to_screen(w.vertex_a, cam);
+	vec3 b_relative = point_to_screen(w.vertex_b, cam);
+	vec3 c_relative = point_to_screen(w.vertex_c, cam);
 
 	SDL_RenderLine(renderer, a_relative.x, a_relative.y, b_relative.x, b_relative.y);
 	SDL_RenderLine(renderer, b_relative.x, b_relative.y, c_relative.x, c_relative.y);
