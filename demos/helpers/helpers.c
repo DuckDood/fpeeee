@@ -185,6 +185,10 @@ void draw_wall_3d(SDL_Renderer *renderer, wall_3d w, camera cam) {
 	vec3 b_relative = point_to_screen(w.vertex_b, cam);
 	vec3 c_relative = point_to_screen(w.vertex_c, cam);
 
+	if(a_relative.z < 0) return;
+	if(b_relative.z < 0) return;
+	if(c_relative.z < 0) return;
+
 	SDL_RenderLine(renderer, a_relative.x, a_relative.y, b_relative.x, b_relative.y);
 	SDL_RenderLine(renderer, b_relative.x, b_relative.y, c_relative.x, c_relative.y);
 	SDL_RenderLine(renderer, c_relative.x, c_relative.y, a_relative.x, a_relative.y);
