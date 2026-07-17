@@ -70,7 +70,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
 	printf("ball size: %zu\n", sizeof(ball_2d));
-	state->grid = construct_grid_2d(200,200, 0.01);
+	state->grid = construct_grid_2d(400,200, 0.01);
 
 	int horizontal_max_spawn = 100;
 	float ball_radius = 0.005;
