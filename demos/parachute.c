@@ -278,8 +278,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			if(i <= parachute_size+1) {
 				current_ball->position.y -= 3 * state->deltatime * state->deltatime;
 			} else {
-				current_ball->position.x += (((float)rand() / RAND_MAX) * 100 * (rand() % 2 - 0.5)) * state->deltatime * state->deltatime;
-				current_ball->position.y += (((float)rand() / RAND_MAX) * 100 * (rand() % 2 - 0.5)) * state->deltatime * state->deltatime;
+				current_ball->position.x += (((double)rand() / RAND_MAX) * 100 * (rand() % 2 - 0.5)) * state->deltatime * state->deltatime;
+				current_ball->position.y += (((double)rand() / RAND_MAX) * 100 * (rand() % 2 - 0.5)) * state->deltatime * state->deltatime;
 			}
 
 			if(i <= parachute_size + 1) {
