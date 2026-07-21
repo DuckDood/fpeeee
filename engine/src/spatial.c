@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <pthread.h>
-
 #define MINIMUM_VECTOR_SIZE 16
 
 int point_aabb_collision(vec2 position, vec2 bb_position, vec2 bb_dimension) {
@@ -91,28 +89,20 @@ void update_grid_2d(spatial_grid *grid, ball_2d *balls, int ball_count) {
 	}
 }
 
-
-void collide_partition_2d(spatial_grid *grid, ball_2d *balls, int column, int row) {
-	int partition_index = row * grid->width + column;
-	if(column < 0 || column > grid->width - 1 || row < 0 || row > grid->height - 1) return;
-
-	spatial_partition *partition = grid->partitions + partition_index;
-
-	int ball_count = partition->ball_count;
-
+void spatial_collision_2d(spatial_grid *grid, ball_2d *balls, int ball_count) {
 	for(int i = 0; i < ball_count; ++i) {
 		//ball_2d *ball = balls + i;
-		ball_2d *ball = balls + grid->ball_map[partition->ball_offset + i];
-		//int ball_column = ball->position.x / grid->element_size + grid->width * 0.5;
-		//int ball_row = ball->position.y / grid->element_size + grid->height * 0.5;
-		//if(ball_column < 0 || ball_column > grid->width - 1 || ball_row < 0 || ball_row > grid->height - 1) continue;
+		ball_2d *ball = balls + grid->ball_map[i];
+		int ball_column = ball->position.x / grid->element_size + grid->width * 0.5;
+		int ball_row = ball->position.y / grid->element_size + grid->height * 0.5;
+		if(ball_column < 0 || ball_column > grid->width - 1 || ball_row < 0 || ball_row > grid->height - 1) continue;
 
-		for(int minor_row = -1; minor_row < 2; ++minor_row) {
-			int total_row = row + minor_row;
+		for(int row = -1; row < 2; ++row) {
+			int total_row = ball_row + row;
 			if(total_row < 0 || total_row > grid->height-1) continue;
 
-			for(int minor_column = -1; minor_column < 2; ++minor_column) {
-				int total_column = column + minor_column;
+			for(int column = -1; column < 2; ++column) {
+				int total_column = ball_column + column;
 				if(total_column < 0 || total_column > grid->width-1) continue;
 
 				int partition_index = total_row * grid->width + total_column;
@@ -133,119 +123,6 @@ void collide_partition_2d(spatial_grid *grid, ball_2d *balls, int column, int ro
 		}
 	}
 
-	return;
-}
-
-struct partition_area_params {
-	spatial_grid *grid;
-	ball_2d *balls;
-	int column;
-	int row;
-
-	int column_length;
-	int row_length;
-};
-
-void* partition_area_collision_2d(void *params) {
-	struct partition_area_params *parameters = (struct partition_area_params*)params;
-
-	for(int minor_row = 0; minor_row < parameters->row_length; ++minor_row) {
-		for(int minor_column = 0; minor_column < parameters->column_length; ++minor_column) {
-			collide_partition_2d(parameters->grid, parameters->balls, parameters->column + minor_column, parameters->row + minor_row);
-		}
-	}
-
-	return NULL;
-}
-
-void spatial_collision_2d(spatial_grid *grid, ball_2d *balls, int ball_count) {
-	(void)ball_count; // unused womp womp
-	/*int numthreads = 1;
-	// proof of concept creating threads on the fly, will try to implement thread pool if multithreading works out
-	pthread_t *threads = malloc(sizeof(pthread_t) * numthreads);
-
-	for(int i = 0; i < numthreads; ++i) {
-		pthread_create(threads + i);
-	}
-
-
-	free(threads);*/
-
-	//pthread_t *threads = malloc(sizeof(pthread_t) * grid->width * grid->height);
-	//int numthreads = 8;
-	int width = 4;
-	int height = 2;
-	pthread_t *threads = malloc(sizeof(pthread_t) * width * height);
-	struct partition_area_params *params = malloc(sizeof(struct partition_area_params) * width * height);
-
-	/*
-	for(int row = 0; row < grid->height; ++row) {
-		for(int column = 0; column < grid->width; ++column) {
-			struct collide_params params;
-			params.grid = grid;
-			params.balls = balls;
-			params.column = column;
-			params.row = row;
-			pthread_create(threads + row * grid->width + column, NULL, &collide_partition_2d, &params);
-			//collide_partition_2d(&params);
-		}
-	}
-	*/
-
-	/*for(int row = 0; row < grid->height; ++row) {
-		for(int column = 0; column < grid->width; ++column) {
-			pthread_join(threads[row * grid->width + column], NULL);
-		}
-	}*/
-
-	/*
-	for(int i = 0; i < numthreads; ++i) {
-
-		int column_count = grid->width / numthreads;
-		int column = grid->width / numthreads * i;
-		//printf("column: %i, count: %i\n", column, column_count);
-		
-
-		struct partition_area_params *params = malloc(sizeof(struct partition_area_params));
-		params->grid = grid;
-		params->balls = balls;
-		params->column = column;
-		//params.row = row;
-		params->row = 0;
-
-		params->row_length = grid->height;
-		params->column_length = column_count;
-		pthread_create(threads + i, NULL, partition_area_collision_2d, params);
-	}*/
-
-	for(int y = 0; y < height; ++y) {
-		for(int x = 0; x < width; ++x) {
-			int index = y * width + x;
-			int column_count = grid->width / width;
-			int column = grid->width / width * x;
-
-			int row_count = grid->height / height;
-			int row = grid->height / height * y;
-
-			params[index].grid = grid;
-			params[index].balls = balls;
-			params[index].column = column;
-			params[index].row = row;
-
-			params[index].row_length = row_count;
-			params[index].column_length = column_count;
-			pthread_create(threads + index, NULL, partition_area_collision_2d, params + index);
-		}
-	}
-
-	for(int i = 0; i < width * height; ++i) {
-		pthread_join(threads[i], NULL);
-	}
-	//printf("\n");
-
-
-	free(threads);
-	free(params);
 }
 
 // 3d
