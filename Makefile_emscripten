@@ -1,4 +1,4 @@
-all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/index.html obj/parachute.c.o build/parachute obj/fluid_3d.c.o build/index.html_3d obj/2d_3d_scene.c.o build/2d_3d_scene 
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/index.html obj/parachute.c.o build/parachute obj/fluid_3d.c.o build/fluid_3d obj/2d_3d_scene.c.o build/2d_3d_scene 
 OSMODE := l
 
 obj/: 
@@ -73,9 +73,9 @@ endif
 
 build/index.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/index.html -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/index.html -sALLOW_MEMORY_GROWTH -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/index.html -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/index.html -sALLOW_MEMORY_GROWTH -lm -lSDL3 -g
 endif
 
 
@@ -89,9 +89,9 @@ endif
 
 build/parachute: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute -sALLOW_MEMORY_GROWTH -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute -sALLOW_MEMORY_GROWTH -lm -lSDL3 -g
 endif
 
 
@@ -103,11 +103,11 @@ else
 endif
 
 
-build/index.html_3d: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o 
+build/fluid_3d: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/index.html_3d -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d -sALLOW_MEMORY_GROWTH -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/index.html_3d -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d -sALLOW_MEMORY_GROWTH -lm -lSDL3 -g
 endif
 
 
@@ -121,9 +121,9 @@ endif
 
 build/2d_3d_scene: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene -sALLOW_MEMORY_GROWTH -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene -sALLOW_MEMORY_GROWTH -lm -lSDL3 -g
 endif
 
 
