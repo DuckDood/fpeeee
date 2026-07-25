@@ -1,6 +1,6 @@
+#include <math.h>
 #include <physics.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 
 void set_velocity_2d(ball_2d *body, vec2 velocity) {
@@ -9,37 +9,76 @@ void set_velocity_2d(ball_2d *body, vec2 velocity) {
 
 
 collision_info_2d check_collision_2d(ball_2d a, wall_2d b) {
-	vec2 relative_position = v2_sub(b.position, a.position);
+	collision_info_2d info;
+
+	vec2 tangent = {b.normal.y, -b.normal.x};
+	vec2 start_position = v2_add(b.position, v2_fmult(tangent, -b.length/2));
+	vec2 end_position = v2_add(b.position, v2_fmult(tangent, b.length/2));
+
+	
+	vec2 min = (vec2){fmin(start_position.x, end_position.x), fmin(start_position.y, end_position.y)};
+	vec2 max = (vec2){fmax(start_position.x, end_position.x), fmax(start_position.y, end_position.y)};
+
+	vec2 new_position = v2_sub(v2_fmult(a.position, 2), a.previous_position);
+
+	if(
+		new_position.x < min.x - a.radius ||
+		new_position.x > max.x + a.radius ||
+
+
+		new_position.y < min.y - a.radius ||
+		new_position.y > max.y + a.radius
+		) {
+		info.hit = false;
+		return info;
+	}
+
+	//vec2 relative_position = v2_sub(b.position, a.position);
+	vec2 relative_position = v2_sub(b.position, new_position);
 	vec2 previous_relative_position = v2_sub(b.position, a.previous_position);
 	float collision_dot = v2_dot(relative_position, b.normal);
 	float previous_collision_dot = v2_dot(previous_relative_position, b.normal);
-	collision_info_2d info;
 
 	int side = (previous_collision_dot <= 0) * 2 - 1;
 	info.normal = v2_fmult(b.normal, side);
 	info.depth = side * -collision_dot - a.radius; // subtract a tiny amount like 0.01 if you dont want things of radius 0 to be able to fall through, pretty hacky fix though and doesnt always work
 
-	vec2 tangent = {b.normal.y, -b.normal.x};
 	float tangent_dot = v2_dot(previous_relative_position, tangent);
 
-	vec2 start_position = v2_add(b.position, v2_fmult(tangent, -b.length/2));
-	vec2 end_position = v2_add(b.position, v2_fmult(tangent, b.length/2));
 
-	vec2 relative_start_position = v2_sub(start_position, a.position);
-	vec2 relative_end_position = v2_sub(end_position, a.position);
+	//vec2 relative_start_position = v2_sub(start_position, a.position);
+	//vec2 relative_end_position = v2_sub(end_position, a.position);
 
-	float dist_to_start = v2_magnitude(relative_start_position);
-	float dist_to_end = v2_magnitude(relative_end_position);
 
-	int on_edge_start = dist_to_start < a.radius;
-	int on_edge_end = dist_to_end < a.radius;
-
-	int on_edge = on_edge_start || on_edge_end;
+	vec2 relative_start_position = v2_sub(start_position, new_position);
+	vec2 relative_end_position = v2_sub(end_position, new_position);
 
 	int on_center = tangent_dot > -b.length/2 && tangent_dot < b.length/2;
 
+	float dist_to_start = v2_dot(relative_start_position, relative_start_position);
+	float dist_to_end = v2_dot(relative_end_position, relative_end_position);
 
-	info.normal = v2_fmult(info.normal, on_center);
+	int on_edge_start = dist_to_start < a.radius * a.radius;
+	int on_edge_end = dist_to_end < a.radius * a.radius;
+
+	int on_edge = on_edge_start || on_edge_end;
+
+	
+	if(on_edge) {
+		dist_to_start = sqrt(dist_to_start);
+		dist_to_end = sqrt(dist_to_end);
+	}
+
+	// dividing by distances will normalize the relative positions
+	info.normal = (on_edge_start && !on_center) ? v2_fdiv(relative_start_position, -dist_to_start) : info.normal;
+	info.normal = (on_edge_end && !on_center) ? v2_fdiv(relative_end_position, -dist_to_end) : info.normal;
+
+	info.depth = (!on_center && on_edge_start) ? dist_to_start - a.radius : info.depth; 
+	info.depth = (!on_center && on_edge_end) ? dist_to_end - a.radius : info.depth; 
+
+
+
+	/*info.normal = v2_fmult(info.normal, on_center);
 	info.normal = v2_add(info.normal,
 			v2_fmult(
 				v2_fdiv(relative_start_position, -dist_to_start),
@@ -54,6 +93,8 @@ collision_info_2d check_collision_2d(ball_2d a, wall_2d b) {
 	info.depth *= on_center;
 	info.depth += (dist_to_start - a.radius) * (on_edge_start && !on_center);
 	info.depth += (dist_to_end - a.radius) * (on_edge_end && !on_center);
+	info.hit = (side*collision_dot > -a.radius && on_center) || on_edge;*/
+
 	info.hit = (side*collision_dot > -a.radius && on_center) || on_edge;
 
 	return info;
