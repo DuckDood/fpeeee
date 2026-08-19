@@ -89,6 +89,17 @@ void update_grid_2d(spatial_grid *grid, ball_2d *balls, int ball_count) {
 	}
 }
 
+void collide_ball_partition_2d(spatial_partition * restrict partition, spatial_grid *grid, ball_2d *balls, ball_2d *ball) {
+	for(int j = 0; j < partition->ball_count; ++j) {
+		//if(partition->ball_offset + j < i) continue;
+		//ball_2d *check_ball = balls + partition->ball_offset + i;
+		ball_2d *check_ball = balls + grid->ball_map[partition->ball_offset + j];
+
+		if(check_ball == ball) continue; // evil evil pointer comparison
+		check_and_resolve_balls_2d(ball, check_ball);
+	}
+}
+
 void spatial_collision_2d(spatial_grid *grid, ball_2d *balls, int ball_count) {
 	for(int i = 0; i < ball_count; ++i) {
 		//ball_2d *ball = balls + i;
@@ -96,8 +107,210 @@ void spatial_collision_2d(spatial_grid *grid, ball_2d *balls, int ball_count) {
 		int ball_column = ball->position.x / grid->element_size + grid->width * 0.5;
 		int ball_row = ball->position.y / grid->element_size + grid->height * 0.5;
 		if(ball_column < 0 || ball_column > grid->width - 1 || ball_row < 0 || ball_row > grid->height - 1) continue;
-
+		int partition_index = ball_row * grid->width + ball_column;
+		[[maybe_unused]] spatial_partition * restrict partition = grid->partitions + partition_index;
+		//collide_ball_partition_2d(partition, grid, balls, ball);
+/*
 		for(int row = -1; row < 2; ++row) {
+			int total_row = (ball->position.y + ball->radius * row) / grid->element_size + grid->height * 0.5;
+			if(total_row < 0 || total_row > grid->height-1) continue;
+
+			for(int column = -1; column < 2; ++column) {
+				int total_column = (ball->position.x + ball->radius * column) / grid->element_size + grid->width * 0.5;
+				if(total_column < 0 || total_column > grid->width-1) continue;
+				if(total_row == ball_row && total_column == ball_column) continue;
+
+				int partition_index = total_row * grid->width + total_column;
+				if(partition_index > grid->width * grid->height) {
+					partition_index = grid->width * grid->height;
+				}
+
+				spatial_partition * restrict partition = grid->partitions + partition_index;
+				collide_ball_partition_2d(partition, grid, balls, ball);
+				checkcount++;
+			}
+		}*/
+		//printf("ck%i\n", checkcount);
+
+		int min_ball_column = (ball->position.x - ball->radius) / grid->element_size + grid->width * 0.5;
+		int min_ball_row = (ball->position.y - ball->radius) / grid->element_size + grid->height * 0.5;
+
+		int max_ball_column = (ball->position.x + ball->radius) / grid->element_size + grid->width * 0.5;
+		int max_ball_row = (ball->position.y + ball->radius) / grid->element_size + grid->height * 0.5;
+
+		for(int row = min_ball_row; row <= max_ball_row; ++row) {
+			if(row >= grid->height - 1) continue;
+			if(row < 0) continue;
+			for(int column = min_ball_column; column <= max_ball_column; ++column) {
+				if(column >= grid->width - 1) continue;
+				if(column < 0) continue;
+				int partition_index = row * grid->width + column;
+				spatial_partition * restrict partition = grid->partitions + partition_index;
+				collide_ball_partition_2d(partition, grid, balls, ball);
+			}
+		}
+
+		/*
+		for(int row = -1; row < 2; ++row) {
+		//	int total_row = ball_row + row;
+			//if(total_row < 0 || total_row > grid->height-1) continue;
+			//int ball_column = ball->position.x / grid->element_size + grid->width * 0.5;
+			int new_ball_row = (ball->position.y + ball->radius * row) / grid->element_size + grid->height * 0.5;
+			//if(new_ball_row == ball_row) continue;
+
+			for(int column = -1; column < 2; ++column) {
+				int new_ball_column = (ball->position.x + ball->radius * row) / grid->element_size + grid->width * 0.5;
+				//int new_ball_column = ball->position.x / grid->element_size + grid->width * 0.5;
+				//if(new_ball_column == ball_column) continue;
+
+				int partition_index = new_ball_row * grid->width + new_ball_column;
+
+				if(new_ball_column > grid->width) {
+					printf("columnabove\n");
+					goto dontcol;
+				}
+				if(new_ball_column < 0) {
+					printf("columnbelow %i\n", new_ball_column);
+					goto dontcol;
+				}
+				if(new_ball_row > grid->height) {
+					printf("rowabove\n");
+					goto dontcol;
+				}
+				if(new_ball_row < 0) {
+					printf("rowbelow\n");
+					goto dontcol;
+				}
+
+				partition = grid->partitions + partition_index;
+				collide_ball_partition_2d(partition, grid, balls, ball);
+dontcol:
+			}
+		}*/
+
+
+		/*
+
+		int min_ball_column = (ball->position.x - ball->radius) / grid->element_size + grid->width * 0.5;
+		//if(new_ball_column == ball_column) new_ball_column = (ball->position.x - ball->radius) / grid->element_size + grid->width * 0.5;
+		int min_ball_row = (ball->position.y - ball->radius) / grid->element_size + grid->height * 0.5;
+		//if(new_ball_row == ball_row) new_ball_row = (ball->position.y - ball->radius) / grid->element_size + grid->height * 0.5;
+
+		int max_ball_column = (ball->position.x + ball->radius) / grid->element_size + grid->width * 0.5;
+		//if(new_ball_column == ball_column) new_ball_column = (ball->position.x - ball->radius) / grid->element_size + grid->width * 0.5;
+		int max_ball_row = (ball->position.y + ball->radius) / grid->element_size + grid->height * 0.5;
+		//if(new_ball_row == ball_row) new_ball_row = (ball->position.y - ball->radius) / grid->element_size + grid->height * 0.5;
+		
+		
+		
+		if(min_ball_column != ball_column) {
+			partition_index = ball_row * grid->width + min_ball_column;
+			partition = grid->partitions + partition_index;
+			collide_ball_partition_2d(partition, grid, balls, ball);
+		}
+
+		if(max_ball_column != ball_column) {
+			partition_index = ball_row * grid->width + max_ball_column;
+			partition = grid->partitions + partition_index;
+			collide_ball_partition_2d(partition, grid, balls, ball);
+		}
+    	
+		if(max_ball_row != ball_row) {
+			partition_index = max_ball_row * grid->width + ball_column;
+			partition = grid->partitions + partition_index;
+			collide_ball_partition_2d(partition, grid, balls, ball);
+		}
+    	
+		if(min_ball_row != ball_row) {
+			partition_index = min_ball_row * grid->width + ball_column;
+			partition = grid->partitions + partition_index;
+			collide_ball_partition_2d(partition, grid, balls, ball);
+		}
+    	
+		if(min_ball_column != ball_column && min_ball_row != ball_row) {
+			partition_index = min_ball_row * grid->width + min_ball_column;
+			partition = grid->partitions + partition_index;
+			collide_ball_partition_2d(partition, grid, balls, ball);
+		}
+
+		if(max_ball_column != ball_column && max_ball_row != ball_row) {
+			partition_index = max_ball_row * grid->width + max_ball_column;
+			partition = grid->partitions + partition_index;
+			collide_ball_partition_2d(partition, grid, balls, ball);
+		}
+    	
+		if(min_ball_column != ball_column && max_ball_row != ball_row) {
+			partition_index = max_ball_row * grid->width + min_ball_column;
+			partition = grid->partitions + partition_index;
+			collide_ball_partition_2d(partition, grid, balls, ball);
+		}
+    	
+		if(max_ball_column != ball_column && min_ball_row != ball_row) {
+			partition_index = min_ball_row * grid->width + max_ball_column;
+			partition = grid->partitions + partition_index;
+			collide_ball_partition_2d(partition, grid, balls, ball);
+		}*/
+
+
+
+		/*
+		for(int j = 0; j < partition->ball_count; ++j) {
+			if(partition->ball_offset + j < i) continue;
+			//ball_2d *check_ball = balls + partition->ball_offset + i;
+			ball_2d *check_ball = balls + grid->ball_map[partition->ball_offset + j];
+
+			if(check_ball == ball) continue; // evil evil pointer comparison
+			check_and_resolve_balls_2d(ball, check_ball);
+		}*/
+		/*
+		int ball_column_side = 0;
+		int ball_row_side = 0;
+		
+		int new_ball_column = (ball->position.x + ball->radius) / grid->element_size + grid->width * 0.5;
+		if(new_ball_column != ball_column) ball_column_side = 1;
+
+		new_ball_column = (ball->position.x - ball->radius) / grid->element_size + grid->width * 0.5;
+		if(new_ball_column != ball_column) ball_column_side = -1;
+
+		int new_ball_row = ( ball->position.y + ball->radius) / grid->element_size + grid->height * 0.5;
+		if(new_ball_row != ball_row) ball_row_side = 1;
+
+		new_ball_row = ( ball->position.y - ball->radius) / grid->element_size + grid->height * 0.5;
+		if(new_ball_row != ball_row) ball_row_side = -1;
+
+		//if(ball_column < 0 || ball_column > grid->width - 1 || ball_row < 0 || ball_row > grid->height - 1) continue;
+		
+		//if(new_ball_column < 0 || new_ball_column > grid->width - 1 || new_ball_row < 0 || new_ball_row > grid->height - 1) goto skip1;
+		if(!(ball_row + ball_row_side < 0 || ball_row + ball_row_side > grid->height - 1) && ball_row != 0) {
+			int new_partition_index = (ball_row + ball_row_side) * grid->width + ball_column;
+			spatial_partition * restrict new_partition = grid->partitions + new_partition_index;
+			collide_ball_partition_2d(new_partition, grid, balls, ball);
+		}
+		if(!(ball_column + ball_column_side < 0 || ball_column + ball_column_side > grid->width - 1) && ball_column !=0) {
+			int new_partition_index = ball_row * grid->width + ball_column + ball_column_side;
+			spatial_partition * restrict new_partition = grid->partitions + new_partition_index;
+			collide_ball_partition_2d(new_partition, grid, balls, ball);
+		}
+		if(!(ball_column + ball_column_side < 0 || ball_column + ball_column_side > grid->width - 1) && !(ball_row + ball_row_side < 0 || ball_row + ball_row_side > grid->height - 1) && ball_column != 0 && ball_row != 0) {
+			int new_partition_index = (ball_row + ball_row_side) * grid->width + ball_column + ball_column_side;
+			spatial_partition * restrict new_partition = grid->partitions + new_partition_index;
+			collide_ball_partition_2d(new_partition, grid, balls, ball);
+		}*/
+
+		
+
+		/*int new_ball_column = (ball->position.x + ball->radius) / grid->element_size + grid->width * 0.5;
+		int new_ball_row = ball->position.y / grid->element_size + grid->height * 0.5;
+		if(new_ball_column != ball_column) {
+			if(!(new_ball_column < 0 || new_ball_column > grid->width - 1 || new_ball_row < 0 || new_ball_row > grid->height - 1)) {
+				partition_index = new_ball_row * grid->width + new_ball_column;
+				partition = grid->partitions + partition_index;
+				collide_ball_partition_2d(partition, grid, balls, ball);
+			}
+		}*/
+		//ball_row = ball->position.y / grid->element_size + grid->height * 0.5;
+
+		/*for(int row = -1; row < 2; ++row) {
 			int total_row = ball_row + row;
 			if(total_row < 0 || total_row > grid->height-1) continue;
 
@@ -111,16 +324,9 @@ void spatial_collision_2d(spatial_grid *grid, ball_2d *balls, int ball_count) {
 				}
 
 				spatial_partition * restrict partition = grid->partitions + partition_index;
-
-				for(int i = 0; i < partition->ball_count; ++i) {
-					//ball_2d *check_ball = balls + partition->ball_offset + i;
-					ball_2d *check_ball = balls + grid->ball_map[partition->ball_offset + i];
-
-					if(check_ball == ball) continue; // evil evil pointer comparison
-					check_and_resolve_balls_2d(ball, check_ball);
-				}
+				collide_ball_partition_2d(partition, grid, balls, ball);
 			}
-		}
+		}*/
 	}
 
 }
