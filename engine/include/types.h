@@ -14,6 +14,8 @@ float v2_dot(vec2 a, vec2 b);
 float v2_magnitude(vec2 a);
 vec2 v2_normalize(vec2 a);
 
+vec2 v2_lerp(vec2 a, vec2 b, float t);
+
 typedef struct {
 	float x;
 	float y;

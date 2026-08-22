@@ -35,6 +35,15 @@ vec2 v2_normalize(vec2 a) {
 	return v2_fdiv(a, v2_magnitude(a));
 }
 
+vec2 v2_lerp(vec2 a, vec2 b, float t) {
+	vec2 c;
+	c.x = (a.x * (1-t)) + b.x * t;
+	c.y = (a.y * (1-t)) + b.y * t;
+
+	return c;
+}
+
+
 // vector 3 functions
 
 vec3 v3_add(vec3 a, vec3 b) {
