@@ -42,6 +42,8 @@ typedef struct {
 	int link_count;
 } shape_2d;
 
+void collide_wall_2d(ball_2d *a, ball_2d *b, ball_2d *collider);
+
 void set_velocity_2d(ball_2d *body, vec2 velocity);
 collision_info_2d check_collision_2d(ball_2d a, wall_2d b);
 void resolve_collision_2d(ball_2d *body, collision_info_2d hit_info, float elasticity, float friction, float deltatime);

@@ -3,6 +3,48 @@
 #include <stdio.h>
 
 
+void collide_wall_2d(ball_2d *a, ball_2d *b, ball_2d *collider) {
+	vec2 a_b_edge = v2_sub(b->position, a->position);
+
+	vec2 relative_a_position = v2_sub(a->position, collider->position);
+	vec2 relative_b_position = v2_sub(b->position, collider->position);
+
+	float a_position_magnitude = v2_magnitude(relative_a_position);
+	float b_position_magnitude = v2_magnitude(relative_b_position);
+
+	float a_b_side_length = v2_magnitude(a_b_edge);
+	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
+	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
+	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
+	vec2 a_b_closest_point = v2_lerp(a->position, b->position, a_b_closest_point_ratio);
+
+	float dist_to_line = v2_magnitude(v2_sub(a_b_closest_point, collider->position));
+
+
+
+	if(dist_to_line < collider->radius) {
+		vec2 collision_normal = v2_normalize((vec2){a_b_edge.y, -a_b_edge.x});
+		float collision_side = (v2_dot(collision_normal, relative_a_position) > 0) * 2 - 1;
+
+		float inverse_mass_collider = 1/collider->mass;
+		//float inverse_mass_wall = 1/(a->mass + b->mass);
+		float inverse_mass_a = 1/a->mass;
+		float inverse_mass_b = 1/b->mass;
+
+		float a_move_ratio = 1-a_b_closest_point_ratio;
+		float b_move_ratio = a_b_closest_point_ratio;
+
+		float inverse_inverse_mass_total = 1/(inverse_mass_collider + inverse_mass_a * a_move_ratio + inverse_mass_b * b_move_ratio);
+		
+
+		
+
+		collider->position = v2_add(collider->position, v2_fmult(collision_normal, -collision_side * inverse_mass_collider * inverse_inverse_mass_total * (collider->radius - dist_to_line)));
+		a->position = v2_add(a->position, v2_fmult(collision_normal, collision_side * inverse_mass_a * inverse_inverse_mass_total * a_move_ratio * (collider->radius - dist_to_line)));
+		b->position = v2_add(b->position, v2_fmult(collision_normal, collision_side * inverse_mass_b * inverse_inverse_mass_total * b_move_ratio * (collider->radius - dist_to_line)));
+	}
+}
+
 void set_velocity_2d(ball_2d *body, vec2 velocity) {
 	body->previous_position = v2_sub(body->position, velocity);
 }
