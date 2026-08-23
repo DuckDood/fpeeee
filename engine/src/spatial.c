@@ -1,3 +1,4 @@
+#include <float.h>
 #include <spatial.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -417,6 +418,25 @@ void update_grid_3d(spatial_grid *grid, ball_3d *balls, int ball_count) {
 	//free(ball_counts);
 }
 
+void collide_ball_partition_3d(spatial_partition * restrict partition, spatial_grid *grid, ball_3d *balls, ball_3d *ball) {
+	/*for(int j = 0; j < partition->ball_count; ++j) {
+		//if(partition->ball_offset + j < i) continue;
+		//ball_2d *check_ball = balls + partition->ball_offset + i;
+		ball_2d *check_ball = balls + grid->ball_map[partition->ball_offset + j];
+
+		if(check_ball == ball) continue; // evil evil pointer comparison
+		check_and_resolve_balls_2d(ball, check_ball);
+	}*/
+
+	for(int i = 0; i < partition->ball_count; ++i) {
+		//ball_2d *check_ball = balls + partition->ball_offset + i;
+		ball_3d *check_ball = balls + grid->ball_map[partition->ball_offset + i];
+
+		if(check_ball == ball) continue; // evil evil pointer comparison
+		check_and_resolve_balls_3d(ball, check_ball);
+	}
+}
+
 void spatial_collision_3d(spatial_grid *grid, ball_3d *balls, int ball_count) {
 	for(int i = 0; i < ball_count; ++i) {
 		ball_3d *ball = balls + grid->ball_map[i];
@@ -429,7 +449,33 @@ void spatial_collision_3d(spatial_grid *grid, ball_3d *balls, int ball_count) {
 			|| ball_layer < 0 || ball_layer > grid->depth - 1)
 			continue;
 
+		float error_buffer = ball->radius * 0.3; // idk you just need it
+		int min_ball_column = (ball->position.x - ball->radius - error_buffer) / grid->element_size + grid->width * 0.5;
+		int min_ball_row = (ball->position.y - ball->radius - error_buffer) / grid->element_size + grid->height * 0.5;
+		int min_ball_layer = (ball->position.z - ball->radius - error_buffer) / grid->element_size + grid->depth * 0.5;
 
+		int max_ball_column = (ball->position.x + ball->radius + error_buffer) / grid->element_size + grid->width * 0.5;
+		int max_ball_row = (ball->position.y + ball->radius + error_buffer) / grid->element_size + grid->height * 0.5;
+		int max_ball_layer = (ball->position.z + ball->radius + error_buffer) / grid->element_size + grid->depth * 0.5;
+
+		for(int layer = min_ball_layer; layer <= max_ball_layer; ++layer) {
+			if(layer >= grid->depth - 1) continue;
+			if(layer < 0) continue;
+			for(int row = min_ball_row; row <= max_ball_row; ++row) {
+				if(row >= grid->height - 1) continue;
+				if(row < 0) continue;
+				for(int column = min_ball_column; column <= max_ball_column; ++column) {
+					if(column >= grid->width - 1) continue;
+					if(column < 0) continue;
+					//int partition_index = row * grid->width + column;
+					int partition_index = layer * grid->width * grid->height + row * grid->width + column;
+					spatial_partition * restrict partition = grid->partitions + partition_index;
+					collide_ball_partition_3d(partition, grid, balls, ball);
+				}
+			}
+		}
+
+		/*
 		for(int layer = -1; layer < 2; ++layer) {
 				int total_layer = ball_layer + layer;
 				if(total_layer < 0 || total_layer > grid->depth-1) continue;
@@ -449,16 +495,10 @@ void spatial_collision_3d(spatial_grid *grid, ball_3d *balls, int ball_count) {
 
 					spatial_partition * restrict partition = grid->partitions + partition_index;
 
-					for(int i = 0; i < partition->ball_count; ++i) {
-						//ball_2d *check_ball = balls + partition->ball_offset + i;
-						ball_3d *check_ball = balls + grid->ball_map[partition->ball_offset + i];
-
-						if(check_ball == ball) continue; // evil evil pointer comparison
-						check_and_resolve_balls_3d(ball, check_ball);
-					}
+					collide_ball_partition_3d(partition, grid, balls, ball);
 				}
 			}
-		}
+		}*/
 	}
 
 }
