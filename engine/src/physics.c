@@ -3,47 +3,6 @@
 #include <stdio.h>
 
 
-void collide_wall_2d(ball_2d *a, ball_2d *b, ball_2d *collider) {
-	vec2 a_b_edge = v2_sub(b->position, a->position);
-
-	vec2 relative_a_position = v2_sub(a->position, collider->position);
-	vec2 relative_b_position = v2_sub(b->position, collider->position);
-
-	float a_position_magnitude = v2_magnitude(relative_a_position);
-	float b_position_magnitude = v2_magnitude(relative_b_position);
-
-	float a_b_side_length = v2_magnitude(a_b_edge);
-	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
-	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
-	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
-	vec2 a_b_closest_point = v2_lerp(a->position, b->position, a_b_closest_point_ratio);
-
-	float dist_to_line = v2_magnitude(v2_sub(a_b_closest_point, collider->position));
-
-
-
-	if(dist_to_line < collider->radius) {
-		vec2 collision_normal = v2_normalize((vec2){a_b_edge.y, -a_b_edge.x});
-		float collision_side = (v2_dot(collision_normal, relative_a_position) > 0) * 2 - 1;
-
-		float inverse_mass_collider = 1/collider->mass;
-		//float inverse_mass_wall = 1/(a->mass + b->mass);
-		float inverse_mass_a = 1/a->mass;
-		float inverse_mass_b = 1/b->mass;
-
-		float a_move_ratio = 1-a_b_closest_point_ratio;
-		float b_move_ratio = a_b_closest_point_ratio;
-
-		float inverse_inverse_mass_total = 1/(inverse_mass_collider + inverse_mass_a * a_move_ratio + inverse_mass_b * b_move_ratio);
-		
-
-		
-
-		collider->position = v2_add(collider->position, v2_fmult(collision_normal, -collision_side * inverse_mass_collider * inverse_inverse_mass_total * (collider->radius - dist_to_line)));
-		a->position = v2_add(a->position, v2_fmult(collision_normal, collision_side * inverse_mass_a * inverse_inverse_mass_total * a_move_ratio * (collider->radius - dist_to_line)));
-		b->position = v2_add(b->position, v2_fmult(collision_normal, collision_side * inverse_mass_b * inverse_inverse_mass_total * b_move_ratio * (collider->radius - dist_to_line)));
-	}
-}
 
 void set_velocity_2d(ball_2d *body, vec2 velocity) {
 	body->previous_position = v2_sub(body->position, velocity);
@@ -355,6 +314,48 @@ void resolve_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b, colli
 
 }
 
+void collide_wall_2d(ball_2d *a, ball_2d *b, ball_2d *collider) {
+	vec2 a_b_edge = v2_sub(b->position, a->position);
+
+	vec2 relative_a_position = v2_sub(a->position, collider->position);
+	vec2 relative_b_position = v2_sub(b->position, collider->position);
+
+	float a_position_magnitude = v2_magnitude(relative_a_position);
+	float b_position_magnitude = v2_magnitude(relative_b_position);
+
+	float a_b_side_length = v2_magnitude(a_b_edge);
+	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
+	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
+	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
+	vec2 a_b_closest_point = v2_lerp(a->position, b->position, a_b_closest_point_ratio);
+
+	float dist_to_line = v2_magnitude(v2_sub(a_b_closest_point, collider->position));
+
+
+
+	if(dist_to_line < collider->radius) {
+		vec2 collision_normal = v2_normalize((vec2){a_b_edge.y, -a_b_edge.x});
+		float collision_side = (v2_dot(collision_normal, relative_a_position) > 0) * 2 - 1;
+
+		float inverse_mass_collider = 1/collider->mass;
+		//float inverse_mass_wall = 1/(a->mass + b->mass);
+		float inverse_mass_a = 1/a->mass;
+		float inverse_mass_b = 1/b->mass;
+
+		float a_move_ratio = 1-a_b_closest_point_ratio;
+		float b_move_ratio = a_b_closest_point_ratio;
+
+		float inverse_inverse_mass_total = 1/(inverse_mass_collider + inverse_mass_a * a_move_ratio + inverse_mass_b * b_move_ratio);
+		
+
+		
+
+		collider->position = v2_add(collider->position, v2_fmult(collision_normal, -collision_side * inverse_mass_collider * inverse_inverse_mass_total * (collider->radius - dist_to_line)));
+		a->position = v2_add(a->position, v2_fmult(collision_normal, collision_side * inverse_mass_a * inverse_inverse_mass_total * a_move_ratio * (collider->radius - dist_to_line)));
+		b->position = v2_add(b->position, v2_fmult(collision_normal, collision_side * inverse_mass_b * inverse_inverse_mass_total * b_move_ratio * (collider->radius - dist_to_line)));
+	}
+}
+
 // 3d functions
 
 void set_velocity_3d(ball_3d *body, vec3 velocity) {
@@ -602,4 +603,194 @@ void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_inf
 void check_and_resolve_balls_3d(ball_3d *a, ball_3d *b) {
 	collision_info_3d hit_info = check_ball_collision_3d(*a, *b);
 	resolve_ball_collision_3d(a, b, hit_info);
+}
+
+void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider) {
+	vec3 a_b_edge = v3_sub(a->position, b->position);
+	vec3 b_c_edge = v3_sub(b->position, c->position);
+	vec3 c_a_edge = v3_sub(c->position, a->position);
+
+	vec3 normal = v3_cross(a_b_edge, b_c_edge);
+	float normal_magnitude = v3_magnitude(normal);
+	float inverse_triangle_area = 1/(normal_magnitude * 0.5);
+	normal = v3_fdiv(normal, normal_magnitude);
+
+	vec3 a_b_edge_normal = v3_normalize(v3_cross(normal, a_b_edge));
+	vec3 b_c_edge_normal = v3_normalize(v3_cross(normal, b_c_edge));
+	vec3 c_a_edge_normal = v3_normalize(v3_cross(normal, c_a_edge));
+
+	vec3 relative_a_position = v3_sub(collider->position, a->position);
+	vec3 relative_b_position = v3_sub(collider->position, b->position);
+	vec3 relative_c_position = v3_sub(collider->position, c->position);
+
+	float a_b_edge_height = v3_dot(relative_a_position, a_b_edge_normal);
+	float b_c_edge_height = v3_dot(relative_b_position, b_c_edge_normal);
+	float c_a_edge_height = v3_dot(relative_c_position, c_a_edge_normal);
+
+	float a_b_edge_area = a_b_edge_height * v3_magnitude(a_b_edge) * 0.5;
+	float b_c_edge_area = b_c_edge_height * v3_magnitude(b_c_edge) * 0.5;
+	float c_a_edge_area = c_a_edge_height * v3_magnitude(c_a_edge) * 0.5;
+
+	float a_barycentric = -b_c_edge_area * inverse_triangle_area;
+	float b_barycentric = -c_a_edge_area * inverse_triangle_area;
+	float c_barycentric = -a_b_edge_area * inverse_triangle_area;
+
+	//printf("barycentrics, abc: %f, %f, %f\n", a_barycentric, b_barycentric, c_barycentric);
+	
+	int a_b_edge_side = a_b_edge_height <= 0;
+	int b_c_edge_side = b_c_edge_height <= 0;
+	int c_a_edge_side = c_a_edge_height <= 0;
+
+	int in_triangle_plane = a_b_edge_side == b_c_edge_side && a_b_edge_side == c_a_edge_side;
+
+	float side_dot = v3_dot(relative_a_position, normal);
+	int side = (side_dot <= 0) * 2 - 1;
+
+	if(in_triangle_plane && side*side_dot > -collider->radius) {
+		//info.hit = in_triangle_plane && side*side_dot > -a.radius;
+		//info.depth = -side_dot - side * a.radius;
+		//info.normal = b.normal;
+		//closest_point
+		
+		//if(side*side_dot > -collider->radius)
+
+		//collider->position = v3_add(collider->position, v3_fmult(normal, -side_dot - side * collider->radius));
+		float inverse_mass_collider = 1/collider->mass;
+
+		float inverse_mass_a = 1/a->mass;
+		float inverse_mass_b = 1/b->mass;
+		float inverse_mass_c = 1/c->mass;
+
+		float a_move_ratio = a_barycentric;
+		float b_move_ratio = b_barycentric;
+		float c_move_ratio = c_barycentric;
+
+		float inverse_inverse_mass_total = 1/(inverse_mass_collider + inverse_mass_a * a_move_ratio + inverse_mass_b * b_move_ratio + inverse_mass_c * c_move_ratio);
+		//printf("invtotal %f\ninvcol %f\ninva %f\ninvb %f\ninvc %f\n", inverse_inverse_mass_total, inverse_mass_collider, inverse_mass_a, inverse_mass_b, inverse_mass_c);
+		//printf("invba %f\n invbb %f\n invbc%f\n", a_move_ratio, b_move_ratio, c_move_ratio);
+		
+
+		
+
+		collider->position = v3_add(collider->position, v3_fmult(normal, inverse_mass_collider * inverse_inverse_mass_total * ( - side_dot - side * collider->radius)));
+		a->position = v3_sub(a->position, v3_fmult(normal, a_move_ratio * inverse_mass_a * inverse_inverse_mass_total * ( - side_dot - side * collider->radius)));
+		b->position = v3_sub(b->position, v3_fmult(normal, b_move_ratio * inverse_mass_b * inverse_inverse_mass_total * ( - side_dot - side * collider->radius)));
+		c->position = v3_sub(c->position, v3_fmult(normal, c_move_ratio * inverse_mass_c * inverse_inverse_mass_total * ( - side_dot - side * collider->radius)));
+	}
+
+
+	/*
+	vec3 relative_a_position = v3_sub(collider->position, a->position);
+	vec3 relative_b_position = v3_sub(collider->position, b->position);
+	vec3 relative_c_position = v3_sub(collider->position, c->position);
+
+	float a_position_magnitude = v3_magnitude(relative_a_position);
+	float b_position_magnitude = v3_magnitude(relative_b_position);
+	float c_position_magnitude = v3_magnitude(relative_c_position);
+
+	vec3 a_b_edge = v3_sub(a->position, b->position);
+	vec3 b_c_edge = v3_sub(b->position, c->position);
+	vec3 c_a_edge = v3_sub(c->position, a->position);
+
+	vec3 normal = v3_normalize(v3_cross(b_c_edge, a_b_edge));
+
+	vec3 a_b_edge_normal = v3_normalize(v3_cross(normal, a_b_edge));
+	vec3 b_c_edge_normal = v3_normalize(v3_cross(normal, b_c_edge));
+	vec3 c_a_edge_normal = v3_normalize(v3_cross(normal, c_a_edge));
+
+	int a_b_edge_side = v3_dot(relative_a_position, a_b_edge_normal) <= 0;
+	int b_c_edge_side = v3_dot(relative_b_position, b_c_edge_normal) <= 0;
+	int c_a_edge_side = v3_dot(relative_c_position, c_a_edge_normal) <= 0;
+
+	int in_triangle_plane = a_b_edge_side == b_c_edge_side && a_b_edge_side == c_a_edge_side;
+
+	float a_b_side_length = v3_magnitude(a_b_edge);
+	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
+	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
+	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
+	vec3 a_b_closest_point = v3_lerp(a->position, b->position, a_b_closest_point_ratio);
+
+	float b_c_side_length = v3_magnitude(b_c_edge);
+	float b_c_closest_point_ratio = (b_c_side_length + (b_position_magnitude*b_position_magnitude - c_position_magnitude*c_position_magnitude - b_c_side_length*b_c_side_length)/(2 * b_c_side_length)) / b_c_side_length;
+	if(b_c_closest_point_ratio < 0) b_c_closest_point_ratio = 0;
+	if(b_c_closest_point_ratio > 1) b_c_closest_point_ratio = 1;
+	vec3 b_c_closest_point = v3_lerp(b->position, c->position, b_c_closest_point_ratio);
+
+	float c_a_side_length = v3_magnitude(c_a_edge);
+	float c_a_closest_point_ratio = (c_a_side_length + (c_position_magnitude*c_position_magnitude - a_position_magnitude*a_position_magnitude - c_a_side_length*c_a_side_length)/(2 * c_a_side_length)) / c_a_side_length;
+	if(c_a_closest_point_ratio < 0) c_a_closest_point_ratio = 0;
+	if(c_a_closest_point_ratio > 1) c_a_closest_point_ratio = 1;
+	vec3 c_a_closest_point = v3_lerp(c->position, a->position, c_a_closest_point_ratio);
+
+	vec3 a_b_closest_relative = v3_sub(collider->position, a_b_closest_point);
+	vec3 b_c_closest_relative = v3_sub(collider->position, b_c_closest_point);
+	vec3 c_a_closest_relative = v3_sub(collider->position, c_a_closest_point);
+
+	float a_b_closest_magnitude = v3_magnitude(a_b_closest_relative);
+	float b_c_closest_magnitude = v3_magnitude(b_c_closest_relative);
+	float c_a_closest_magnitude = v3_magnitude(c_a_closest_relative);
+	
+	float closest_magnitude;
+	vec3 closest_point;
+	if(a_b_closest_magnitude < b_c_closest_magnitude) {
+		closest_magnitude = a_b_closest_magnitude;
+		closest_point = a_b_closest_relative;
+	} else {
+		closest_magnitude = b_c_closest_magnitude;
+		closest_point = b_c_closest_relative;
+	}
+
+	if(c_a_closest_magnitude < closest_magnitude) {
+		closest_magnitude = c_a_closest_magnitude;
+		closest_point = c_a_closest_relative;
+	}
+
+	if(closest_magnitude < collider->radius) {
+		//info.hit = 1;
+		//info.depth = -closest_magnitude + a.radius;
+		//info.normal = v3_normalize(closest_point);
+		//info.normal = v3_fmult(info.normal, 1);
+		
+		printf("hit\n");
+	}
+
+	float side_dot = v3_dot(relative_a_position, normal);
+	int side = (side_dot <= 0) * 2 - 1;
+
+	if(in_triangle_plane) {
+		//info.hit = in_triangle_plane && side*side_dot > -a.radius;
+		//info.depth = -side_dot - side * a.radius;
+		//info.normal = b.normal;
+		closest_point
+		
+		if(side*side_dot > -collider->radius)
+		printf("hit2\n");
+	}
+
+	//return info;
+	*/
+
+
+
+	/*if(dist_to_line < collider->radius) {
+		vec2 collision_normal = v2_normalize((vec2){a_b_edge.y, -a_b_edge.x});
+		float collision_side = (v2_dot(collision_normal, relative_a_position) > 0) * 2 - 1;
+
+		float inverse_mass_collider = 1/collider->mass;
+		//float inverse_mass_wall = 1/(a->mass + b->mass);
+		float inverse_mass_a = 1/a->mass;
+		float inverse_mass_b = 1/b->mass;
+
+		float a_move_ratio = 1-a_b_closest_point_ratio;
+		float b_move_ratio = a_b_closest_point_ratio;
+
+		float inverse_inverse_mass_total = 1/(inverse_mass_collider + inverse_mass_a * a_move_ratio + inverse_mass_b * b_move_ratio);
+		
+
+		
+
+		collider->position = v2_add(collider->position, v2_fmult(collision_normal, -collision_side * inverse_mass_collider * inverse_inverse_mass_total * (collider->radius - dist_to_line)));
+		a->position = v2_add(a->position, v2_fmult(collision_normal, collision_side * inverse_mass_a * inverse_inverse_mass_total * a_move_ratio * (collider->radius - dist_to_line)));
+		b->position = v2_add(b->position, v2_fmult(collision_normal, collision_side * inverse_mass_b * inverse_inverse_mass_total * b_move_ratio * (collider->radius - dist_to_line)));
+	}*/
 }
