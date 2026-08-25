@@ -133,11 +133,17 @@ void spatial_collision_2d(spatial_grid *grid, ball_2d *balls, int ball_count) {
 		}*/
 		//printf("ck%i\n", checkcount);
 
-		int min_ball_column = (ball->position.x - ball->radius) / grid->element_size + grid->width * 0.5;
-		int min_ball_row = (ball->position.y - ball->radius) / grid->element_size + grid->height * 0.5;
+		float error_buffer = ball->radius;
 
-		int max_ball_column = (ball->position.x + ball->radius) / grid->element_size + grid->width * 0.5;
-		int max_ball_row = (ball->position.y + ball->radius) / grid->element_size + grid->height * 0.5;
+		int min_ball_column = (ball->position.x - ball->radius - error_buffer) / grid->element_size + grid->width * 0.5;
+		int min_ball_row = (ball->position.y - ball->radius - error_buffer) / grid->element_size + grid->height * 0.5;
+
+		int max_ball_column = (ball->position.x + ball->radius + error_buffer) / grid->element_size + grid->width * 0.5;
+		int max_ball_row = (ball->position.y + ball->radius + error_buffer) / grid->element_size + grid->height * 0.5;
+
+		//printf("mincol: %i, maxcol: %i\n", min_ball_column, max_ball_column);
+		//printf("minrow: %i, maxrow: %i\n", min_ball_row, max_ball_row);
+
 
 		for(int row = min_ball_row; row <= max_ball_row; ++row) {
 			if(row >= grid->height - 1) continue;
@@ -449,7 +455,8 @@ void spatial_collision_3d(spatial_grid *grid, ball_3d *balls, int ball_count) {
 			|| ball_layer < 0 || ball_layer > grid->depth - 1)
 			continue;
 
-		float error_buffer = ball->radius * 0.3; // idk you just need it
+		// this doesnt speed up the spatial collisions, but it does allow balls that are bigger than the size of the grid cell to exist just with detriments to check counts
+		float error_buffer = ball->radius; // 
 		int min_ball_column = (ball->position.x - ball->radius - error_buffer) / grid->element_size + grid->width * 0.5;
 		int min_ball_row = (ball->position.y - ball->radius - error_buffer) / grid->element_size + grid->height * 0.5;
 		int min_ball_layer = (ball->position.z - ball->radius - error_buffer) / grid->element_size + grid->depth * 0.5;
