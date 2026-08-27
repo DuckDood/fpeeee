@@ -51,10 +51,20 @@ build parachute
 
 rmbuild obj/parachute.c.o
 
+src dynamic_wall_parachute.c
+build dynamic_wall_parachute
+
+rmbuild obj/dynamic_wall_parachute.c.o
+
 src fluid_3d.c
 build fluid_3d
 
 rmbuild obj/fluid_3d.c.o
+
+src cloth.c
+build cloth
+
+rmbuild obj/cloth.c.o
 
 src 2d_3d_scene.c
 build 2d_3d_scene
