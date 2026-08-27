@@ -1,6 +1,7 @@
 #include <math.h>
 #include <physics.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 
 
@@ -605,12 +606,70 @@ void check_and_resolve_balls_3d(ball_3d *a, ball_3d *b) {
 	resolve_ball_collision_3d(a, b, hit_info);
 }
 
+void get_point_triangle_info(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider, float *barycentric_a, float *barycentric_b, float *barycentric_c, bool *inside_triangle_plane, float *distance_to_triangle_face, int *side, vec3 *face_normal) {
+	vec3 a_b_edge = v3_sub(a->position, b->position); // gets relative edges
+	vec3 b_c_edge = v3_sub(b->position, c->position);
+	vec3 c_a_edge = v3_sub(c->position, a->position);
+
+	vec3 relative_a_position = v3_sub(collider->position, a->position); // gets relative positions from vertices
+	vec3 relative_b_position = v3_sub(collider->position, b->position);
+	vec3 relative_c_position = v3_sub(collider->position, c->position);
+
+	vec3 normal = v3_cross(a_b_edge, b_c_edge); // get normal vector
+
+	float normal_magnitude = v3_magnitude(normal);
+	float inverse_triangle_area = 1/(normal_magnitude * 0.5); // the magnitude of the cross product also gives double the area (for some reason)
+	normal = v3_fdiv(normal, normal_magnitude); // normalize normal vector
+
+	vec3 a_b_edge_normal = v3_normalize(v3_cross(normal, a_b_edge)); // gives a vector pointing off of each edge into the triangle
+	vec3 b_c_edge_normal = v3_normalize(v3_cross(normal, b_c_edge));
+	vec3 c_a_edge_normal = v3_normalize(v3_cross(normal, c_a_edge));
+
+
+	float a_b_edge_height = v3_dot(relative_a_position, a_b_edge_normal); // gives the distance between the edge and the point
+	float b_c_edge_height = v3_dot(relative_b_position, b_c_edge_normal);
+	float c_a_edge_height = v3_dot(relative_c_position, c_a_edge_normal);
+
+	float a_b_edge_area = a_b_edge_height * v3_magnitude(a_b_edge) * 0.5; // gives the area of the triangle made from each sides vertices and the point we're checking against (edge height toward point * edge length * 0.5)
+	float b_c_edge_area = b_c_edge_height * v3_magnitude(b_c_edge) * 0.5;
+	float c_a_edge_area = c_a_edge_height * v3_magnitude(c_a_edge) * 0.5;
+	
+	int a_b_edge_side = a_b_edge_height <= 0;
+	int b_c_edge_side = b_c_edge_height <= 0;
+	int c_a_edge_side = c_a_edge_height <= 0;
+
+	*barycentric_a = -b_c_edge_area * inverse_triangle_area; // convert to barycentrics
+	*barycentric_b = -c_a_edge_area * inverse_triangle_area;
+	*barycentric_c = -a_b_edge_area * inverse_triangle_area;
+
+	*inside_triangle_plane = a_b_edge_side == b_c_edge_side && a_b_edge_side == c_a_edge_side; // inside triangle (on the same side of each line)
+	*distance_to_triangle_face = v3_dot(relative_a_position, normal);
+	*side = (*distance_to_triangle_face <= 0) * 2 - 1;
+
+	*face_normal = normal;
+}
+
 void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider) {
+	/*
 	vec3 a_b_edge = v3_sub(a->position, b->position);
 	vec3 b_c_edge = v3_sub(b->position, c->position);
 	vec3 c_a_edge = v3_sub(c->position, a->position);
 
+	vec3 relative_a_position = v3_sub(collider->position, a->position);
+	vec3 relative_b_position = v3_sub(collider->position, b->position);
+	vec3 relative_c_position = v3_sub(collider->position, c->position);
+
 	vec3 normal = v3_cross(a_b_edge, b_c_edge);
+
+	float side_dot = v3_dot(relative_a_position, normal);
+	int side = (side_dot <= 0) * 2 - 1;
+
+	vec3 previous_relative_a_position = v3_sub(collider->previous_position, a->position);
+
+	float previous_side_dot = v3_dot(previous_relative_a_position, normal);
+	int previous_side = (previous_side_dot <= 0) * 2 - 1;
+
+
 	float normal_magnitude = v3_magnitude(normal);
 	float inverse_triangle_area = 1/(normal_magnitude * 0.5);
 	normal = v3_fdiv(normal, normal_magnitude);
@@ -619,9 +678,6 @@ void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider) {
 	vec3 b_c_edge_normal = v3_normalize(v3_cross(normal, b_c_edge));
 	vec3 c_a_edge_normal = v3_normalize(v3_cross(normal, c_a_edge));
 
-	vec3 relative_a_position = v3_sub(collider->position, a->position);
-	vec3 relative_b_position = v3_sub(collider->position, b->position);
-	vec3 relative_c_position = v3_sub(collider->position, c->position);
 
 	float a_b_edge_height = v3_dot(relative_a_position, a_b_edge_normal);
 	float b_c_edge_height = v3_dot(relative_b_position, b_c_edge_normal);
@@ -643,10 +699,22 @@ void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider) {
 
 	int in_triangle_plane = a_b_edge_side == b_c_edge_side && a_b_edge_side == c_a_edge_side;
 
-	float side_dot = v3_dot(relative_a_position, normal);
-	int side = (side_dot <= 0) * 2 - 1;
+	//float distance_to_face = side_dot;
 
-	if(in_triangle_plane && side*side_dot > -collider->radius) {
+	if(previous_side != side) {
+		printf("tunneling detected dfajsd;f;klasdf AHHHH\n");
+	}*/
+
+	
+	float a_barycentric, b_barycentric, c_barycentric, distance_to_face;
+	bool in_triangle_plane;
+	int side;
+	vec3 normal;
+
+	get_point_triangle_info(a, b, c, collider, &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance_to_face, &side, &normal);
+
+
+	if(in_triangle_plane && side*distance_to_face > -collider->radius) {
 		//info.hit = in_triangle_plane && side*side_dot > -a.radius;
 		//info.depth = -side_dot - side * a.radius;
 		//info.normal = b.normal;
@@ -672,11 +740,15 @@ void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider) {
 
 		
 
-		collider->position = v3_add(collider->position, v3_fmult(normal, inverse_mass_collider * inverse_inverse_mass_total * ( - side_dot - side * collider->radius)));
-		a->position = v3_sub(a->position, v3_fmult(normal, a_move_ratio * inverse_mass_a * inverse_inverse_mass_total * ( - side_dot - side * collider->radius)));
-		b->position = v3_sub(b->position, v3_fmult(normal, b_move_ratio * inverse_mass_b * inverse_inverse_mass_total * ( - side_dot - side * collider->radius)));
-		c->position = v3_sub(c->position, v3_fmult(normal, c_move_ratio * inverse_mass_c * inverse_inverse_mass_total * ( - side_dot - side * collider->radius)));
+		collider->position = v3_add(collider->position, v3_fmult(normal, inverse_mass_collider * inverse_inverse_mass_total * ( - distance_to_face - side * collider->radius)));
+		a->position = v3_sub(a->position, v3_fmult(normal, a_move_ratio * inverse_mass_a * inverse_inverse_mass_total * ( - distance_to_face - side * collider->radius)));
+		b->position = v3_sub(b->position, v3_fmult(normal, b_move_ratio * inverse_mass_b * inverse_inverse_mass_total * ( - distance_to_face - side * collider->radius)));
+		c->position = v3_sub(c->position, v3_fmult(normal, c_move_ratio * inverse_mass_c * inverse_inverse_mass_total * ( - distance_to_face - side * collider->radius)));
 	}
+
+
+	// it could still be hitting outside of the plane with the radius
+	
 
 
 	/*
