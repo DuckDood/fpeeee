@@ -68,32 +68,20 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	//state->ball_count = 1000;
-	state->ball_count = 5;
-	//state->ball_count = 130;
+	state->ball_count = 0;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
 	state->grid = construct_grid_3d(25, 50, 25, 0.3);
 
 
-	state->balls[0].position = (vec3){-1, 0, -1};
-	state->balls[1].position = (vec3){1, 0, -1};
-	state->balls[2].position = (vec3){-1, 0, 1};
-	state->balls[3].position = (vec3){1, 0, 1};
-
-	//state->balls[4].position = (vec3){0, 3, 0};
-	state->balls[4].position = (vec3){0, 3, 0};
-
 	for(int i = 0; i < state->ball_count; ++i) {
+		state->balls[i].position = (vec3){0, i * 0.5 + 5, 0};
 		set_velocity_3d(state->balls + i, (vec3){0});
 		state->balls[i].mass = 1;
-		state->balls[i].radius = 0.15;
+		state->balls[i].radius = 0.5;
 	}
 
-	set_velocity_3d(state->balls + 4, (vec3){0, 0.01, 0});
-
 	state->cloth = generate_cloth_3d(5, 5, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 100, (vec3){0});
-	//state->cloth.ball_count = 0;
 
 	state->frame_tick_count = SDL_GetTicks();
 	state->frame_count = 0;
@@ -103,6 +91,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 void SDL_AppQuit(void *appstate, [[maybe_unused]] SDL_AppResult result) {
 	prog_state *state = appstate;
 	destroy_grid_3d(&state->grid);
+	free_shape_3d(state->cloth);
 	free(state->balls);
 
 	SDL_DestroyRenderer(state->renderer);
@@ -140,11 +129,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	state->deltatime = 1.0/framerate/steps_per_frame;
 	//state->deltatime *= 0.5;
 	if(key_states[SDL_SCANCODE_RETURN]) {
-		if(SDL_GetTicks() > state->spawn_tick_count + 100) {
+		if(SDL_GetTicks() > state->spawn_tick_count + 500) {
 			int spawn_count = 1;
 			int x = 0, y = 0, z = 0;
-			int max_width = 5;
-			float ball_radius = 0.15;
+			int max_width = 2;
+			float ball_radius = 0.3;
 			float spawn_height = 5;
 			state->spawn_tick_count = SDL_GetTicks();
 			state->balls = realloc(state->balls, (state->ball_count += spawn_count) * sizeof(ball_3d));
@@ -165,8 +154,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				//state->balls[state->ball_count-1].radius = 0.1;
 
 				state->balls[state->ball_count-i].position = (vec3){(x-max_width*0.5) * 2 * ball_radius, spawn_height + y * 2 * ball_radius, (z-max_width*0.5) * 2 * ball_radius};
-				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, -0.03, 0});
-				state->balls[state->ball_count - i].mass = 1;
+				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, 0, 0});
+				state->balls[state->ball_count - i].mass = 0.5;
 				state->balls[state->ball_count - i].radius = ball_radius;
 				//state->balls[state->ball_count - i].radius = (rand() % 5 + 10)* 0.01;
 			}
@@ -183,12 +172,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	transform = generate_rotation_matrix(0, 0, 0);
 	transform = m3_mult(transform, generate_scale_matrix((vec3){1, 4, 1}));
 
+	/*
 	if(!key_states[SDL_SCANCODE_R]) {
 		for(int i = 0; i < state->cloth.ball_count; ++i) {
 			state->cloth.balls[i].previous_position = state->cloth.balls[i].position;
 		}
-		state->balls[4].previous_position = state->balls[4].position;
-	}
+	}*/
 
 	if(key_states[SDL_SCANCODE_LEFT]) {
 		state->cam.rotation.x-=0.03;
@@ -235,47 +224,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			ball_3d *current_ball = state->balls + i;
 			update_ball_3d(current_ball);
 			current_ball->position.y -= 10 * state->deltatime * state->deltatime;
-			//current_ball->position.y -= 9.8 * state->deltatime * state->deltatime;
-		}
-		state->balls[4].position.y -= 10 * state->deltatime * state->deltatime;
-		for(int i = 0; i < state->ball_count; ++i) {
-	//		check_and_resolve_3d(state->balls+i, bottom1, 0, 0, state->deltatime);
-	//		check_and_resolve_3d(state->balls+i, bottom2, 0, 0, state->deltatime);
-    //
-	//		check_and_resolve_3d(state->balls+i, back1, 0, 0, state->deltatime);
-	//		check_and_resolve_3d(state->balls+i, back2, 0, 0, state->deltatime);
-    //
-	//		check_and_resolve_3d(state->balls+i, front1, 0, 0, state->deltatime);
-	//		check_and_resolve_3d(state->balls+i, front2, 0, 0, state->deltatime);
-    //
-	//		check_and_resolve_3d(state->balls+i, left1, 0, 0, state->deltatime);
-	//		check_and_resolve_3d(state->balls+i, left2, 0, 0, state->deltatime);
-    //
-	//		check_and_resolve_3d(state->balls+i, right1, 0, 0, state->deltatime);
-	//		check_and_resolve_3d(state->balls+i, right2, 0, 0, state->deltatime);
 		}
 
-		/*
-		update_linkage_3d((linkage_3d){
-				.a = state->balls + 0,
-				.b = state->balls + 1,
-				.length = 2,
-				.type = DISTANCE
-				}, state->deltatime);
-
-		update_linkage_3d((linkage_3d){
-				.a = state->balls + 1,
-				.b = state->balls + 2,
-				.length = sqrt(8),
-				.type = DISTANCE
-				}, state->deltatime);
-
-		update_linkage_3d((linkage_3d){
-				.a = state->balls + 0,
-				.b = state->balls + 2,
-				.length = 2,
-				.type = DISTANCE
-				}, state->deltatime);*/
 		state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
 		state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5};
         
@@ -286,74 +236,35 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				update_linkage_3d(state->cloth.links[i], state->deltatime);
 		}
         
-		//state->cloth.balls[0].position = (vec3){-2.5, 0, 5};
-		//state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 5};
-        
-		//state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].position = (vec3){-2.5, 0, 10};
-		//state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, 10};
-
-		state->balls[0].position = (vec3){-1, 0, -1 + 3};
-		state->balls[1].position = (vec3){1, 0,  -1 + 3};
-		state->balls[2].position = (vec3){-1, 0,  1 + 3};
-		state->balls[3].position = (vec3){1, 0,   1 + 3};
-
-		collide_wall_3d(state->balls + 0, state->balls + 1, state->balls + 2, state->balls + 4);
-		state->balls[0].position = (vec3){-1, 0, -1 + 3};
-		state->balls[1].position = (vec3){1, 0,  -1 + 3};
-		state->balls[2].position = (vec3){-1, 0,  1 + 3};
-		state->balls[3].position = (vec3){1, 0,   1 + 3};
-		collide_wall_3d(state->balls + 3, state->balls + 1, state->balls + 2, state->balls + 4);
-
-		/*distance_constraint_3d(state->balls + 0, state->balls + 1, 2);
-		distance_constraint_3d(state->balls + 0, state->balls + 2, 2);
-		distance_constraint_3d(state->balls + 1, state->balls + 2, sqrt(8));
-
-		distance_constraint_3d(state->balls + 3, state->balls + 1, 2);
-		distance_constraint_3d(state->balls + 3, state->balls + 2, 2);
-		distance_constraint_3d(state->balls + 1, state->balls + 2, sqrt(8));*/
-
-		distance_constraint_3d(state->balls + 0, state->balls + 1, 2);
-		distance_constraint_3d(state->balls + 0, state->balls + 2, 2);
-
-		distance_constraint_3d(state->balls + 3, state->balls + 1, 2);
-		distance_constraint_3d(state->balls + 3, state->balls + 2, 2);
-
 		state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
 		state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5};
         
 		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].position = (vec3){-2.5, 0, -2.5};
 		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};
 		
-		/*
-		for(int i = 0; i < state->ball_count; ++i) {
-			for(int j = 0; j < state->ball_count; ++j) {
-				if(i == j) continue;
-				check_and_resolve_balls_3d(state->balls + i, state->balls + j);
-			}
-		}*/
-		
-		
 		
 		
 		update_grid_3d(&state->grid, state->balls, state->ball_count);
-		//spatial_collision_3d(&state->grid, state->balls, state->ball_count);
+		spatial_collision_3d(&state->grid, state->balls, state->ball_count);
 	
 		//collide_wall_3d(&state->cloth.balls[0], &state->cloth.balls[CLOTH_DIMENSIONS-1], &state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS], state->balls + 4);
 		//collide_wall_3d(&state->cloth.balls[state->cloth.ball_count-1], &state->cloth.balls[CLOTH_DIMENSIONS-1], &state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS], state->balls + 4);
 		
 	
-		for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
-			for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
-				collide_wall_3d(
-						&state->cloth.balls[i + CLOTH_DIMENSIONS*row],
-						&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
-						&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
-						state->balls + 4);
-				collide_wall_3d(
-						&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
-						&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
-						&state->cloth.balls[i+CLOTH_DIMENSIONS+1 + CLOTH_DIMENSIONS*row],
-						state->balls + 4);
+		for(int ball = 0; ball < state->ball_count; ++ball) {
+			for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
+				for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
+					collide_wall_3d(
+							&state->cloth.balls[i + CLOTH_DIMENSIONS*row],
+							&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
+							&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
+							state->balls + ball);
+					collide_wall_3d(
+							&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
+							&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
+							&state->cloth.balls[i+CLOTH_DIMENSIONS+1 + CLOTH_DIMENSIONS*row],
+							state->balls + ball);
+				}
 			}
 		}
 	}
@@ -422,7 +333,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		draw_circle_3d(state->renderer, state->balls[i], 25, state->cam);
 	}
 
-	draw_wall_3d(state->renderer, (wall_3d) {
+	/*draw_wall_3d(state->renderer, (wall_3d) {
 		.vertex_a = state->balls[0].position,
 		.vertex_b = state->balls[1].position,
 		.vertex_c = state->balls[2].position,
@@ -432,7 +343,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		.vertex_a = state->balls[3].position,
 		.vertex_b = state->balls[1].position,
 		.vertex_c = state->balls[2].position,
-	}, state->cam);
+	}, state->cam);*/
 
 	
 	/*for(int i = 0; i < state->cloth.ball_count; ++i) {
