@@ -712,7 +712,23 @@ void get_point_triangle_info(vec3 a, vec3 b, vec3 c, vec3 collider, float *baryc
 	}
 }
 
+
 void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider) {
+	float min_x, min_y, min_z;
+	float max_x, max_y, max_z;
+	min_x = fmin(fmin(a->position.x, b->position.x), c->position.x) - collider->radius;
+	min_y = fmin(fmin(a->position.y, b->position.y), c->position.y) - collider->radius;
+	min_z = fmin(fmin(a->position.z, b->position.z), c->position.z) - collider->radius;
+
+	max_x = fmax(fmax(a->position.x, b->position.x), c->position.x) + collider->radius;
+	max_y = fmax(fmax(a->position.y, b->position.y), c->position.y) + collider->radius;
+	max_z = fmax(fmax(a->position.z, b->position.z), c->position.z) + collider->radius;
+
+	
+	if(collider->position.x < min_x || collider->position.x > max_x ||
+	collider->position.y < min_y || collider->position.y > max_y ||
+	collider->position.z < min_z || collider->position.z > max_z) return;
+
 	float a_barycentric, b_barycentric, c_barycentric, distance;
 	bool in_triangle_plane;
 	int side;
