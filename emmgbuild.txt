@@ -46,6 +46,11 @@ build fluid
 
 rmbuild obj/fluid.c.o
 
+src cutcloth.c
+build cutcloth
+
+rmbuild obj/cutcloth.c.o
+
 src parachute.c
 build parachute
 
