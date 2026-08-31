@@ -163,6 +163,26 @@ void draw_circle_3d(SDL_Renderer *renderer, ball_3d b, int resolution, camera ca
 				((b_position_relative.y + sin(angle)*b.radius) * 0.5 + 0.5) * HEIGHT,
 				((b_position_relative.x + cos(angle + (3.14159*2)/resolution)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
 				((b_position_relative.y + sin(angle + (3.14159*2)/resolution)*b.radius) * 0.5 + 0.5) * HEIGHT);
+		SDL_RenderLine(renderer,
+				1+((b_position_relative.x + cos(angle)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
+				((b_position_relative.y + sin(angle)*b.radius) * 0.5 + 0.5) * HEIGHT,
+				1+((b_position_relative.x + cos(angle + (3.14159*2)/resolution)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
+				((b_position_relative.y + sin(angle + (3.14159*2)/resolution)*b.radius) * 0.5 + 0.5) * HEIGHT);
+		SDL_RenderLine(renderer,
+				-1+((b_position_relative.x + cos(angle)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
+				((b_position_relative.y + sin(angle)*b.radius) * 0.5 + 0.5) * HEIGHT,
+				-1+((b_position_relative.x + cos(angle + (3.14159*2)/resolution)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
+				((b_position_relative.y + sin(angle + (3.14159*2)/resolution)*b.radius) * 0.5 + 0.5) * HEIGHT);
+		SDL_RenderLine(renderer,
+				((b_position_relative.x + cos(angle)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
+				1+((b_position_relative.y + sin(angle)*b.radius) * 0.5 + 0.5) * HEIGHT,
+				((b_position_relative.x + cos(angle + (3.14159*2)/resolution)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
+				1+((b_position_relative.y + sin(angle + (3.14159*2)/resolution)*b.radius) * 0.5 + 0.5) * HEIGHT);
+		SDL_RenderLine(renderer,
+				((b_position_relative.x + cos(angle)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
+				-1+((b_position_relative.y + sin(angle)*b.radius) * 0.5 + 0.5) * HEIGHT,
+				((b_position_relative.x + cos(angle + (3.14159*2)/resolution)*b.radius) * inverse_aspect_ratio * 0.5 + 0.5) * WIDTH,
+				-1+((b_position_relative.y + sin(angle + (3.14159*2)/resolution)*b.radius) * 0.5 + 0.5) * HEIGHT);
 	}
 }
 
