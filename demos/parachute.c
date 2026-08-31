@@ -62,6 +62,8 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 		return SDL_APP_FAILURE;
 	}
 
+	SDL_SetRenderVSync(state->renderer, 1);
+
 
 	state->cam.position = (vec3){0, 0, -1};
 	state->cam.rotation = (vec3){0, 0, 0};
@@ -457,7 +459,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	Uint64 time_taken = SDL_GetTicks() - start_time;
 	if(time_taken > (Uint64)1000 / framerate) time_taken = 1000 / framerate;
-	SDL_Delay(1000 / framerate - time_taken);
+	//SDL_Delay(1000 / framerate - time_taken);
 
 	state->frame_count++;
 

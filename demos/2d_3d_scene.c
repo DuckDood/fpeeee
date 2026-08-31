@@ -75,6 +75,8 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 		return SDL_APP_FAILURE;
 	}
 
+	SDL_SetRenderVSync(app_state->renderer, 1);
+
 
 	app_state->fps_ticks[0] = SDL_GetTicks();
 	app_state->fps_ticks[2] = SDL_GetTicks();
@@ -525,7 +527,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	if(time_taken > 0)
 		time_taken -= 1;
 	if(time_taken > (Uint64)1000 / framerate) time_taken = 1000 / framerate;
-	SDL_Delay(1000 / framerate - time_taken);
+	//SDL_Delay(1000 / framerate - time_taken);
 
 	fflush(stdout);
 
