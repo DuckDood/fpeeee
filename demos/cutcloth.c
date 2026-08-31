@@ -17,7 +17,6 @@
 
 #include <spatial.h>
 
-
 #define WIDTH 1280
 #define HEIGHT 720
 
@@ -38,6 +37,8 @@ typedef struct {
 	int frame_count;
 
 	shape_2d cloth;
+	
+	spatial_grid collision_grid;
 
 } prog_state;
 
@@ -71,6 +72,8 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->frame_count = 0;
 
 	state->cloth = generate_cloth(CLOTH_WIDTH, CLOTH_WIDTH, CLOTH_RESOLUTION, CLOTH_RESOLUTION, CLOTH_STIFFNESS, (vec2){ 0, 0});
+
+	state->collision_grid = construct_grid_2d(150, 150, 0.02);
 
 	return SDL_APP_CONTINUE;
 }
@@ -186,7 +189,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	float mouse_x, mouse_y;
 
-	bool mouse_down = SDL_BUTTON_LMASK & SDL_GetMouseState(&mouse_x, &mouse_y);
+
+	SDL_MouseButtonFlags mouse_buttons = SDL_GetMouseState(&mouse_x, &mouse_y);
+	bool mouse_down = SDL_BUTTON_LMASK & mouse_buttons;
+	bool mouse_right_down = SDL_BUTTON_RMASK & mouse_buttons;
 
 
 	mouse_x /= state->cam.width;
@@ -199,6 +205,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	mouse_y *= 2;
 
 	mouse_x *= aspect_ratio;
+	vec2 mouse_vec = {mouse_x, mouse_y};
 
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
 		for(int i = 0; i < state->cloth.ball_count; ++i) {
@@ -223,10 +230,43 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				if(side_1 * side_2 < 0) {
 					state->cloth.links[i].stiffness = 0;
 				}*/
-				vec2 avg_position = v2_lerp(state->cloth.links[i].a->position, state->cloth.links[i].b->position, 0.5);
+
+				/*vec2 avg_position = v2_lerp(state->cloth.links[i].a->position, state->cloth.links[i].b->position, 0.5);
 				float dist = v2_magnitude(v2_sub(avg_position, (vec2){mouse_x, mouse_y}));
 				if(dist < 0.01)
+				state->cloth.links[i].stiffness = 0;*/
+				vec2 mouse_vec = {mouse_x, mouse_y};
+				vec2 relative_a_position = v2_sub(mouse_vec, state->cloth.links[i].a->position);
+				vec2 relative_b_position = v2_sub(mouse_vec, state->cloth.links[i].b->position);
+			
+				float a_position_magnitude = v2_magnitude(relative_a_position);
+				float b_position_magnitude = v2_magnitude(relative_b_position);
+			
+				vec2 a_b_edge = v2_sub(state->cloth.links[i].a->position, state->cloth.links[i].b->position);
+				float a_b_side_length = v2_magnitude(a_b_edge);
+				float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
+				if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
+				if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
+				vec2 closest_position = v2_lerp(state->cloth.links[i].a->position, state->cloth.links[i].b->position, a_b_closest_point_ratio);
+
+				float dist = v2_magnitude(v2_sub(closest_position, (vec2){mouse_x, mouse_y}));
+				if(dist < 0.01)
 				state->cloth.links[i].stiffness = 0;
+			}
+		}
+
+		if(mouse_right_down) {
+			for(int i = 0; i < state->cloth.ball_count; ++i) {
+				vec2 relative_position = v2_sub(state->cloth.balls[i].position,mouse_vec);
+				float relative_magnitude = v2_magnitude(relative_position);
+				float mouse_radius = 1;
+				float mouse_power = 10;
+				float power = mouse_power * state->deltatime * state->deltatime * -sqrt((mouse_radius - relative_magnitude)/(mouse_radius*mouse_radius));
+				if(relative_magnitude < mouse_radius) {
+					#define LERP(a, b, t) a*(1-t)+b*t
+					state->cloth.balls[i].position = v2_add(state->cloth.balls[i].position, v2_fmult(relative_position, power));
+					#undef LERP
+				}
 			}
 		}
 
@@ -243,6 +283,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		for(int i = 0; i < state->cloth.link_count; ++i) {
 			update_linkage_2d(state->cloth.links[i], state->deltatime);
 		}
+
+		update_grid_2d(&state->collision_grid, state->cloth.balls, state->cloth.ball_count);
+		spatial_collision_2d(&state->collision_grid, state->cloth.balls, state->cloth.ball_count);
 	}
 
 	
@@ -281,7 +324,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	state->frame_count++;
 
 	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
-		printf("framerate: %i\n", state->frame_count);
+		printf("framerate: %i\r", state->frame_count);
+		fflush(stdout);
 		state->frame_tick_count = SDL_GetTicks();
 		state->frame_count = 0;
 	}
