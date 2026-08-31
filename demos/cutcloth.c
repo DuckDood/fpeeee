@@ -22,7 +22,7 @@
 #define HEIGHT 720
 
 #define CLOTH_RESOLUTION 75
-#define CLOTH_WIDTH 1.
+#define CLOTH_WIDTH 1.5
 #define CLOTH_STIFFNESS 5
 
 typedef struct {
@@ -99,7 +99,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 				case SDLK_R:
 					free_shape_2d(state->cloth);
 					state->cloth = generate_cloth(CLOTH_WIDTH, CLOTH_WIDTH, CLOTH_RESOLUTION, CLOTH_RESOLUTION, CLOTH_STIFFNESS, (vec2){ 0, 0});
-					printf("something");
 				default:
 					break;
 			}
