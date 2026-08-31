@@ -1,17 +1,36 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<link rel="preconnect" href="https://fonts.googleapis.com"> <!-- loads font in case you don't have it -->
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 		<title>FPEEEE physics engine demos</title>
+		<style>
+		body {
+			font-family: roboto;
+			text-align: center;
+		}
+
+		ul {
+			display: inline-block;
+			text-align: left;
+		}
+		</style>
 	</head>
 	<body>
-		<h1>engine demos</h1>
-		<p>todo: make this page better</p>
-		<ul>
-			<li><a href="fluid.html">fluid</a></li>
-			<li><a href="fluid_3d.html">fluid 3d</a></li>
-			<li><a href="parachute.html">parachute</a></li>
-			<li><a href="cloth.html">cloth</a></li>
-			<li><a href="cutcloth.html">cloth cutter (recommended)</a></li>
-		</ul>
+		<h1>Engine Demos</h1>
+		<div>
+			<ul>
+				<li><a href="fluid.html">Fluid</a><br>A lot of balls</li>
+				<br>
+				<li><a href="fluid_3d.html">3D fluid</a><br>A lot of balls, but 3D!</li>
+				<br>
+				<li><a href="parachute.html">Parachute</a><br>Simple parachute with air particles</li>
+				<br>
+				<li><a href="cloth.html">Cloth</a><br>3D cloth with springs and collision</li>
+				<br>
+				<li><a href="cutcloth.html">Cloth cutter</a><br>2D cloth that you can cut!</li>
+			</ul>
+		</div>
 	</body>
 </html>
