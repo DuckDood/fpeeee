@@ -17,6 +17,16 @@
 
 #include <spatial.h>
 
+int fps = 0;
+int ball_count = 0;
+
+const char optionstr[50];
+
+const char *get_option() {
+	snprintf((char*)optionstr, 50, "FPS: %i, Number of balls: %i", fps, ball_count);
+	return optionstr;
+}
+
 #define CLOTH_DIMENSIONS 20
 
 //#define WIDTH 1280
@@ -403,17 +413,21 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	state->frame_count++;
 
-	/*
+	
+	ball_count = state->ball_count;
+	///*
 	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
 		printf("framerate: %i\nball count: %i\n", state->frame_count, state->ball_count);
-		if(state->frame_count < 60) {
+		/*if(state->frame_count < 60) {
 			printf("wee woo wee woo\n");
-		}
+		}*/
+		fps = state->frame_count;
+
 		state->frame_tick_count = SDL_GetTicks();
 		state->frame_count = 0;
 
 		//spatial_partition *bin_partition = state->grid.partitions + state->grid.width * state->grid.height * state->grid.depth;
-		int push_back = 0;
+		/*int push_back = 0;
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_3d *ball = state->balls + i;
 			int ball_column = ball->position.x / state->grid.element_size + state->grid.width * 0.5;
@@ -428,9 +442,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				++push_back;
 		}
 		state->ball_count -= push_back;
-		state->balls = realloc(state->balls, sizeof(ball_3d) * state->ball_count);
+		state->balls = realloc(state->balls, sizeof(ball_3d) * state->ball_count);*/
 	}
-	*/
+	//*/
 
 
 

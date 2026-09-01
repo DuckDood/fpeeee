@@ -14,6 +14,13 @@
 
 #include <helpers.h>
 
+const char optionstr[10];
+int option = 10;
+const char* get_option() {
+	snprintf((char*)optionstr, 10, "%i", option);
+	return optionstr;
+}
+
 //#define WIDTH 800
 //#define HEIGHT 600
 #define WIDTH 1280

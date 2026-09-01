@@ -17,6 +17,16 @@
 
 #include <spatial.h>
 
+int fps = 0;
+int ball_count = 0;
+
+const char optionstr[50];
+
+const char *get_option() {
+	snprintf((char*)optionstr, 50, "FPS: %i, Number of balls: %i", fps, ball_count);
+	return optionstr;
+}
+
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -347,8 +357,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	state->frame_count++;
 
+	ball_count = state->ball_count;
+
 	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
 		printf("framerate: %i\nball count: %i\n", state->frame_count, state->ball_count);
+		fps = state->frame_count;
 		state->frame_tick_count = SDL_GetTicks();
 		state->frame_count = 0;
 	}

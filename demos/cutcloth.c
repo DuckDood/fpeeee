@@ -17,11 +17,21 @@
 
 #include <spatial.h>
 
+int fps = 0;
+bool self_collision = 0;
+
+const char optionstr[50];
+
+const char *get_option() {
+	snprintf((char*)optionstr, 50, "FPS: %i, Self collision: %s", fps, self_collision ? "true" : "false");
+	return optionstr;
+}
+
 
 #define WIDTH 1280
 #define HEIGHT 720
 
-#define CLOTH_RESOLUTION 75
+#define CLOTH_RESOLUTION 50
 #define CLOTH_WIDTH 1.5
 #define CLOTH_STIFFNESS 5
 
@@ -40,6 +50,8 @@ typedef struct {
 	shape_2d cloth;
 	
 	spatial_grid collision_grid;
+
+	bool self_collision;
 
 } prog_state;
 
@@ -76,6 +88,8 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->collision_grid = construct_grid_2d(250, 150, 0.02);
 
+	state->self_collision = 0;
+
 	return SDL_APP_CONTINUE;
 }
 
@@ -105,6 +119,10 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 				case SDLK_R:
 					free_shape_2d(state->cloth);
 					state->cloth = generate_cloth(CLOTH_WIDTH, CLOTH_WIDTH, CLOTH_RESOLUTION, CLOTH_RESOLUTION, CLOTH_STIFFNESS, (vec2){ 0, 0}, 0.5);
+					break;
+				case SDLK_T:
+					state->self_collision = !state->self_collision;
+					break;
 				default:
 					break;
 			}
@@ -285,8 +303,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			update_linkage_2d(state->cloth.links[i], state->deltatime);
 		}
 
-		update_grid_2d(&state->collision_grid, state->cloth.balls, state->cloth.ball_count);
-		spatial_collision_2d(&state->collision_grid, state->cloth.balls, state->cloth.ball_count);
+		if(state->self_collision) {
+			update_grid_2d(&state->collision_grid, state->cloth.balls, state->cloth.ball_count);
+			spatial_collision_2d(&state->collision_grid, state->cloth.balls, state->cloth.ball_count);
+		}
 	}
 
 	
@@ -324,8 +344,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	state->frame_count++;
 
+	self_collision = state->self_collision;
+
 	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
 		printf("framerate: %i\n", state->frame_count);
+		fps = state->frame_count;
 		fflush(stdout);
 		state->frame_tick_count = SDL_GetTicks();
 		state->frame_count = 0;

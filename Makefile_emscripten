@@ -73,9 +73,9 @@ endif
 
 build/fluid.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -89,9 +89,9 @@ endif
 
 build/cutcloth.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cutcloth.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cutcloth.c.o -o build/cutcloth.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cutcloth.c.o -o build/cutcloth.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cutcloth.c.o -o build/cutcloth.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cutcloth.c.o -o build/cutcloth.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -105,9 +105,9 @@ endif
 
 build/parachute.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -121,9 +121,9 @@ endif
 
 build/dynamic_wall_parachute.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/dynamic_wall_parachute.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/dynamic_wall_parachute.c.o -o build/dynamic_wall_parachute.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/dynamic_wall_parachute.c.o -o build/dynamic_wall_parachute.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/dynamic_wall_parachute.c.o -o build/dynamic_wall_parachute.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/dynamic_wall_parachute.c.o -o build/dynamic_wall_parachute.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -137,9 +137,9 @@ endif
 
 build/fluid_3d.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -153,9 +153,9 @@ endif
 
 build/cloth.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o -o build/cloth.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o -o build/cloth.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o -o build/cloth.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o -o build/cloth.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -169,9 +169,9 @@ endif
 
 build/2d_3d_scene.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=requestFullscreen -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/2d_3d_scene.c.o -o build/2d_3d_scene.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 

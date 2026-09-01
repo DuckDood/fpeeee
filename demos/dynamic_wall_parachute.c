@@ -17,6 +17,13 @@
 
 #include <spatial.h>
 
+const char optionstr[10];
+int option = 10;
+const char* get_option() {
+	snprintf((char*)optionstr, 10, "%i", option);
+	return optionstr;
+}
+
 void update_ball_2d_b(ball_2d *body) {
 	vec2 next_position = v2_sub(v2_fmult(body->position, 2), body->previous_position);
 	vec2 new_position = v2_sub(v2_fmult(body->position, 2), next_position);
