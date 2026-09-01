@@ -74,7 +74,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->cloth = generate_cloth(CLOTH_WIDTH, CLOTH_WIDTH, CLOTH_RESOLUTION, CLOTH_RESOLUTION, CLOTH_STIFFNESS, (vec2){ 0, 0}, 0.5);
 
-	state->collision_grid = construct_grid_2d(150, 150, 0.02);
+	state->collision_grid = construct_grid_2d(250, 150, 0.02);
 
 	return SDL_APP_CONTINUE;
 }
@@ -116,7 +116,6 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
 	prog_state *state = appstate;
-	option++;
 
 	Uint64 start_time = SDL_GetTicks();
 
