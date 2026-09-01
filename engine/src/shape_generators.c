@@ -46,7 +46,7 @@ shape_2d generate_rectangle(float width, float height, vec2 starting_position) {
 	return rectangle;
 }
 
-shape_2d generate_cloth(float width, float height, int width_resolution, int height_resolution, float stiffness, vec2 starting_position) {
+shape_2d generate_cloth(float width, float height, int width_resolution, int height_resolution, float stiffness, vec2 starting_position, float radius_multiplier) {
 	shape_2d cloth;
 
 	cloth.ball_count = width_resolution * height_resolution;
@@ -62,7 +62,7 @@ shape_2d generate_cloth(float width, float height, int width_resolution, int hei
 			ball_2d *active_ball = &cloth.balls[row * width_resolution + column];
 			active_ball->position = v2_add((vec2){(column-width_resolution/2.) * width/(width_resolution-1), (row-height_resolution/2.) * height/(height_resolution-1)}, starting_position);
 			set_velocity_2d(active_ball, (vec2){0,0});
-			active_ball->radius = fmax(width/width_resolution, height/height_resolution) * 0.5; // insures that it will fill the space, but some balls might overlap if the dimensions arent square
+			active_ball->radius = fmax(width/width_resolution, height/height_resolution) * 0.5 * radius_multiplier; // insures that it will fill the space, but some balls might overlap if the dimensions arent square
 			active_ball->mass = 1. / (width_resolution * height_resolution);
 			if(column < width_resolution - 1) {
 				cloth.links[cloth_link_count++] = (linkage_2d){

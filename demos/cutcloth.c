@@ -17,6 +17,7 @@
 
 #include <spatial.h>
 
+
 #define WIDTH 1280
 #define HEIGHT 720
 
@@ -71,7 +72,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->spawn_tick_count = SDL_GetTicks();
 	state->frame_count = 0;
 
-	state->cloth = generate_cloth(CLOTH_WIDTH, CLOTH_WIDTH, CLOTH_RESOLUTION, CLOTH_RESOLUTION, CLOTH_STIFFNESS, (vec2){ 0, 0});
+	state->cloth = generate_cloth(CLOTH_WIDTH, CLOTH_WIDTH, CLOTH_RESOLUTION, CLOTH_RESOLUTION, CLOTH_STIFFNESS, (vec2){ 0, 0}, 0.5);
 
 	state->collision_grid = construct_grid_2d(150, 150, 0.02);
 
@@ -103,7 +104,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 			switch(event->key.key) {
 				case SDLK_R:
 					free_shape_2d(state->cloth);
-					state->cloth = generate_cloth(CLOTH_WIDTH, CLOTH_WIDTH, CLOTH_RESOLUTION, CLOTH_RESOLUTION, CLOTH_STIFFNESS, (vec2){ 0, 0});
+					state->cloth = generate_cloth(CLOTH_WIDTH, CLOTH_WIDTH, CLOTH_RESOLUTION, CLOTH_RESOLUTION, CLOTH_STIFFNESS, (vec2){ 0, 0}, 0.5);
 				default:
 					break;
 			}
@@ -115,6 +116,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
 	prog_state *state = appstate;
+	option++;
 
 	Uint64 start_time = SDL_GetTicks();
 
@@ -324,7 +326,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	state->frame_count++;
 
 	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
-		printf("framerate: %i\r", state->frame_count);
+		printf("framerate: %i\n", state->frame_count);
 		fflush(stdout);
 		state->frame_tick_count = SDL_GetTicks();
 		state->frame_count = 0;

@@ -3,7 +3,7 @@
 #include <physics.h>
 
 shape_2d generate_rectangle(float width, float height, vec2 starting_position);
-shape_2d generate_cloth(float width, float height, int width_resolution, int height_resolution, float stiffness, vec2 starting_position);
+shape_2d generate_cloth(float width, float height, int width_resolution, int height_resolution, float stiffness, vec2 starting_position, float radius_multiplier);
 shape_2d generate_rope(float length, int resolution, float stiffness, vec2 starting_position);
 
 shape_2d generate_wheel(float radius, int resolution, vec2 starting_position);
