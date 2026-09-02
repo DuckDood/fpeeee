@@ -32,7 +32,9 @@ float v2_magnitude(vec2 a) {
 }
 
 vec2 v2_normalize(vec2 a) {
-	return v2_fdiv(a, v2_magnitude(a));
+	float magnitude_squared = v2_dot(a, a);
+	if(magnitude_squared == 0) return (vec2){0}; // return 0 vector when passed 0 vector
+	return v2_fdiv(a, sqrt(magnitude_squared));
 }
 
 vec2 v2_lerp(vec2 a, vec2 b, float t) {
@@ -76,7 +78,9 @@ float v3_magnitude(vec3 a) {
 }
 
 vec3 v3_normalize(vec3 a) {
-	return v3_fdiv(a, v3_magnitude(a));
+	float magnitude_squared = v3_dot(a, a);
+	if(magnitude_squared == 0) return (vec3){0}; // return 0 vector when passed 0 vector
+	return v3_fdiv(a, sqrt(magnitude_squared));
 }
 
 vec3 v3_cross(vec3 a, vec3 b) {
