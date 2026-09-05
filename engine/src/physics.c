@@ -316,6 +316,18 @@ void resolve_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b, colli
 }
 
 void collide_wall_2d(ball_2d *a, ball_2d *b, ball_2d *collider) {
+	float min_x, min_y;
+	float max_x, max_y;
+	min_x = fmin(a->position.x, b->position.x) - collider->radius;
+	min_y = fmin(a->position.y, b->position.y) - collider->radius;
+
+	max_x = fmax(a->position.x, b->position.x) + collider->radius;
+	max_y = fmax(a->position.y, b->position.y) + collider->radius;
+
+	
+	if(collider->position.x < min_x || collider->position.x > max_x ||
+	collider->position.y < min_y || collider->position.y > max_y) return;
+
 	vec2 a_b_edge = v2_sub(b->position, a->position);
 
 	vec2 relative_a_position = v2_sub(a->position, collider->position);
