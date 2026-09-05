@@ -19,11 +19,12 @@
 
 int fps = 0;
 int ball_count = 0;
+float spawn_interval = 0;
 
-const char optionstr[50];
+char optionstr[256];
 
-const char *get_option() {
-	snprintf((char*)optionstr, 50, "FPS: %i, Number of balls: %i", fps, ball_count);
+char *get_option() {
+	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nclick to attract\nenter to spawn balls\nscroll to affect spawning speed\nP to set where the balls should shoot towards when spawning (tiny red dot)\n\nFPS: %i, Number of balls: %i, Spawn interval: %.1f", fps, ball_count, spawn_interval);
 	return optionstr;
 }
 
@@ -358,6 +359,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	state->frame_count++;
 
 	ball_count = state->ball_count;
+	spawn_interval = state->spawn_delay;
 
 	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
 		printf("framerate: %i\nball count: %i\n", state->frame_count, state->ball_count);

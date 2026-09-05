@@ -20,19 +20,17 @@
 int fps = 0;
 int ball_count = 0;
 
-const char optionstr[50];
+char optionstr[256];
 
-const char *get_option() {
-	snprintf((char*)optionstr, 50, "FPS: %i, Number of balls: %i", fps, ball_count);
+char *get_option() {
+	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nEnter to spawn balls\nWASD to move\nArrow keys to rotate camera (sorry)\n\nFPS: %i, Number of balls: %i", fps, ball_count);
 	return optionstr;
 }
 
 #define CLOTH_DIMENSIONS 20
 
-//#define WIDTH 1280
-//#define HEIGHT 720
-#define WIDTH 600
-#define HEIGHT 600
+#define WIDTH 1280
+#define HEIGHT 720
 
 typedef struct {
 	SDL_Window *window;
@@ -143,33 +141,16 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	if(key_states[SDL_SCANCODE_RETURN]) {
 		if(SDL_GetTicks() > state->spawn_tick_count + 500) {
 			int spawn_count = 1;
-			int x = 0, y = 0, z = 0;
-			int max_width = 2;
 			float ball_radius = 0.3;
 			float spawn_height = 5;
 			state->spawn_tick_count = SDL_GetTicks();
 			state->balls = realloc(state->balls, (state->ball_count += spawn_count) * sizeof(ball_3d));
 
 			for(int i = 1; i <= spawn_count; ++i) {
-				if(x >= max_width-1) {
-					x = 0;
-					z++;
-				}
-				if(z >= max_width-1) {
-					z = 0;
-					y++;
-				}
-				x++;
-				//state->balls[state->ball_count-1].previous_position = (vec3){0, 10.01, 0};
-				//state->balls[state->ball_count-1].position = (vec3){0, 10, 0};
-				//state->balls[state->ball_count-1].mass = 1;
-				//state->balls[state->ball_count-1].radius = 0.1;
-
-				state->balls[state->ball_count-i].position = (vec3){(x-max_width*0.5) * 2 * ball_radius, spawn_height + y * 2 * ball_radius, (z-max_width*0.5) * 2 * ball_radius};
+				state->balls[state->ball_count-i].position = (vec3){0, spawn_height + i * 2 * ball_radius, 0};
 				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, 0, 0});
 				state->balls[state->ball_count - i].mass = 0.5;
 				state->balls[state->ball_count - i].radius = ball_radius;
-				//state->balls[state->ball_count - i].radius = (rand() % 5 + 10)* 0.01;
 			}
 		}
 	}
@@ -340,10 +321,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			}
 		}
 	}*/
-	SDL_SetRenderDrawColor(state->renderer, 255, 0, 0, 255);
-	for(int i = 0; i < state->ball_count; ++i) {
-		draw_circle_3d(state->renderer, state->balls[i], 25, state->cam);
-	}
 
 	/*draw_wall_3d(state->renderer, (wall_3d) {
 		.vertex_a = state->balls[0].position,
@@ -380,6 +357,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		}
 	}*/
 
+	SDL_SetRenderDrawColor(state->renderer, 0, 0, 255, 255);
 	for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
 		for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
 			
@@ -395,6 +373,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 					}, state->cam
 					);
 		}
+	}
+	SDL_SetRenderDrawColor(state->renderer, 255, 0, 0, 255);
+	for(int i = 0; i < state->ball_count; ++i) {
+		draw_circle_3d(state->renderer, state->balls[i], 25, state->cam);
 	}
 
 	SDL_RenderPresent(state->renderer);

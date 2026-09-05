@@ -17,9 +17,9 @@
 
 #include <spatial.h>
 
-const char optionstr[10];
+char optionstr[10];
 int option = 10;
-const char* get_option() {
+char* get_option() {
 	snprintf((char*)optionstr, 10, "%i", option);
 	return optionstr;
 }

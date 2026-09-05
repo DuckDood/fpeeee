@@ -20,18 +20,16 @@
 int fps = 0;
 int ball_count = 0;
 
-const char optionstr[50];
+char optionstr[256];
 
-const char *get_option() {
-	snprintf((char*)optionstr, 50, "FPS: %i, Number of balls: %i", fps, ball_count);
+char *get_option() {
+	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nEnter to spawn balls\nWASD to move\nArrow keys to rotate camera (sorry)\n\nFPS: %i, Number of balls: %i", fps, ball_count);
 	return optionstr;
 }
 
 
-//#define WIDTH 1280
-//#define HEIGHT 720
-#define WIDTH 600
-#define HEIGHT 600
+#define WIDTH 1280
+#define HEIGHT 720
 
 typedef struct {
 	SDL_Window *window;

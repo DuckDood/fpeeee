@@ -19,11 +19,12 @@
 
 int fps = 0;
 int ball_count = 0;
+float spawn_interval = 0;
 
-const char optionstr[50];
+char optionstr[256];
 
-const char *get_option() {
-	snprintf((char*)optionstr, 50, "FPS: %i, Number of balls: %i", fps, ball_count);
+char *get_option() {
+	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nclick to attract\nenter to spawn particles\nscroll to affect spawning speed\nP to set where the particles should shoot towards when spawning (tiny red dot)\n\nFPS: %i, Number of particles: %i, Spawn interval: %.1f", fps, ball_count, spawn_interval);
 	return optionstr;
 }
 
@@ -74,8 +75,9 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	SDL_SetRenderVSync(state->renderer, 1);
 
+	float scale = 1;
 
-	state->cam.position = (vec3){0, 0, -1};
+	state->cam.position = (vec3){0, 0, -1 + (1-scale)};
 	state->cam.rotation = (vec3){0, 0, 0};
 
 	state->cam.width = WIDTH;
@@ -84,9 +86,8 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->deltatime = 0;
 
 	//state->ball_count = 5000;
-	state->ball_count = 3000;
+	state->ball_count = 2000;
 	//state->ball_count = 130;
-	int scale = 1;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
 	printf("ball size: %zu\n", sizeof(ball_2d));
@@ -204,7 +205,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		state->cam.position.x -= 0.2 * cos(state->cam.rotation.x);
 	}
 
-	int scale = 1;
+	float scale = 1;
 	wall_2d floor;
 	floor.length = aspect_ratio * 2 * scale;
 	floor.normal = (vec2){0, 1};
@@ -242,7 +243,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	mouse_x *= 2 * scale;
 	mouse_y *= 2 * scale;
 
-	float mouse_radius = 0.3;
+	float mouse_radius = 0.25;
 	float mouse_power = 50;
 
 	vec2 mouse_position = (vec2){mouse_x * aspect_ratio, mouse_y};
@@ -253,7 +254,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	//int parachute_size = 50;
 	float  parascale = 0.75;
 	for(int i = 0; i < state->ball_count; ++i) {
-		state->balls[i].mass = 0.75;
+		//state->balls[i].mass = 0.75;
+		state->balls[i].mass = 1.5;
 	}
 
 	int parachute_size = 50;
@@ -262,7 +264,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	}
 	state->balls[parachute_size+1].mass = 50;
 	for(int i = 0; i < parachute_size+1; ++i) {
-		state->balls[i].mass = 1;
+		state->balls[i].mass = 2;
 	}
 
 
@@ -474,6 +476,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	state->frame_count++;
 
 	ball_count = state->ball_count;
+	spawn_interval = state->spawn_delay;
 
 	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
 		printf("framerate: %i\nball count: %i\n", state->frame_count, state->ball_count);

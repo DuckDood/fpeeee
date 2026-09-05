@@ -20,10 +20,10 @@
 int fps = 0;
 bool self_collision = 0;
 
-const char optionstr[50];
+char optionstr[256];
 
-const char *get_option() {
-	snprintf((char*)optionstr, 50, "FPS: %i, Self collision: %s", fps, self_collision ? "true" : "false");
+char *get_option() {
+	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nclick to cut\nright click to attract\nT to toggle self collision (laggy!)\nR to reset cloth\n\nFPS: %i, Self collision: %s", fps, self_collision ? "true" : "false");
 	return optionstr;
 }
 
