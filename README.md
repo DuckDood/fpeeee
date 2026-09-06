@@ -29,3 +29,6 @@ This will put demos in a the build/ directory for you to run.
 * [Coding a Physics Engine from scratch!](https://www.youtube.com/watch?v=nXrEX6j-Mws) by Zanzlanz for an simple instroduction to ball based physics simulations
 * [Stack Overflow](https://stackoverflow.com/) in general
 * And finally, [Stardance](https://stardance.hackclub.com/) for motivating me to continue this project!
+
+## AI
+I used some AI as a fancy search engine to find papers and stuff, and double checking stuff in my code if there is a blatant but hard to spot mistake, but I always take its responses with a grain of salt and I do absolutely NO copy pasting straight from it.
