@@ -21,3 +21,10 @@ Try some demos of the project [here](https://duckdood.github.io/physics_demo) (c
 * ### Building
 `git clone https://github.com/duckdood/fpeeee && cd fpeeee && make`\
 This will put demos in a the build/ directory for you to run.
+
+## Credits
+* [Advanced character physics](https://www.cs.cmu.edu/afs/cs/academic/class/15462-s13/www/lec_slides/Jakobsen.pdf) by Thomas Jakobsen for verlet integration
+* [Position based dynamics](https://www.cs.toronto.edu/~jacobson/seminar/mueller-et-al-2007.pdf) by Matthias Müller et al. for more complex constraints
+* [Coding a Physics Engine from scratch!](https://www.youtube.com/watch?v=nXrEX6j-Mws) by Zanzlanz for an simple instroduction to ball based physics simulations
+* [Stack Overflow](https://stackoverflow.com/) in general
+* And finally, [Stardance](https://stardance.hackclub.com/) for motivating me to continue this project!
