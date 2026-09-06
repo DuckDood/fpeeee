@@ -17,6 +17,7 @@ Try some demos of the project [here](https://duckdood.github.io/physics_demo) (c
 ## Building locally (Linux and MinGW)
 * ### Dependencies
 * A C compiler (I've tested with GCC and Clang)
+* Make
 * SDL3
 * ### Building
 `git clone https://github.com/duckdood/fpeeee && cd fpeeee && make`\
