@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v7
       - run: |
           ls
+          git checkout main
           embuilder build sdl3
           emmake make -f Makefile_emscripten
           ls
