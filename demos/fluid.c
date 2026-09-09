@@ -78,7 +78,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	state->ball_count = 1000;
+	state->ball_count = 100;
 	//state->ball_count = 130;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
@@ -91,7 +91,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	for(int i = 0; i < state->ball_count; ++i) {
 		state->balls[i].position = (vec2){((i%horizontal_max_spawn) - (horizontal_max_spawn-1)/2.0) * ball_radius*2, spawn_height + ball_radius*2 * floor((float)i / horizontal_max_spawn)};
-		set_velocity_2d(state->balls + i, (vec2){0, 0});
+		set_velocity_2d(state->balls + i, (vec2){rand() * 1e-11, rand() * 1e-10});
 		state->balls[i].mass = 0.5;
 		state->balls[i].radius = ball_radius;
 	}
@@ -236,7 +236,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
-	if(key_states[SDL_SCANCODE_RETURN]) {
+	/*if(key_states[SDL_SCANCODE_RETURN]) {
 		if(SDL_GetTicks() > state->spawn_tick_count + state->spawn_delay) {
 			state->spawn_tick_count = SDL_GetTicks();
 			state->balls = realloc(state->balls, ++state->ball_count * sizeof(ball_2d));
@@ -247,27 +247,31 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			state->balls[state->ball_count-1].mass = 1;
 			state->balls[state->ball_count-1].radius = 0.005;
 		}
-	}
+	}*/
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_2d *current_ball = state->balls + i;
-			update_ball_2d(current_ball);
-			current_ball->position.y -= 1 * state->deltatime * state->deltatime;
+			//current_ball->position.y -= 1 * state->deltatime * state->deltatime;
 
 			if(mouse_down) {
 				vec2 relative_to_mouse = v2_sub(current_ball->position, mouse_position);
 				float distance_to_mouse = v2_magnitude(relative_to_mouse);
 				if(distance_to_mouse < mouse_radius + current_ball->radius) {
 					float total_mouse_power = mouse_power * (mouse_radius - distance_to_mouse + current_ball->radius) / mouse_radius;
-					current_ball->position = v2_sub(current_ball->position, v2_fmult(v2_normalize(relative_to_mouse), total_mouse_power * state->deltatime * state->deltatime));
+					current_ball->velocity = v2_sub(current_ball->velocity, v2_fmult(v2_normalize(relative_to_mouse), total_mouse_power * state->deltatime));
 				}
 			}
+			begin_ball_update_2d(current_ball, state->deltatime);
 		}
+
+		//distance_constraint_2d(state->balls + 0, state->balls+1, 0.3);
+		//distance_constraint_2d(state->balls + 0, state->balls+1, 0.3);
+		solve_constraint_2d(NULL, NULL, (vec2*[]){&state->balls[0].position}, (float[]){1}, 1, (float[]){0.5});
 		for(int i = 0; i < state->ball_count; ++i) {
-			check_and_resolve_2d(state->balls+i, floor, 0, 0, state->deltatime);
-			check_and_resolve_2d(state->balls+i, ceiling, 0, 0, state->deltatime);
-			check_and_resolve_2d(state->balls+i, left, 0, 0, state->deltatime);
-			check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
-			check_and_resolve_2d(state->balls+i, another, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, floor, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, ceiling, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, left, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, another, 0, 0, state->deltatime);
 		}
 
 		
@@ -276,6 +280,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		update_grid_2d(&state->grid, state->balls, state->ball_count);
 		
 		spatial_collision_2d(&state->grid, state->balls, state->ball_count);
+
+		for(int i = 0; i < state->ball_count; ++i) {
+			ball_2d *current_ball = state->balls + i;
+			end_ball_update_2d(current_ball, state->deltatime);
+		}
 	}
 
 	
