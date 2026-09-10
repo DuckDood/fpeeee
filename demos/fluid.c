@@ -79,7 +79,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	state->ball_count = 100;
+	state->ball_count = 2;
 	//state->ball_count = 130;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
@@ -92,7 +92,8 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	for(int i = 0; i < state->ball_count; ++i) {
 		state->balls[i].position = (vec2){((i%horizontal_max_spawn) - (horizontal_max_spawn-1)/2.0) * ball_radius*2, spawn_height + ball_radius*2 * floor((float)i / horizontal_max_spawn)};
-		set_velocity_2d(state->balls + i, (vec2){rand() * 1e-11, rand() * 1e-10});
+		//set_velocity_2d(state->balls + i, (vec2){rand() * 1e-11, rand() * 1e-10});
+		set_velocity_2d(state->balls + i, (vec2){0});
 		state->balls[i].mass = 0.5;
 		state->balls[i].radius = ball_radius;
 	}
@@ -266,16 +267,18 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 		//distance_constraint_2d(state->balls + 0, state->balls+1, 0.3);
 		//distance_constraint_2d(state->balls + 0, state->balls+1, 0.3);
-		solve_constraint_2d(dist_constraint_C, (del_constraint_function_2d[]){dist_constraint_delC_a, dist_constraint_delC_b}, (vec2*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1, 1}, 2, (float[]){0.5});
-		for(int i = 0; i < state->ball_count; ++i) {
+
+		/*for(int i = 0; i < state->ball_count; ++i) {
 			//check_and_resolve_2d(state->balls+i, floor, 0, 0, state->deltatime);
 			//check_and_resolve_2d(state->balls+i, ceiling, 0, 0, state->deltatime);
 			//check_and_resolve_2d(state->balls+i, left, 0, 0, state->deltatime);
 			//check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
 			//check_and_resolve_2d(state->balls+i, another, 0, 0, state->deltatime);
-		}
-
-		
+			for(int j = 0; j < state->ball_count; ++j) {
+				solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, INEQ_GREATER, (vec2*[]){&state->balls[i].position, &state->balls[j].position}, (float[]){1, 1}, 2, (float[]){state->balls[0].radius * 2});
+			}
+		}*/
+		solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, EQUALITY, (vec2*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1, 1}, 2, (float[]){state->balls[0].radius * 20});
 		
 		
 		update_grid_2d(&state->grid, state->balls, state->ball_count);
