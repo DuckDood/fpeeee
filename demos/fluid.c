@@ -16,6 +16,7 @@
 #include <helpers.h>
 
 #include <spatial.h>
+#include <constraints.h>
 
 int fps = 0;
 int ball_count = 0;
@@ -265,7 +266,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 		//distance_constraint_2d(state->balls + 0, state->balls+1, 0.3);
 		//distance_constraint_2d(state->balls + 0, state->balls+1, 0.3);
-		solve_constraint_2d(NULL, NULL, (vec2*[]){&state->balls[0].position}, (float[]){1}, 1, (float[]){0.5});
+		solve_constraint_2d(dist_constraint_C, (del_constraint_function_2d[]){dist_constraint_delC_a, dist_constraint_delC_b}, (vec2*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1, 1}, 2, (float[]){0.5});
 		for(int i = 0; i < state->ball_count; ++i) {
 			//check_and_resolve_2d(state->balls+i, floor, 0, 0, state->deltatime);
 			//check_and_resolve_2d(state->balls+i, ceiling, 0, 0, state->deltatime);

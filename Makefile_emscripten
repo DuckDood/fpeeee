@@ -1,4 +1,4 @@
-all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/fluid.html copyindex 
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/fluid.html copyindex 
 OSMODE := l
 
 obj/: 
@@ -47,6 +47,14 @@ else
 endif
 
 
+obj/constraints.c.o: engine/src/constraints.c 
+ifeq (${OSMODE}, l)
+	${CC} engine/src/constraints.c -c -o obj/constraints.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g
+else
+	${CC} engine/src/constraints.c -c -o obj/constraints.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g
+endif
+
+
 obj/helpers.c.o: demos/helpers/helpers.c 
 ifeq (${OSMODE}, l)
 	${CC} demos/helpers/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/
@@ -71,11 +79,11 @@ else
 endif
 
 
-build/fluid.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o 
+build/fluid.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -111,19 +119,24 @@ else
 	clang engine/src/spatial.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -MJ emmgtemp/3.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/helpers/helpers.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/4.json -fsyntax-only
+	clang engine/src/constraints.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -MJ emmgtemp/4.json -fsyntax-only
 else
-	clang demos/helpers/helpers.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/4.json -fsyntax-only
+	clang engine/src/constraints.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -MJ emmgtemp/4.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/helpers/matrix.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
+	clang demos/helpers/helpers.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
 else
-	clang demos/helpers/matrix.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
+	clang demos/helpers/helpers.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/6.json -fsyntax-only
+	clang demos/helpers/matrix.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/6.json -fsyntax-only
 else
-	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/6.json -fsyntax-only
+	clang demos/helpers/matrix.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/6.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/7.json -fsyntax-only
+else
+	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -g -Idemos/helpers/ -MJ emmgtemp/7.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[

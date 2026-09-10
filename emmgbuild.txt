@@ -30,6 +30,7 @@ src types.c
 src physics.c
 src shape_generators.c
 src spatial.c
+src constraints.c
 
 # Put build here
 

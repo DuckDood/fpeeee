@@ -18,19 +18,7 @@ void end_ball_update_2d(ball_2d *body, float deltatime) {
 	body->velocity = v2_fdiv(v2_sub(body->position, body->temp_position), deltatime);
 }
 
-float center_constraint_C(vec2 **vectors,[[maybe_unused]] float *inv_weights,[[maybe_unused]] int size, void *arguments) {
-	float length = *(float*)arguments;
-	return v2_magnitude(*vectors[0]) - length;
-}
-
-vec2 center_constraint_delC(vec2 **vectors,[[maybe_unused]] int size, [[maybe_unused]]void *arguments) {
-	return v2_normalize(*vectors[0]);
-}
-
 void solve_constraint_2d(constraint_function_2d constraint, del_constraint_function_2d *del_constraints, vec2 **vectors, float *inv_weights, int size, void *arguments) {
-	constraint = center_constraint_C;
-	del_constraints = (del_constraint_function_2d[]){center_constraint_delC};
-
 	float lambda_numerator = -constraint(vectors, inv_weights, size, arguments);	
 	float lamdba_denominator = 0;
 	for(int i = 0; i < size; ++i) {
