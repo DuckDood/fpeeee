@@ -33,7 +33,8 @@ void solve_constraint_2d(constraint_function_2d constraint, del_constraint_funct
 	}
 	float lamdba_denominator = 0;
 	for(int i = 0; i < size; ++i) {
-		lamdba_denominator += inv_weights[i] + v2_magnitude(del_constraints[i](vectors, size, arguments));
+		vec2 del_constraint = del_constraints[i](vectors, size, arguments);
+		lamdba_denominator += inv_weights[i] * v2_dot(del_constraint, del_constraint);
 	}
 
 	float lamdba = lambda_numerator / lamdba_denominator;
