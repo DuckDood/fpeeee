@@ -45,14 +45,7 @@ void solve_constraint_2d(constraint_function_2d constraint, del_constraint_funct
 }
 
 
-void distance_constraint_2d(ball_2d *a, ball_2d *b, float length) {
-	/*
-	vec2 direction_between = v2_sub(a->position, b->position);
-	vec2 inbetween_point = v2_fmult(v2_add(a->position, b->position), 0.5);
-	vec2 normalized_direction = v2_normalize(direction_between);
-	a->position = v2_add(inbetween_point, v2_fmult(normalized_direction, length*0.5));
-	b->position = v2_add(inbetween_point, v2_fmult(normalized_direction, -length*0.5));
-	*/
+/*void distance_constraint_2d(ball_2d *a, ball_2d *b, float length) {
 	// from the 'Advanced Character Physics' paper by Thomas Jakobson
 	
 	float inverse_mass_a = 1/a->mass;
@@ -64,7 +57,7 @@ void distance_constraint_2d(ball_2d *a, ball_2d *b, float length) {
 
 	a->position = v2_add(a->position, v2_fmult(delta, inverse_mass_a * diff));
 	b->position = v2_sub(b->position, v2_fmult(delta, inverse_mass_b * diff));
-}
+}*/
 
 
 
