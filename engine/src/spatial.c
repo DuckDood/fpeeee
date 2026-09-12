@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdlib.h>
 #include <string.h>
+#include <constraints.h>
 
 #define MINIMUM_VECTOR_SIZE 16
 
@@ -98,6 +99,8 @@ void collide_ball_partition_2d(spatial_partition * restrict partition, spatial_g
 
 		if(check_ball == ball) continue; // evil evil pointer comparison
 		//check_and_resolve_balls_2d(ball, check_ball);
+		solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, INEQ_GREATER, (vec2*[]){&ball->position, &check_ball->position}, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius});
+
 	}
 }
 
