@@ -55,7 +55,8 @@ void solve_constraint_2d(constraint_function_2d constraint, del_constraint_funct
 
 typedef struct {
 	vec3 position;
-	vec3 previous_position;
+	vec3 velocity;
+	vec3 temp_position;
 	float radius;
 	float mass;
 } ball_3d;
@@ -89,7 +90,7 @@ typedef struct {
 	int link_count;
 } shape_3d;
 
-void set_velocity_3d(ball_3d *body, vec3 velocity);
+/*void set_velocity_3d(ball_3d *body, vec3 velocity);
 collision_info_3d check_collision_3d(ball_3d a, wall_3d b);
 void resolve_collision_3d(ball_3d *body, collision_info_3d hit_info, float elasticity, float friction, float deltatime);
 void check_and_resolve_3d(ball_3d *body, wall_3d collider, float elasticity, float friction, float deltatime);
@@ -106,4 +107,13 @@ collision_info_3d check_ball_collision_3d(ball_3d a, ball_3d b);
 void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info);
 void check_and_resolve_balls_3d(ball_3d *a, ball_3d *b);
 
-void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider);
+void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider);*/
+
+void set_velocity_3d(ball_3d *body, vec3 velocity);
+void begin_ball_update_3d(ball_3d *body, float deltatime);
+void end_ball_update_3d(ball_3d *body, float deltatime);
+
+typedef float (*constraint_function_3d)(vec3 **vectors, float *inv_weights, int size, void *arguments);
+typedef vec3 (*del_constraint_function_3d)(vec3 **vectors, int size, void *arguments);
+
+void solve_constraint_3d(constraint_function_3d constraint, del_constraint_function_3d *del_constraints, constraint_types type, vec3 **vectors, float *inv_weights, int size, void *arguments);

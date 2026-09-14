@@ -17,6 +17,8 @@
 
 #include <spatial.h>
 
+#include <constraints.h>
+
 int fps = 0;
 int ball_count = 0;
 
@@ -76,7 +78,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->deltatime = 0;
 
 	//state->ball_count = 1000;
-	state->ball_count = 0;
+	state->ball_count = 2;
 	//state->ball_count = 130;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
@@ -305,10 +307,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_3d *current_ball = state->balls + i;
-			update_ball_3d(current_ball);
-			current_ball->position.y -= 9.8 * state->deltatime * state->deltatime;
+
+			current_ball->velocity.y -= 1 * state->deltatime;
+			begin_ball_update_3d(current_ball, state->deltatime);
 		}
-		for(int i = 0; i < state->ball_count; ++i) {
+		/*for(int i = 0; i < state->ball_count; ++i) {
 			check_and_resolve_3d(state->balls+i, bottom1, 0, 0, state->deltatime);
 			check_and_resolve_3d(state->balls+i, bottom2, 0, 0, state->deltatime);
 
@@ -323,7 +326,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 			check_and_resolve_3d(state->balls+i, right1, 0, 0, state->deltatime);
 			check_and_resolve_3d(state->balls+i, right2, 0, 0, state->deltatime);
-		}
+		}*/
+		state->balls[0].position = (vec3){0};
+		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_LESS, (vec3*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){1});
 
 		
 		/*
@@ -336,6 +341,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		
 		
 		
+		for(int i = 0; i < state->ball_count; ++i) {
+			ball_3d *current_ball = state->balls + i;
+
+			end_ball_update_3d(current_ball, state->deltatime);
+		}
 		
 		update_grid_3d(&state->grid, state->balls, state->ball_count);
 		spatial_collision_3d(&state->grid, state->balls, state->ball_count);

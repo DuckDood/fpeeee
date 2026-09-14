@@ -62,10 +62,10 @@ rmbuild obj/fluid.c.o
 ##
 ##rmbuild obj/dynamic_wall_parachute.c.o
 #
-#src fluid_3d.c
-#build fluid_3d
-#
-#rmbuild obj/fluid_3d.c.o
+src fluid_3d.c
+build fluid_3d
+
+rmbuild obj/fluid_3d.c.o
 #
 #src cloth.c
 #build cloth

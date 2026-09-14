@@ -442,7 +442,7 @@ void collide_ball_partition_3d(spatial_partition * restrict partition, spatial_g
 		ball_3d *check_ball = balls + grid->ball_map[partition->ball_offset + i];
 
 		if(check_ball == ball) continue; // evil evil pointer comparison
-		check_and_resolve_balls_3d(ball, check_ball);
+		//check_and_resolve_balls_3d(ball, check_ball);
 	}
 }
 

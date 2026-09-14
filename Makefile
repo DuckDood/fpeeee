@@ -1,4 +1,4 @@
-all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/fluid 
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/fluid obj/fluid_3d.c.o build/fluid_3d 
 OSMODE := l
 
 obj/: 
@@ -87,6 +87,22 @@ else
 endif
 
 
+obj/fluid_3d.c.o: demos/fluid_3d.c 
+ifeq (${OSMODE}, l)
+	${CC} demos/fluid_3d.c -c -o obj/fluid_3d.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+else
+	${CC} demos/fluid_3d.c -c -o obj/fluid_3d.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+endif
+
+
+build/fluid_3d: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o 
+ifeq (${OSMODE}, l)
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -g
+else
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -g
+endif
+
+
 clean:
 	rm -r obj
 	rm -r build
@@ -134,6 +150,11 @@ ifeq (${OSMODE}, l)
 	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/7.json -fsyntax-only
 else
 	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/7.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang demos/fluid_3d.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/8.json -fsyntax-only
+else
+	clang demos/fluid_3d.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/8.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[

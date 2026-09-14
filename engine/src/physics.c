@@ -47,143 +47,170 @@ void solve_constraint_2d(constraint_function_2d constraint, del_constraint_funct
 
 
 // 3d functions
-
 void set_velocity_3d(ball_3d *body, vec3 velocity) {
-	body->previous_position = v3_sub(body->position, velocity);
+	body->velocity = velocity;
+}
+void begin_ball_update_3d(ball_3d *body, float deltatime) {
+	body->temp_position = body->position;
+	body->position = v3_add(body->position, v3_fmult(body->velocity, deltatime));
+}
+void end_ball_update_3d(ball_3d *body, float deltatime) {
+	body->velocity = v3_fdiv(v3_sub(body->position, body->temp_position), deltatime);
 }
 
-void update_ball_3d(ball_3d *body) {
-	vec3 new_position = v3_sub(v3_fmult(body->position, 2), body->previous_position);
-	body->previous_position = body->position;
-	body->position = new_position;
+void solve_constraint_3d(constraint_function_3d constraint, del_constraint_function_3d *del_constraints, constraint_types type, vec3 **vectors, float *inv_weights, int size, void *arguments) {
+	float lambda_numerator = -constraint(vectors, inv_weights, size, arguments);	
+	switch(type) {
+		case EQUALITY:
+			if(-lambda_numerator == 0) return;
+			break;
+		case INEQ_GREATER:
+			if(-lambda_numerator >= 0) return;
+			break;
+		case INEQ_LESS:
+			if(-lambda_numerator <= 0) return;
+			break;
+	}
+	float lamdba_denominator = 0;
+	for(int i = 0; i < size; ++i) {
+		vec3 del_constraint = del_constraints[i](vectors, size, arguments);
+		lamdba_denominator += inv_weights[i] * v3_dot(del_constraint, del_constraint);
+	}
+
+	float lamdba = lambda_numerator / lamdba_denominator;
+
+	for(int i = 0; i < size; ++i) {
+		vec3 correction = v3_fmult(del_constraints[i](vectors, size, arguments), lamdba * inv_weights[i]);
+		*vectors[i] = v3_add(*vectors[i], correction);
+	}
 }
 
+//collision_info_3d check_collision_3d(ball_3d a, wall_3d b) {
+//	collision_info_3d info;
+//	info.hit = 0;
+//	vec3 relative_a_position = v3_sub(a.position, b.vertex_a);
+//	vec3 relative_b_position = v3_sub(a.position, b.vertex_b);
+//	vec3 relative_c_position = v3_sub(a.position, b.vertex_c);
+//
+//	float a_position_magnitude = v3_magnitude(relative_a_position);
+//	float b_position_magnitude = v3_magnitude(relative_b_position);
+//	float c_position_magnitude = v3_magnitude(relative_c_position);
+//
+//	// the edge will do the corners as well
+//	/*
+//	if(intersecting_a) {
+//		info.hit = 1;
+//		info.depth = -a_position_magnitude + a.radius;
+//		info.normal = v3_normalize(relative_a_position);
+//	}
+//
+//	if(intersecting_b) {
+//		info.hit = 1;
+//		info.depth = -b_position_magnitude + a.radius;
+//		info.normal = v3_normalize(relative_b_position);
+//	}
+//
+//	if(intersecting_c) {
+//		info.hit = 1;
+//		info.depth = -c_position_magnitude + a.radius;
+//		info.normal = v3_normalize(relative_c_position);
+//	}
+//	*/
+//
+//	// make a normal for each side and then check whether its inside 
+//	// super hard idk how to make that normal in 3d
+//	// maybe just like how it is in 2d?
+//	// i originally wanted to like project things along the triangles normal to and then to do a 2d triangle check
+//	// actually, the perpendicular trick with the -y, x or whatever it is wouldn't work in 3d
+//	// dangit
+//	vec3 a_b_edge = v3_sub(b.vertex_a, b.vertex_b);
+//	vec3 b_c_edge = v3_sub(b.vertex_b, b.vertex_c);
+//	vec3 c_a_edge = v3_sub(b.vertex_c, b.vertex_a);
+//
+//	// how to check if intersecting line? hmmm
+//	// something with dot product probably
+//	
+//	// idea: some random ray intersection test thing and then the cross product with the line and some vector that will give a vector that points away being the normal
+//	// idk how tho
+//
+//	// HOW??
+//	// idea: wall_normal = cross(b.normal, a_b_edge);
+//	// idk how position works though
+//	vec3 a_b_edge_normal = v3_normalize(v3_cross(b.normal, a_b_edge));
+//	vec3 b_c_edge_normal = v3_normalize(v3_cross(b.normal, b_c_edge));
+//	vec3 c_a_edge_normal = v3_normalize(v3_cross(b.normal, c_a_edge));
+//
+//	int a_b_edge_side = v3_dot(relative_a_position, a_b_edge_normal) <= 0;
+//	int b_c_edge_side = v3_dot(relative_b_position, b_c_edge_normal) <= 0;
+//	int c_a_edge_side = v3_dot(relative_c_position, c_a_edge_normal) <= 0;
+//	// figured it out
+//
+//	int in_triangle_plane = a_b_edge_side == b_c_edge_side && a_b_edge_side == c_a_edge_side;
+//
+//
+//	// my sister came up with this edge collision stuff
+//	// a_b_closest_point = a_b_side_length - (a_position_magnitude^2  - b_position_magnitude^2 - a_b_side_length^2)/-2 * a_b_side_length
+//	float a_b_side_length = v3_magnitude(a_b_edge);
+//	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
+//	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
+//	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
+//	vec3 a_b_closest_point = v3_lerp(b.vertex_a, b.vertex_b, a_b_closest_point_ratio);
+//
+//	float b_c_side_length = v3_magnitude(b_c_edge);
+//	float b_c_closest_point_ratio = (b_c_side_length + (b_position_magnitude*b_position_magnitude - c_position_magnitude*c_position_magnitude - b_c_side_length*b_c_side_length)/(2 * b_c_side_length)) / b_c_side_length;
+//	if(b_c_closest_point_ratio < 0) b_c_closest_point_ratio = 0;
+//	if(b_c_closest_point_ratio > 1) b_c_closest_point_ratio = 1;
+//	vec3 b_c_closest_point = v3_lerp(b.vertex_b, b.vertex_c, b_c_closest_point_ratio);
+//
+//	float c_a_side_length = v3_magnitude(c_a_edge);
+//	float c_a_closest_point_ratio = (c_a_side_length + (c_position_magnitude*c_position_magnitude - a_position_magnitude*a_position_magnitude - c_a_side_length*c_a_side_length)/(2 * c_a_side_length)) / c_a_side_length;
+//	if(c_a_closest_point_ratio < 0) c_a_closest_point_ratio = 0;
+//	if(c_a_closest_point_ratio > 1) c_a_closest_point_ratio = 1;
+//	vec3 c_a_closest_point = v3_lerp(b.vertex_c, b.vertex_a, c_a_closest_point_ratio);
+//
+//	vec3 a_b_closest_relative = v3_sub(a.position, a_b_closest_point);
+//	vec3 b_c_closest_relative = v3_sub(a.position, b_c_closest_point);
+//	vec3 c_a_closest_relative = v3_sub(a.position, c_a_closest_point);
+//
+//	float a_b_closest_magnitude = v3_magnitude(a_b_closest_relative);
+//	float b_c_closest_magnitude = v3_magnitude(b_c_closest_relative);
+//	float c_a_closest_magnitude = v3_magnitude(c_a_closest_relative);
+//	
+//	float closest_magnitude;
+//	vec3 closest_point;
+//	if(a_b_closest_magnitude < b_c_closest_magnitude) {
+//		closest_magnitude = a_b_closest_magnitude;
+//		closest_point = a_b_closest_relative;
+//	} else {
+//		closest_magnitude = b_c_closest_magnitude;
+//		closest_point = b_c_closest_relative;
+//	}
+//
+//	if(c_a_closest_magnitude < closest_magnitude) {
+//		closest_magnitude = c_a_closest_magnitude;
+//		closest_point = c_a_closest_relative;
+//	}
+//
+//	if(closest_magnitude < a.radius) {
+//		info.hit = 1;
+//		info.depth = -closest_magnitude + a.radius;
+//		info.normal = v3_normalize(closest_point);
+//		info.normal = v3_fmult(info.normal, 1);
+//	}
+//
+//	float side_dot = v3_dot(relative_a_position, b.normal);
+//	int side = (side_dot <= 0) * 2 - 1;
+//
+//	if(in_triangle_plane) {
+//		info.hit = in_triangle_plane && side*side_dot > -a.radius;
+//		info.depth = -side_dot - side * a.radius;
+//		info.normal = b.normal;
+//	}
+//
+//	return info;
+//}
 
-collision_info_3d check_collision_3d(ball_3d a, wall_3d b) {
-	collision_info_3d info;
-	info.hit = 0;
-	vec3 relative_a_position = v3_sub(a.position, b.vertex_a);
-	vec3 relative_b_position = v3_sub(a.position, b.vertex_b);
-	vec3 relative_c_position = v3_sub(a.position, b.vertex_c);
-
-	float a_position_magnitude = v3_magnitude(relative_a_position);
-	float b_position_magnitude = v3_magnitude(relative_b_position);
-	float c_position_magnitude = v3_magnitude(relative_c_position);
-
-	// the edge will do the corners as well
-	/*
-	if(intersecting_a) {
-		info.hit = 1;
-		info.depth = -a_position_magnitude + a.radius;
-		info.normal = v3_normalize(relative_a_position);
-	}
-
-	if(intersecting_b) {
-		info.hit = 1;
-		info.depth = -b_position_magnitude + a.radius;
-		info.normal = v3_normalize(relative_b_position);
-	}
-
-	if(intersecting_c) {
-		info.hit = 1;
-		info.depth = -c_position_magnitude + a.radius;
-		info.normal = v3_normalize(relative_c_position);
-	}
-	*/
-
-	// make a normal for each side and then check whether its inside 
-	// super hard idk how to make that normal in 3d
-	// maybe just like how it is in 2d?
-	// i originally wanted to like project things along the triangles normal to and then to do a 2d triangle check
-	// actually, the perpendicular trick with the -y, x or whatever it is wouldn't work in 3d
-	// dangit
-	vec3 a_b_edge = v3_sub(b.vertex_a, b.vertex_b);
-	vec3 b_c_edge = v3_sub(b.vertex_b, b.vertex_c);
-	vec3 c_a_edge = v3_sub(b.vertex_c, b.vertex_a);
-
-	// how to check if intersecting line? hmmm
-	// something with dot product probably
-	
-	// idea: some random ray intersection test thing and then the cross product with the line and some vector that will give a vector that points away being the normal
-	// idk how tho
-
-	// HOW??
-	// idea: wall_normal = cross(b.normal, a_b_edge);
-	// idk how position works though
-	vec3 a_b_edge_normal = v3_normalize(v3_cross(b.normal, a_b_edge));
-	vec3 b_c_edge_normal = v3_normalize(v3_cross(b.normal, b_c_edge));
-	vec3 c_a_edge_normal = v3_normalize(v3_cross(b.normal, c_a_edge));
-
-	int a_b_edge_side = v3_dot(relative_a_position, a_b_edge_normal) <= 0;
-	int b_c_edge_side = v3_dot(relative_b_position, b_c_edge_normal) <= 0;
-	int c_a_edge_side = v3_dot(relative_c_position, c_a_edge_normal) <= 0;
-	// figured it out
-
-	int in_triangle_plane = a_b_edge_side == b_c_edge_side && a_b_edge_side == c_a_edge_side;
-
-
-	// my sister came up with this edge collision stuff
-	// a_b_closest_point = a_b_side_length - (a_position_magnitude^2  - b_position_magnitude^2 - a_b_side_length^2)/-2 * a_b_side_length
-	float a_b_side_length = v3_magnitude(a_b_edge);
-	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
-	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
-	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
-	vec3 a_b_closest_point = v3_lerp(b.vertex_a, b.vertex_b, a_b_closest_point_ratio);
-
-	float b_c_side_length = v3_magnitude(b_c_edge);
-	float b_c_closest_point_ratio = (b_c_side_length + (b_position_magnitude*b_position_magnitude - c_position_magnitude*c_position_magnitude - b_c_side_length*b_c_side_length)/(2 * b_c_side_length)) / b_c_side_length;
-	if(b_c_closest_point_ratio < 0) b_c_closest_point_ratio = 0;
-	if(b_c_closest_point_ratio > 1) b_c_closest_point_ratio = 1;
-	vec3 b_c_closest_point = v3_lerp(b.vertex_b, b.vertex_c, b_c_closest_point_ratio);
-
-	float c_a_side_length = v3_magnitude(c_a_edge);
-	float c_a_closest_point_ratio = (c_a_side_length + (c_position_magnitude*c_position_magnitude - a_position_magnitude*a_position_magnitude - c_a_side_length*c_a_side_length)/(2 * c_a_side_length)) / c_a_side_length;
-	if(c_a_closest_point_ratio < 0) c_a_closest_point_ratio = 0;
-	if(c_a_closest_point_ratio > 1) c_a_closest_point_ratio = 1;
-	vec3 c_a_closest_point = v3_lerp(b.vertex_c, b.vertex_a, c_a_closest_point_ratio);
-
-	vec3 a_b_closest_relative = v3_sub(a.position, a_b_closest_point);
-	vec3 b_c_closest_relative = v3_sub(a.position, b_c_closest_point);
-	vec3 c_a_closest_relative = v3_sub(a.position, c_a_closest_point);
-
-	float a_b_closest_magnitude = v3_magnitude(a_b_closest_relative);
-	float b_c_closest_magnitude = v3_magnitude(b_c_closest_relative);
-	float c_a_closest_magnitude = v3_magnitude(c_a_closest_relative);
-	
-	float closest_magnitude;
-	vec3 closest_point;
-	if(a_b_closest_magnitude < b_c_closest_magnitude) {
-		closest_magnitude = a_b_closest_magnitude;
-		closest_point = a_b_closest_relative;
-	} else {
-		closest_magnitude = b_c_closest_magnitude;
-		closest_point = b_c_closest_relative;
-	}
-
-	if(c_a_closest_magnitude < closest_magnitude) {
-		closest_magnitude = c_a_closest_magnitude;
-		closest_point = c_a_closest_relative;
-	}
-
-	if(closest_magnitude < a.radius) {
-		info.hit = 1;
-		info.depth = -closest_magnitude + a.radius;
-		info.normal = v3_normalize(closest_point);
-		info.normal = v3_fmult(info.normal, 1);
-	}
-
-	float side_dot = v3_dot(relative_a_position, b.normal);
-	int side = (side_dot <= 0) * 2 - 1;
-
-	if(in_triangle_plane) {
-		info.hit = in_triangle_plane && side*side_dot > -a.radius;
-		info.depth = -side_dot - side * a.radius;
-		info.normal = b.normal;
-	}
-
-	return info;
-}
-
+/*
 void resolve_collision_3d(ball_3d *body, collision_info_3d hit_info, float elasticity, float friction, float deltatime) {
 	if(hit_info.hit) {
 		vec3 velocity = v3_sub(body->position, body->previous_position);
@@ -262,23 +289,23 @@ void update_linkage_3d(linkage_3d link, float deltatime) {
 		default:
 			break;
 	}
-}
+}*/
 
-collision_info_3d check_ball_collision_3d(ball_3d a, ball_3d b) {
-	float distance = v3_magnitude(v3_sub(a.position, b.position));
-	collision_info_3d hit_info;
-	//if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
-		hit_info.hit = distance <= a.radius + b.radius;
-		hit_info.normal = v3_normalize(v3_sub(a.position, b.position));
-		hit_info.depth = distance - a.radius - b.radius;
-	/*} else {
-		hit_info.hit = 0;
-	}*/
-
-	return hit_info;
-
-}
-void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info) {
+//collision_info_3d check_ball_collision_3d(ball_3d a, ball_3d b) {
+//	float distance = v3_magnitude(v3_sub(a.position, b.position));
+//	collision_info_3d hit_info;
+//	//if(a.position.x + a.radius > b.position.x - b.radius && a.position.x - a.radius < b.position.x + b.radius /* x */ && a.position.y + a.radius > b.position.y - b.radius && a.position.y - a.radius < b.position.y + b.radius) {
+//		hit_info.hit = distance <= a.radius + b.radius;
+//		hit_info.normal = v3_normalize(v3_sub(a.position, b.position));
+//		hit_info.depth = distance - a.radius - b.radius;
+//	/*} else {
+//		hit_info.hit = 0;
+//	}*/
+//
+//	return hit_info;
+//
+//}
+/*void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info) {
 	// not 100 percent sure if this is the best way
 	if(hit_info.hit) {
 		float inverse_mass_a = 1/a->mass;
@@ -444,4 +471,4 @@ void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider) {
 		b->position = v3_sub(b->position, v3_fmult(normal, side * b_move_ratio * inverse_mass_b * inverse_inverse_mass_total * (distance - collider->radius)));
 		c->position = v3_sub(c->position, v3_fmult(normal, side * c_move_ratio * inverse_mass_c * inverse_inverse_mass_total * (distance - collider->radius)));
 	}
-}
+}*/
