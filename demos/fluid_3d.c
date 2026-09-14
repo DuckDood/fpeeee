@@ -78,7 +78,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->deltatime = 0;
 
 	//state->ball_count = 1000;
-	state->ball_count = 2;
+	state->ball_count = 4;
 	//state->ball_count = 130;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
@@ -109,6 +109,13 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->frame_tick_count = SDL_GetTicks();
 	state->frame_count = 0;
+	state->balls[0].position = (vec3){sin(0), -1, cos(0)};
+	state->balls[1].position = (vec3){sin(3.141 * 2 / 3), -1, cos(3.141 * 2 / 3)};
+	state->balls[2].position = (vec3){sin(3.141 * 4 / 3), -1, cos(3.141 * 4 / 3)};
+
+	state->balls[3].position = (vec3){-0.6, 3, 0};
+
+	state->balls[3].velocity = (vec3){0, -2, 0};
 	return SDL_APP_CONTINUE;
 }
 
@@ -308,7 +315,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_3d *current_ball = state->balls + i;
 
-			current_ball->velocity.y -= 1 * state->deltatime;
+			//current_ball->velocity.y -= 1 * state->deltatime;
 			begin_ball_update_3d(current_ball, state->deltatime);
 		}
 		/*for(int i = 0; i < state->ball_count; ++i) {
@@ -327,8 +334,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			check_and_resolve_3d(state->balls+i, right1, 0, 0, state->deltatime);
 			check_and_resolve_3d(state->balls+i, right2, 0, 0, state->deltatime);
 		}*/
-		state->balls[0].position = (vec3){0};
-		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_LESS, (vec3*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){1});
+		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, EQUALITY, (vec3*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){2});
+		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, EQUALITY, (vec3*[]){&state->balls[1].position, &state->balls[2].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){2});
+		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, EQUALITY, (vec3*[]){&state->balls[0].position, &state->balls[2].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){2});
+		solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+				(vec3*[]){&state->balls[3].position, &state->balls[0].position, &state->balls[1].position, &state->balls[2].position},
+				(float[]){1,1,1,1}, 4, (float[]){state->balls[3].radius});
 
 		
 		/*
@@ -440,11 +451,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	ball_count = state->ball_count;
 
-	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
+	/*if(SDL_GetTicks() > state->frame_tick_count + 1000) {
 		printf("framerate: %i\nball count: %i\n", state->frame_count, state->ball_count);
-		/*if(state->frame_count < 60) {
-			printf("wee woo wee woo\n");
-		}*/
 		fps = state->frame_count;
 		state->frame_tick_count = SDL_GetTicks();
 		state->frame_count = 0;
@@ -466,7 +474,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		}
 		state->ball_count -= push_back;
 		state->balls = realloc(state->balls, sizeof(ball_3d) * state->ball_count);
+	}*/
+	vec3 momenta = {0};
+	for(int i = 0; i < state->ball_count; ++i) {
+		momenta = v3_add(momenta, v3_fmult(state->balls[i].velocity, state->balls[i].mass));
 	}
+	printf("momenta: %f\n", v3_magnitude(momenta));
 
 
 

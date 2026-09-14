@@ -251,14 +251,50 @@ float wall_constraint_3d(vec3 **vectors, [[maybe_unused]]float *inv_weights, [[m
 	int side;
 	vec3 normal;
 
-	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[2], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
+	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
 
 	return distance - *(float*)arguments;
 }
 
 vec3 wall_constraint_del_body_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
+	float a_barycentric, b_barycentric, c_barycentric, distance;
+	bool in_triangle_plane;
+	int side;
+	vec3 normal;
+
+	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
+
+	return v3_fmult(normal, -side);
 }
 vec3 wall_constraint_del_a_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
+	float a_barycentric, b_barycentric, c_barycentric, distance;
+	bool in_triangle_plane;
+	int side;
+	vec3 normal;
+
+	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
+	float move_ratio = a_barycentric;
+	return v3_fmult(normal, side * move_ratio);
 }
 vec3 wall_constraint_del_b_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
+	float a_barycentric, b_barycentric, c_barycentric, distance;
+	bool in_triangle_plane;
+	int side;
+	vec3 normal;
+
+	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
+	float move_ratio = b_barycentric;
+
+	return v3_fmult(normal, side * move_ratio);
+}
+vec3 wall_constraint_del_c_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
+	float a_barycentric, b_barycentric, c_barycentric, distance;
+	bool in_triangle_plane;
+	int side;
+	vec3 normal;
+
+	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
+	float move_ratio = c_barycentric;
+
+	return v3_fmult(normal, side * move_ratio);
 }
