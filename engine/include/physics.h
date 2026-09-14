@@ -53,10 +53,6 @@ typedef vec2 (*del_constraint_function_2d)(vec2 **vectors, int size, void *argum
 
 void solve_constraint_2d(constraint_function_2d constraint, del_constraint_function_2d *del_constraints, constraint_types type, vec2 **vectors, float *inv_weights, int size, void *arguments);
 
-void distance_constraint_2d(ball_2d *a, ball_2d *b, float length);
-
-void collide_wall_2d(ball_2d *a, ball_2d *b, ball_2d *collider);
-
 typedef struct {
 	vec3 position;
 	vec3 previous_position;
