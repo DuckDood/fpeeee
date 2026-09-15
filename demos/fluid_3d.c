@@ -29,6 +29,16 @@ char *get_option() {
 	return optionstr;
 }
 
+void split_draw_debug(SDL_Renderer *renderer) {
+	get_option();
+	char *split;
+	split = strtok(optionstr, "\n");
+	for(int i = 5; split != NULL; i+=10) {
+		SDL_RenderDebugText(renderer, 5, i, split);
+		split = strtok(NULL, "\n");
+	}
+
+}
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -78,14 +88,14 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->deltatime = 0;
 
 	//state->ball_count = 1000;
-	state->ball_count = 4;
+	state->ball_count = 2;
 	//state->ball_count = 130;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
 	state->grid = construct_grid_3d(25, 50, 25, 0.3);
 
 	float ball_radius = 0.15;
-	float spawn_height = 1;
+	float spawn_height = 3;
 
 	int x = 0, y = 0, z = 0;
 	int max_width = 11;
@@ -109,13 +119,13 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->frame_tick_count = SDL_GetTicks();
 	state->frame_count = 0;
-	state->balls[0].position = (vec3){sin(0), -1, cos(0)};
-	state->balls[1].position = (vec3){sin(3.141 * 2 / 3), -1, cos(3.141 * 2 / 3)};
-	state->balls[2].position = (vec3){sin(3.141 * 4 / 3), -1, cos(3.141 * 4 / 3)};
-
-	state->balls[3].position = (vec3){-0.6, 3, 0};
-
-	state->balls[3].velocity = (vec3){0, -2, 0};
+	//state->balls[0].position = (vec3){sin(0), 10, cos(0)};
+	//state->balls[1].position = (vec3){sin(3.141 * 2 / 3), 110, cos(3.141 * 2 / 3)};
+	//state->balls[2].position = (vec3){sin(3.141 * 4 / 3), -1, cos(3.141 * 4 / 3)};
+    //
+	//state->balls[3].position = (vec3){-0.6, 3, 0};
+    //
+	//state->balls[3].velocity = (vec3){0, -2, 0};
 	return SDL_APP_CONTINUE;
 }
 
@@ -160,7 +170,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	//state->deltatime = 0;
 	if(key_states[SDL_SCANCODE_RETURN]) {
 		if(SDL_GetTicks() > state->spawn_tick_count + 100) {
-			int spawn_count = 25;
+			int spawn_count = 22;
 			int x = 0, y = 0, z = 0;
 			int max_width = 5;
 			float ball_radius = 0.15;
@@ -183,8 +193,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				//state->balls[state->ball_count-1].mass = 1;
 				//state->balls[state->ball_count-1].radius = 0.1;
 
-				state->balls[state->ball_count-i].position = (vec3){(x-max_width*0.5) * 2 * ball_radius, spawn_height + y * 2 * ball_radius, (z-max_width*0.5) * 2 * ball_radius};
-				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, -0.03, 0});
+				state->balls[state->ball_count-i].position = (vec3){rand() * 0.0000000000000001 + (x-max_width*0.51) * 2 * ball_radius, spawn_height + y * 2 * ball_radius, (z-max_width*0.51) * 2 * ball_radius};
+				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, -3, 0});
 				state->balls[state->ball_count - i].mass = 1;
 				state->balls[state->ball_count - i].radius = ball_radius;
 				//state->balls[state->ball_count - i].radius = (rand() % 5 + 10)* 0.01;
@@ -195,7 +205,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	SDL_SetRenderDrawColor(state->renderer, 0, 0, 0, 255);
 	SDL_RenderClear(state->renderer);
 
-	SDL_SetRenderDrawColor(state->renderer, 255, 0, 0, 1);
+	SDL_SetRenderDrawColor(state->renderer, 255, 0, 0, 255);
 
 
 	mat3 transform;
@@ -314,6 +324,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_3d *current_ball = state->balls + i;
+			current_ball->velocity.y -= 9.8 * state->deltatime;
 
 			//current_ball->velocity.y -= 1 * state->deltatime;
 			begin_ball_update_3d(current_ball, state->deltatime);
@@ -334,12 +345,77 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			check_and_resolve_3d(state->balls+i, right1, 0, 0, state->deltatime);
 			check_and_resolve_3d(state->balls+i, right2, 0, 0, state->deltatime);
 		}*/
-		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, EQUALITY, (vec3*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){2});
+		for(int i = 0; i < state->ball_count; ++i) {
+		/*	check_and_resolve_3d(state->balls+i, bottom1, 0, 0, state->deltatime);
+			check_and_resolve_3d(state->balls+i, bottom2, 0, 0, state->deltatime);
+
+			check_and_resolve_3d(state->balls+i, back1, 0, 0, state->deltatime);
+			check_and_resolve_3d(state->balls+i, back2, 0, 0, state->deltatime);
+
+			check_and_resolve_3d(state->balls+i, front1, 0, 0, state->deltatime);
+			check_and_resolve_3d(state->balls+i, front2, 0, 0, state->deltatime);
+
+			check_and_resolve_3d(state->balls+i, left1, 0, 0, state->deltatime);
+			check_and_resolve_3d(state->balls+i, left2, 0, 0, state->deltatime);
+
+			check_and_resolve_3d(state->balls+i, right1, 0, 0, state->deltatime);
+			check_and_resolve_3d(state->balls+i, right2, 0, 0, state->deltatime);*/
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &bottom1.vertex_a, &bottom1.vertex_b, &bottom1.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &bottom2.vertex_a, &bottom2.vertex_b, &bottom2.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &back1.vertex_a, &back1.vertex_b, &back1.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &back2.vertex_a, &back2.vertex_b, &back2.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &front1.vertex_a, &front1.vertex_b, &front1.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &front2.vertex_a, &front2.vertex_b, &front2.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &left1.vertex_a, &left1.vertex_b, &left1.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &left2.vertex_a, &left2.vertex_b, &left2.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &right1.vertex_a, &right1.vertex_b, &right1.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &right2.vertex_a, &right2.vertex_b, &right2.vertex_c},
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+		/*	for(int j = 0; j < state->ball_count; ++j) {
+				if(i==j) continue;
+				ball_3d *ball = state->balls + i;
+				ball_3d *check_ball = state->balls + j;
+				//solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_GREATER, (vec3*[]){&state->balls[i].position, &state->balls[j].position}, (float[]){1/state->balls[i].mass, 1/state->balls[j].mass}, 2, (float[]){0.3});
+				solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_GREATER, (vec3*[]){&ball->position, &check_ball->position}, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius});
+			}*/
+		}   
+
+		/*solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, EQUALITY, (vec3*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){2});
 		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, EQUALITY, (vec3*[]){&state->balls[1].position, &state->balls[2].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){2});
 		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, EQUALITY, (vec3*[]){&state->balls[0].position, &state->balls[2].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){2});
 		solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 				(vec3*[]){&state->balls[3].position, &state->balls[0].position, &state->balls[1].position, &state->balls[2].position},
 				(float[]){1,1,1,1}, 4, (float[]){state->balls[3].radius});
+		for(int i = 4; i < state->ball_count; ++i) {
+			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
+					(vec3*[]){&state->balls[i].position, &state->balls[0].position, &state->balls[1].position, &state->balls[2].position},
+					(float[]){1,1,1,1}, 4, (float[]){state->balls[3].radius});
+		}*/
+		//state->balls[0].position = (vec3){0};
+		//solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_GREATER, (vec3*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){2});
 
 		
 		/*
@@ -350,6 +426,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			}
 		}*/
 		
+		update_grid_3d(&state->grid, state->balls, state->ball_count);
+		spatial_collision_3d(&state->grid, state->balls, state->ball_count);
 		
 		
 		for(int i = 0; i < state->ball_count; ++i) {
@@ -358,13 +436,15 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			end_ball_update_3d(current_ball, state->deltatime);
 		}
 		
-		update_grid_3d(&state->grid, state->balls, state->ball_count);
-		spatial_collision_3d(&state->grid, state->balls, state->ball_count);
 	}
 
 	for(int i = 0; i < state->ball_count; ++i) {
 		draw_circle_3d(state->renderer, state->balls[i], 25, state->cam);
 	}
+	SDL_SetRenderScale(state->renderer, 1., 1.);
+	//SDL_RenderDebugText(state->renderer, 0, 0, get_option());
+	split_draw_debug(state->renderer);
+	SDL_SetRenderScale(state->renderer, 1., 1.);
 	
 	/*
 	for(int i = 0; i < state->grid.depth; ++i) {
@@ -440,6 +520,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	draw_wall_3d(state->renderer, right1, state->cam);
 	draw_wall_3d(state->renderer, right2, state->cam);
 
+
 	SDL_RenderPresent(state->renderer);
 
 
@@ -451,35 +532,35 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	ball_count = state->ball_count;
 
-	/*if(SDL_GetTicks() > state->frame_tick_count + 1000) {
+	if(SDL_GetTicks() > state->frame_tick_count + 1000) {
 		printf("framerate: %i\nball count: %i\n", state->frame_count, state->ball_count);
 		fps = state->frame_count;
 		state->frame_tick_count = SDL_GetTicks();
 		state->frame_count = 0;
 
 		//spatial_partition *bin_partition = state->grid.partitions + state->grid.width * state->grid.height * state->grid.depth;
-		int push_back = 0;
-		for(int i = 0; i < state->ball_count; ++i) {
-			ball_3d *ball = state->balls + i;
-			int ball_column = ball->position.x / state->grid.element_size + state->grid.width * 0.5;
-			int ball_row = ball->position.y / state->grid.element_size + state->grid.height * 0.5;
-			int ball_layer = ball->position.z / state->grid.element_size + state->grid.depth * 0.5;
+		//int push_back = 0;
+		//for(int i = 0; i < state->ball_count; ++i) {
+		//	ball_3d *ball = state->balls + i;
+		//	int ball_column = ball->position.x / state->grid.element_size + state->grid.width * 0.5;
+		//	int ball_row = ball->position.y / state->grid.element_size + state->grid.height * 0.5;
+		//	int ball_layer = ball->position.z / state->grid.element_size + state->grid.depth * 0.5;
 
-			state->balls[i-push_back] = state->balls[i];
+		//	state->balls[i-push_back] = state->balls[i];
 
-			if(ball_column < 0 || ball_column > state->grid.width - 1
-				|| ball_row < 0 || ball_row > state->grid.height - 1
-				|| ball_layer < 0 || ball_layer > state->grid.depth - 1)
-				++push_back;
-		}
-		state->ball_count -= push_back;
-		state->balls = realloc(state->balls, sizeof(ball_3d) * state->ball_count);
-	}*/
-	vec3 momenta = {0};
+		//	if(ball_column < 0 || ball_column > state->grid.width - 1
+		//		|| ball_row < 0 || ball_row > state->grid.height - 1
+		//		|| ball_layer < 0 || ball_layer > state->grid.depth - 1)
+		//		++push_back;
+		//}
+		//state->ball_count -= push_back;
+		//state->balls = realloc(state->balls, sizeof(ball_3d) * state->ball_count);
+	}
+	/*vec3 momenta = {0};
 	for(int i = 0; i < state->ball_count; ++i) {
 		momenta = v3_add(momenta, v3_fmult(state->balls[i].velocity, state->balls[i].mass));
 	}
-	printf("momenta: %f\n", v3_magnitude(momenta));
+	printf("momenta: %f\n", v3_magnitude(momenta));*/
 
 
 
