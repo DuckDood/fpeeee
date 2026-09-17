@@ -66,12 +66,12 @@ src fluid_3d.c
 build fluid_3d
 
 rmbuild obj/fluid_3d.c.o
-#
-#src cloth.c
-#build cloth
-#
-#rmbuild obj/cloth.c.o
-#
+
+src cloth.c
+build cloth
+
+rmbuild obj/cloth.c.o
+
 ##src 2d_3d_scene.c
 ##build 2d_3d_scene
 ##

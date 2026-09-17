@@ -1,4 +1,4 @@
-all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/fluid obj/parachute.c.o build/parachute obj/fluid_3d.c.o build/fluid_3d 
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/fluid obj/parachute.c.o build/parachute obj/fluid_3d.c.o build/fluid_3d obj/cloth.c.o build/cloth 
 OSMODE := l
 
 obj/: 
@@ -119,6 +119,22 @@ else
 endif
 
 
+obj/cloth.c.o: demos/cloth.c 
+ifeq (${OSMODE}, l)
+	${CC} demos/cloth.c -c -o obj/cloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+else
+	${CC} demos/cloth.c -c -o obj/cloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+endif
+
+
+build/cloth: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o 
+ifeq (${OSMODE}, l)
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -g
+else
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -g
+endif
+
+
 clean:
 	rm -r obj
 	rm -r build
@@ -176,6 +192,11 @@ ifeq (${OSMODE}, l)
 	clang demos/fluid_3d.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/9.json -fsyntax-only
 else
 	clang demos/fluid_3d.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/9.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang demos/cloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/10.json -fsyntax-only
+else
+	clang demos/cloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/10.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[
