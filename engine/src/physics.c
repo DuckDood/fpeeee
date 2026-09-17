@@ -18,7 +18,7 @@ void end_ball_update_2d(ball_2d *body, float deltatime) {
 	body->velocity = v2_fdiv(v2_sub(body->position, body->temp_position), deltatime);
 }
 
-void solve_constraint_2d(constraint_function_2d constraint, del_constraint_function_2d *del_constraints, constraint_types type, vec2 **vectors, float *inv_weights, int size, void *arguments) {
+void solve_constraint_2d(constraint_function_2d constraint, del_constraint_function_2d *del_constraints, constraint_types type, vec2 **vectors, float *inv_weights, int size, void *arguments, float deltatime, float compliance) {
 	float lambda_numerator = -constraint(vectors, inv_weights, size, arguments);	
 	switch(type) {
 		case EQUALITY:
@@ -37,7 +37,7 @@ void solve_constraint_2d(constraint_function_2d constraint, del_constraint_funct
 		lamdba_denominator += inv_weights[i] * v2_dot(del_constraint, del_constraint);
 	}
 
-	float lamdba = lambda_numerator / lamdba_denominator;
+	float lamdba = lambda_numerator / (lamdba_denominator + compliance/(deltatime*deltatime));
 
 	for(int i = 0; i < size; ++i) {
 		vec2 correction = v2_fmult(del_constraints[i](vectors, size, arguments), lamdba * inv_weights[i]);
@@ -58,7 +58,7 @@ void end_ball_update_3d(ball_3d *body, float deltatime) {
 	body->velocity = v3_fdiv(v3_sub(body->position, body->temp_position), deltatime);
 }
 
-void solve_constraint_3d(constraint_function_3d constraint, del_constraint_function_3d *del_constraints, constraint_types type, vec3 **vectors, float *inv_weights, int size, void *arguments) {
+void solve_constraint_3d(constraint_function_3d constraint, del_constraint_function_3d *del_constraints, constraint_types type, vec3 **vectors, float *inv_weights, int size, void *arguments, float deltatime, float compliance) {
 	float lambda_numerator = -constraint(vectors, inv_weights, size, arguments);	
 	switch(type) {
 		case EQUALITY:
@@ -77,7 +77,7 @@ void solve_constraint_3d(constraint_function_3d constraint, del_constraint_funct
 		lamdba_denominator += inv_weights[i] * v3_dot(del_constraint, del_constraint);
 	}
 
-	float lamdba = lambda_numerator / lamdba_denominator;
+	float lamdba = lambda_numerator / (lamdba_denominator + compliance/(deltatime*deltatime));
 
 	for(int i = 0; i < size; ++i) {
 		vec3 correction = v3_fmult(del_constraints[i](vectors, size, arguments), lamdba * inv_weights[i]);

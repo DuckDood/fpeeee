@@ -362,38 +362,38 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			check_and_resolve_3d(state->balls+i, right2, 0, 0, state->deltatime);*/
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &bottom1.vertex_a, &bottom1.vertex_b, &bottom1.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &bottom2.vertex_a, &bottom2.vertex_b, &bottom2.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &back1.vertex_a, &back1.vertex_b, &back1.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &back2.vertex_a, &back2.vertex_b, &back2.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &front1.vertex_a, &front1.vertex_b, &front1.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &front2.vertex_a, &front2.vertex_b, &front2.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &left1.vertex_a, &left1.vertex_b, &left1.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &left2.vertex_a, &left2.vertex_b, &left2.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &right1.vertex_a, &right1.vertex_b, &right1.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 			solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 					(vec3*[]){&state->balls[i].position, &right2.vertex_a, &right2.vertex_b, &right2.vertex_c},
-					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius});
+					(float[]){1,0,0,0}, 4, (float[]){state->balls[0].radius}, state->deltatime, 0);
 		/*	for(int j = 0; j < state->ball_count; ++j) {
 				if(i==j) continue;
 				ball_3d *ball = state->balls + i;

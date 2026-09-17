@@ -315,19 +315,19 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		for(int i = 0; i < parachute_size; ++i) {
 			solve_constraint_2d(dist_constraint_2d,
 					(del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, INEQ_LESS, 
-					(vec2*[]){&state->balls[i].position, &state->balls[i+1].position}, (float[]){1/state->balls[i].mass, 1/state->balls[i+1].mass}, 2, (float[]){0.01});
+					(vec2*[]){&state->balls[i].position, &state->balls[i+1].position}, (float[]){1/state->balls[i].mass, 1/state->balls[i+1].mass}, 2, (float[]){0.01}, state->deltatime, 0);
 		}
 		solve_constraint_2d(dist_constraint_2d,
 				(del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, EQUALITY, 
-				(vec2*[]){&state->balls[0].position, &state->balls[parachute_size].position}, (float[]){1/state->balls[0].mass, 1/state->balls[parachute_size].mass}, 2, (float[]){parachute_size * 0.0125 * parascale});
+				(vec2*[]){&state->balls[0].position, &state->balls[parachute_size].position}, (float[]){1/state->balls[0].mass, 1/state->balls[parachute_size].mass}, 2, (float[]){parachute_size * 0.0125 * parascale}, state->deltatime, 0);
 
 		solve_constraint_2d(dist_constraint_2d,
 				(del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, EQUALITY, 
-				(vec2*[]){&state->balls[parachute_size].position, &state->balls[parachute_size+1].position}, (float[]){1/state->balls[parachute_size].mass, 1/state->balls[parachute_size+1].mass}, 2, (float[]){parachute_size * 0.01 * parascale});
+				(vec2*[]){&state->balls[parachute_size].position, &state->balls[parachute_size+1].position}, (float[]){1/state->balls[parachute_size].mass, 1/state->balls[parachute_size+1].mass}, 2, (float[]){parachute_size * 0.01 * parascale}, state->deltatime, 0);
 
 		solve_constraint_2d(dist_constraint_2d,
 				(del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, EQUALITY, 
-				(vec2*[]){&state->balls[0].position, &state->balls[parachute_size+1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[parachute_size+1].mass}, 2, (float[]){parachute_size * 0.01 * parascale});
+				(vec2*[]){&state->balls[0].position, &state->balls[parachute_size+1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[parachute_size+1].mass}, 2, (float[]){parachute_size * 0.01 * parascale}, state->deltatime, 0);
 
 		
 /*
@@ -348,17 +348,17 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			//check_and_resolve_2d(state->balls+i, another, 0, 0, state->deltatime);
 			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
 					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{-aspect_ratio, 1}}}, 
-					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius});
+					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius}, state->deltatime, 0);
 			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
 					(vec2*[]){&state->balls[i].position, (vec2[]){{aspect_ratio, -1}},(vec2[]){{aspect_ratio, 1}}}, 
-					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius});
+					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius}, state->deltatime, 0);
 
 			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
 					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{aspect_ratio, -1}}}, 
-					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius});
+					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius}, state->deltatime, 0);
 			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
 					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, 1}},(vec2[]){{aspect_ratio, 1}}}, 
-					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius});
+					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius}, state->deltatime, 0);
 		}
 
 		

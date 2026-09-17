@@ -232,7 +232,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			ball_3d *b = state->cloth.links[i].b;
 			solve_constraint_3d(dist_constraint_3d,
 					(del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_LESS, 
-					(vec3*[]){&a->position, &b->position}, (float[]){1/a->mass, 1/b->mass}, 2, (float[]){state->cloth.links[i].length});
+					(vec3*[]){&a->position, &b->position}, (float[]){1/a->mass, 1/b->mass}, 2, (float[]){state->cloth.links[i].length}, state->deltatime, 1/state->cloth.links[i].stiffness);
 		}
         
 		state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
@@ -271,7 +271,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				ball_3d *body = state->balls + ball;
 				solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 						(vec3*[]){&body->position, &vert_a->position, &vert_b->position, &vert_c->position},
-						(float[]){1/body->mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius});
+						(float[]){1/body->mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0);
 
 				vert_a = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
 
@@ -280,7 +280,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 				solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 						(vec3*[]){&body->position, &vert_a->position, &vert_b->position, &vert_c->position},
-						(float[]){1/body->mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius});
+						(float[]){1/body->mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0);
 					}
 			}
 		}

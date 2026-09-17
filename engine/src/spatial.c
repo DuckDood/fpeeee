@@ -99,7 +99,7 @@ void collide_ball_partition_2d(spatial_partition * restrict partition, spatial_g
 
 		if(check_ball == ball) continue; // evil evil pointer comparison
 		//check_and_resolve_balls_2d(ball, check_ball);
-		solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, INEQ_GREATER, (vec2*[]){&ball->position, &check_ball->position}, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius});
+		solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, INEQ_GREATER, (vec2*[]){&ball->position, &check_ball->position}, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius}, 1, 0);
 
 	}
 }
@@ -443,7 +443,7 @@ void collide_ball_partition_3d(spatial_partition * restrict partition, spatial_g
 
 		if(check_ball == ball) continue; // evil evil pointer comparison
 		//check_and_resolve_balls_3d(ball, check_ball);
-		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_GREATER, (vec3*[]){&ball->position, &check_ball->position}, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius});
+		solve_constraint_3d(dist_constraint_3d, (del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_GREATER, (vec3*[]){&ball->position, &check_ball->position}, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius}, 1, 0);
 	}
 }
 
