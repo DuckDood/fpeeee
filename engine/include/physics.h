@@ -1,5 +1,6 @@
 #pragma once
 #include <types.h>
+#include <constraints.h>
 
 typedef struct {
 	vec2 position;
@@ -48,10 +49,8 @@ void set_velocity_2d(ball_2d *body, vec2 velocity);
 void begin_ball_update_2d(ball_2d *body, float deltatime);
 void end_ball_update_2d(ball_2d *body, float deltatime);
 
-typedef float (*constraint_function_2d)(vec2 **vectors, float *inv_weights, int size, void *arguments);
-typedef vec2 (*del_constraint_function_2d)(vec2 **vectors, int size, void *arguments);
-
 void solve_constraint_2d(constraint_function_2d constraint, del_constraint_function_2d *del_constraints, constraint_types type, vec2 **vectors, float *inv_weights, int size, void *arguments, float deltatime, float compliance);
+void solve_full_constraint_2d(full_constraint_function_2d constraint, constraint_params *parameters, float *inv_weights, float deltatime, float compliance, constraint_types type);
 
 typedef struct {
 	vec3 position;

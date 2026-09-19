@@ -14,6 +14,18 @@ vec2 dist_constraint_del_b_2d(vec2 **vectors,[[maybe_unused]] int size, [[maybe_
 	return v2_normalize(v2_sub(*vectors[1], *vectors[0]));
 }
 
+float distance_constraint_2d(constraint_params *params) {
+	vec2 relative_position = v2_sub(*params->vectors[0], *params->vectors[1]);
+	float distance_between = v2_magnitude(relative_position);
+
+	float inv_dist_between = 1/distance_between;
+
+	params->output_ptr[0] = v2_fmult(relative_position, inv_dist_between);
+	params->output_ptr[1] = v2_fmult(relative_position, -inv_dist_between);
+
+	return distance_between - *(float*)params->arguments;
+}
+
 float wall_constraint_2d(vec2 **vectors, [[maybe_unused]]float *inv_weights, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
 	// vectors should be 0,1,2 -> body, vertex a, vertex b
 	vec2 a_b_edge = v2_sub(*vectors[2], *vectors[1]);
