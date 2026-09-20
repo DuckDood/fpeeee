@@ -26,6 +26,38 @@ float distance_constraint_2d(constraint_params *params) {
 	return distance_between - *(float*)params->arguments;
 }
 
+float penetration_constraint_2d(constraint_params* params) {
+	vec2 a_b_edge = v2_sub(*params->vectors[2], *params->vectors[1]);
+
+	vec2 relative_a_position = v2_sub(*params->vectors[1], *params->vectors[0]);
+	vec2 relative_b_position = v2_sub(*params->vectors[2], *params->vectors[0]);
+
+	float a_position_magnitude = v2_magnitude(relative_a_position);
+	float b_position_magnitude = v2_magnitude(relative_b_position);
+
+	float a_b_side_length = v2_magnitude(a_b_edge);
+	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
+	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
+	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
+	vec2 a_b_closest_point = v2_lerp(*params->vectors[1], *params->vectors[2], a_b_closest_point_ratio);
+
+	vec2 relative_to_closest = v2_sub(*params->vectors[0], a_b_closest_point);
+
+	float dist_to_closest = v2_magnitude(relative_to_closest);// - *(float*)params->arguments;
+	float inv_dist_to_closest = 1/dist_to_closest;
+
+	params->output_ptr[0] = v2_fmult(relative_to_closest, inv_dist_to_closest);
+	float a_move_ratio = 1-a_b_closest_point_ratio;
+	float b_move_ratio = a_b_closest_point_ratio;
+
+	params->output_ptr[1] =  v2_fmult(relative_to_closest, -a_move_ratio * inv_dist_to_closest);
+	params->output_ptr[2] =  v2_fmult(relative_to_closest, -b_move_ratio * inv_dist_to_closest);
+
+
+	return dist_to_closest - *(float*)params->arguments;
+
+}
+
 float wall_constraint_2d(vec2 **vectors, [[maybe_unused]]float *inv_weights, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
 	// vectors should be 0,1,2 -> body, vertex a, vertex b
 	vec2 a_b_edge = v2_sub(*vectors[2], *vectors[1]);

@@ -24,6 +24,7 @@ typedef float (*full_constraint_function_2d)(constraint_params*);
 
 
 float distance_constraint_2d(constraint_params*);
+float penetration_constraint_2d(constraint_params*);
 
 
 
