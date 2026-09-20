@@ -159,10 +159,13 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec2 ballPosition;\n"
     "layout (location = 2) in float ballRadius;\n"
+    "layout (location = 3) in vec2 prevPos;\n"
 	"uniform float aspectRatio;\n"
+	"out vec2 velocity;\n"
     "void main()\n"
     "{\n"
     "   gl_Position = vec4(aspectRatio * (aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, aPos.z * 0.1, 1.0);\n"
+    "	velocity = ballPosition - prevPos;\n"
     "}\0";
 
 	GLuint v_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -181,9 +184,11 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	const char *fs_source = "#version 300 es\nprecision mediump float;\n"
 	"out vec4 FragColor;\n"
 	"\n"
+	"in vec2 velocity;\n"
 	"void main()\n"
 	"{\n"
-	    "FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
+		"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 1000.);\n"
+	    "FragColor = vec4(col, 1.0f);\n"
 	"}\0";
 
 	GLuint f_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -236,6 +241,10 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ball_2d), (void*)(4*sizeof(float)));
 	glEnableVertexAttribArray(2);
 	glVertexAttribDivisor(2, 1);
+
+	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(ball_2d), (void*)(2*sizeof(float)));
+	glEnableVertexAttribArray(3);
+	glVertexAttribDivisor(3, 1);
 
 
 	return SDL_APP_CONTINUE;
