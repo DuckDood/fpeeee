@@ -36,9 +36,13 @@ src constraints.c
 
 srcdir demos/helpers
 srcflag -Idemos/helpers/
+srcflag -Idemos/helpers/glad/include
 
 src helpers.c
 src matrix.c
+
+srcdir demos/helpers/glad/src
+src gl.c
 
 srcdir demos
 

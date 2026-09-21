@@ -1,4 +1,4 @@
-all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o build/fluid obj/cutcloth.c.o build/cutcloth obj/parachute.c.o build/parachute obj/fluid_3d.c.o build/fluid_3d obj/cloth.c.o build/cloth 
+all: obj/ build/ obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o build/fluid obj/cutcloth.c.o build/cutcloth obj/parachute.c.o build/parachute obj/fluid_3d.c.o build/fluid_3d obj/cloth.c.o build/cloth 
 OSMODE := l
 
 obj/: 
@@ -57,97 +57,105 @@ endif
 
 obj/helpers.c.o: demos/helpers/helpers.c 
 ifeq (${OSMODE}, l)
-	${CC} demos/helpers/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/helpers/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 else
-	${CC} demos/helpers/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/helpers/helpers.c -c -o obj/helpers.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 endif
 
 
 obj/matrix.c.o: demos/helpers/matrix.c 
 ifeq (${OSMODE}, l)
-	${CC} demos/helpers/matrix.c -c -o obj/matrix.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/helpers/matrix.c -c -o obj/matrix.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 else
-	${CC} demos/helpers/matrix.c -c -o obj/matrix.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/helpers/matrix.c -c -o obj/matrix.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
+endif
+
+
+obj/gl.c.o: demos/helpers/glad/src/gl.c 
+ifeq (${OSMODE}, l)
+	${CC} demos/helpers/glad/src/gl.c -c -o obj/gl.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
+else
+	${CC} demos/helpers/glad/src/gl.c -c -o obj/gl.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 endif
 
 
 obj/fluid.c.o: demos/fluid.c 
 ifeq (${OSMODE}, l)
-	${CC} demos/fluid.c -c -o obj/fluid.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/fluid.c -c -o obj/fluid.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 else
-	${CC} demos/fluid.c -c -o obj/fluid.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/fluid.c -c -o obj/fluid.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 endif
 
 
-build/fluid: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o 
+build/fluid: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3 -g
 endif
 
 
 obj/cutcloth.c.o: demos/cutcloth.c 
 ifeq (${OSMODE}, l)
-	${CC} demos/cutcloth.c -c -o obj/cutcloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/cutcloth.c -c -o obj/cutcloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 else
-	${CC} demos/cutcloth.c -c -o obj/cutcloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/cutcloth.c -c -o obj/cutcloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 endif
 
 
-build/cutcloth: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cutcloth.c.o 
+build/cutcloth: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cutcloth.c.o -o build/cutcloth -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cutcloth.c.o -o build/cutcloth -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth -lm -lSDL3 -g
 endif
 
 
 obj/parachute.c.o: demos/parachute.c 
 ifeq (${OSMODE}, l)
-	${CC} demos/parachute.c -c -o obj/parachute.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/parachute.c -c -o obj/parachute.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 else
-	${CC} demos/parachute.c -c -o obj/parachute.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/parachute.c -c -o obj/parachute.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 endif
 
 
-build/parachute: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o 
+build/parachute: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -g
 endif
 
 
 obj/fluid_3d.c.o: demos/fluid_3d.c 
 ifeq (${OSMODE}, l)
-	${CC} demos/fluid_3d.c -c -o obj/fluid_3d.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/fluid_3d.c -c -o obj/fluid_3d.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 else
-	${CC} demos/fluid_3d.c -c -o obj/fluid_3d.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/fluid_3d.c -c -o obj/fluid_3d.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 endif
 
 
-build/fluid_3d: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o 
+build/fluid_3d: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -g
 endif
 
 
 obj/cloth.c.o: demos/cloth.c 
 ifeq (${OSMODE}, l)
-	${CC} demos/cloth.c -c -o obj/cloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/cloth.c -c -o obj/cloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 else
-	${CC} demos/cloth.c -c -o obj/cloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/
+	${CC} demos/cloth.c -c -o obj/cloth.c.o -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include
 endif
 
 
-build/cloth: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o 
+build/cloth: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -g
 endif
 
 
@@ -185,39 +193,44 @@ else
 	clang engine/src/constraints.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -MJ emmgtemp/4.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/helpers/helpers.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
+	clang demos/helpers/helpers.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/5.json -fsyntax-only
 else
-	clang demos/helpers/helpers.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/5.json -fsyntax-only
+	clang demos/helpers/helpers.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/5.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/helpers/matrix.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/6.json -fsyntax-only
+	clang demos/helpers/matrix.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/6.json -fsyntax-only
 else
-	clang demos/helpers/matrix.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/6.json -fsyntax-only
+	clang demos/helpers/matrix.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/6.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/7.json -fsyntax-only
+	clang demos/helpers/glad/src/gl.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/7.json -fsyntax-only
 else
-	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/7.json -fsyntax-only
+	clang demos/helpers/glad/src/gl.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/7.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/cutcloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/8.json -fsyntax-only
+	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/8.json -fsyntax-only
 else
-	clang demos/cutcloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/8.json -fsyntax-only
+	clang demos/fluid.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/8.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/parachute.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/9.json -fsyntax-only
+	clang demos/cutcloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/9.json -fsyntax-only
 else
-	clang demos/parachute.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/9.json -fsyntax-only
+	clang demos/cutcloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/9.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/fluid_3d.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/10.json -fsyntax-only
+	clang demos/parachute.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/10.json -fsyntax-only
 else
-	clang demos/fluid_3d.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/10.json -fsyntax-only
+	clang demos/parachute.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/10.json -fsyntax-only
 endif
 ifeq (${OSMODE}, l)
-	clang demos/cloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/11.json -fsyntax-only
+	clang demos/fluid_3d.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/11.json -fsyntax-only
 else
-	clang demos/cloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -MJ emmgtemp/11.json -fsyntax-only
+	clang demos/fluid_3d.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/11.json -fsyntax-only
+endif
+ifeq (${OSMODE}, l)
+	clang demos/cloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/12.json -fsyntax-only
+else
+	clang demos/cloth.c  -Iengine/include/ -O3 -std=c23 -Wall -Wextra -Wpedantic -Werror -march=native -g -Idemos/helpers/ -Idemos/helpers/glad/include -MJ emmgtemp/12.json -fsyntax-only
 endif
 # not cross platform here sad i think
 	echo [ > emmgtemp/[
