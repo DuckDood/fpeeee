@@ -161,10 +161,13 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     "layout (location = 2) in float ballRadius;\n"
     "layout (location = 3) in vec2 prevPos;\n"
 	"uniform float aspectRatio;\n"
+	"uniform mat3 camRot;\n"
+	"uniform vec3 camPos;\n"
 	"out vec2 velocity;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(aspectRatio * (aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, aPos.z * 0.1, 1.0);\n"
+	"	vec3 pos = camRot * (vec3(aspectRatio * (aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, aPos.z) - camPos);\n"
+    "   gl_Position = vec4(pos, pos.z);\n"
     "	velocity = ballPosition - prevPos;\n"
     "}\0";
 
@@ -308,36 +311,36 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 
 	if(key_states[SDL_SCANCODE_LEFT]) {
-		state->cam.rotation.x+=0.03;
-	}
-	if(key_states[SDL_SCANCODE_RIGHT]) {
 		state->cam.rotation.x-=0.03;
 	}
-	if(key_states[SDL_SCANCODE_UP]) {
-		state->cam.rotation.y+=0.03;
+	if(key_states[SDL_SCANCODE_RIGHT]) {
+		state->cam.rotation.x+=0.03;
 	}
-	if(key_states[SDL_SCANCODE_DOWN]) {
+	if(key_states[SDL_SCANCODE_UP]) {
 		state->cam.rotation.y-=0.03;
 	}
+	if(key_states[SDL_SCANCODE_DOWN]) {
+		state->cam.rotation.y+=0.03;
+	}
 	if(key_states[SDL_SCANCODE_W]) {
-		state->cam.position.z += 0.2 * cos(state->cam.rotation.x) * cos(state->cam.rotation.y);
-		state->cam.position.x += 0.2 * sin(state->cam.rotation.x) * cos(state->cam.rotation.y);
+		state->cam.position.z += 0.1 * cos(state->cam.rotation.x) * cos(state->cam.rotation.y);
+		state->cam.position.x += 0.1 * sin(state->cam.rotation.x) * cos(state->cam.rotation.y);
 
-		state->cam.position.y += 0.2 * sin(state->cam.rotation.y);
+		state->cam.position.y -= 0.1 * sin(state->cam.rotation.y);
 	}
 	if(key_states[SDL_SCANCODE_S]) {
-		state->cam.position.z -= 0.2 * cos(state->cam.rotation.x) * cos(state->cam.rotation.y);
-		state->cam.position.x -= 0.2 * sin(state->cam.rotation.x) * cos(state->cam.rotation.y);
+		state->cam.position.z -= 0.1 * cos(state->cam.rotation.x) * cos(state->cam.rotation.y);
+		state->cam.position.x -= 0.1 * sin(state->cam.rotation.x) * cos(state->cam.rotation.y);
 
-		state->cam.position.y -= 0.2 * sin(state->cam.rotation.y);
+		state->cam.position.y += 0.1 * sin(state->cam.rotation.y);
 	}
 	if(key_states[SDL_SCANCODE_D]) {
-		state->cam.position.z -= 0.2 * sin(state->cam.rotation.x);
-		state->cam.position.x += 0.2 * cos(state->cam.rotation.x);
+		state->cam.position.z -= 0.1 * sin(state->cam.rotation.x);
+		state->cam.position.x += 0.1 * cos(state->cam.rotation.x);
 	}
 	if(key_states[SDL_SCANCODE_A]) {
-		state->cam.position.z += 0.2 * sin(state->cam.rotation.x);
-		state->cam.position.x -= 0.2 * cos(state->cam.rotation.x);
+		state->cam.position.z += 0.1 * sin(state->cam.rotation.x);
+		state->cam.position.x -= 0.1 * cos(state->cam.rotation.x);
 	}
 
 	wall_2d floor;
@@ -508,6 +511,8 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	
 	glUseProgram(state->shader_program);
 	glUniform1f(glGetUniformLocation(state->shader_program, "aspectRatio"), 1/aspect_ratio);
+	glUniformMatrix3fv(glGetUniformLocation(state->shader_program, "camRot"), 1, GL_TRUE, generate_rotation_matrix(state->cam.rotation.x, state->cam.rotation.y, state->cam.rotation.z).matrix);
+	glUniform3f(glGetUniformLocation(state->shader_program, "camPos"), state->cam.position.x, state->cam.position.y, state->cam.position.z);
 	glBindVertexArray(state->VAO);
 	//glDrawArrays(GL_TRIANGLES, 0, CIRCLE_SIDE_COUNT * 3);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, CIRCLE_SIDE_COUNT * 3, state->ball_count);
