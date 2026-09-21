@@ -29,7 +29,7 @@ float spawn_interval = 0;
 char optionstr[256];
 
 char *get_option() {
-	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nclick to attract\nenter to spawn balls\nscroll to affect spawning speed\nP to set where the balls should shoot towards when spawning (tiny red dot)\n\nFPS: %i, Number of balls: %i, Spawn interval: %.1f", fps, ball_count, spawn_interval);
+	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nclick to attract\nenter to spawn balls\nscroll to affect spawning speed\nP to set where the balls should shoot towards when spawning\n\nFPS: %i, Number of balls: %i, Spawn interval: %.1f", fps, ball_count, spawn_interval);
 	return optionstr;
 }
 
@@ -112,7 +112,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
 	printf("ball size: %zu\n", sizeof(ball_2d));
-	state->grid = construct_grid_2d(400,300, 0.01);
+	state->grid = construct_grid_2d(205 * (float)WIDTH/HEIGHT, 205, 0.01);
 
 	int horizontal_max_spawn = 100;
 	float ball_radius = 0.005;
@@ -272,6 +272,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 			state->cam.width = event->window.data1;
 			state->cam.height = event->window.data2;
 			glViewport(0, 0, event->window.data1, event->window.data2);
+			float aspect_ratio = (float)event->window.data1 / event->window.data2;
+			destroy_grid_2d(&state->grid);
+			state->grid = construct_grid_2d(205 * aspect_ratio, 205, 0.01); // 205 instead of 200 just in case
 			break;
 
 		case SDL_EVENT_MOUSE_WHEEL:
