@@ -33,7 +33,7 @@ char *get_option() {
 	return optionstr;
 }
 
-#define CLOTH_DIMENSIONS 20
+#define CLOTH_DIMENSIONS 25
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -67,6 +67,7 @@ typedef struct {
 	GLuint shader_program;
 
 	GLuint cloth_VBO;
+	GLuint cloth_normals_VBO;
 	GLuint cloth_VAO;
 	GLuint cloth_EBO;
 
@@ -129,7 +130,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 
 	glEnable(GL_DEPTH_TEST);
-#define CIRCLE_SIDE_COUNT 10
+#define CIRCLE_SIDE_COUNT 20
 	GLfloat vertices[CIRCLE_SIDE_COUNT * CIRCLE_SIDE_COUNT * 3 * 3 * 2];
 	/*for(int i = 0; i < CIRCLE_SIDE_COUNT; ++i) {
 		float angle1 = (float)i / CIRCLE_SIDE_COUNT * 3.14159 * 2;
@@ -194,7 +195,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"out vec3 normal;\n"
     "void main()\n"
     "{\n"
-	"	vec3 pos = camRot * (vec3((aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, aPos.z * ballRadius + ballPosition.z) - camPos);\n"
+	"	vec3 pos = camRot * (vec3((aPos.x * ballRadius * 0.99 + ballPosition.x), aPos.y * ballRadius * 0.99+ ballPosition.y, aPos.z * ballRadius * 0.99 + ballPosition.z) - camPos);\n"
     "   gl_Position = vec4(pos.x * aspectRatio, pos.y, pos.z*pos.z * 1./100., pos.z);\n" // 1./100. so the far clipping plane doesnt come too quick
     "	velocity = ballPosition - prevPos;\n"
 	"	normal = normalize(aPos);\n"
@@ -293,15 +294,27 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glBindVertexArray(state->cloth_VAO);
 
 	glGenBuffers(1, &state->cloth_VBO);
-	glGenBuffers(1, &state->cloth_EBO);
 	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_VBO);
+	
+	glBufferData(GL_ARRAY_BUFFER, sizeof(ball_3d) * state->cloth.ball_count, state->cloth.balls, GL_DYNAMIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ball_3d), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glGenBuffers(1, &state->cloth_normals_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_normals_VBO);
+	
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * state->cloth.ball_count, NULL, GL_DYNAMIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+	glEnableVertexAttribArray(1);
+
+	glGenBuffers(1, &state->cloth_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->cloth_EBO);
 	GLuint indices[(CLOTH_DIMENSIONS-1)*(CLOTH_DIMENSIONS-1) * 6];
 	int indices_top = 0;
 	for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
 		for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
-			indices[indices_top++] = i + CLOTH_DIMENSIONS*row;
 			indices[indices_top++] = i+1 + CLOTH_DIMENSIONS*row;
+			indices[indices_top++] = i + CLOTH_DIMENSIONS*row;
 			indices[indices_top++] = i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row;
 
 			indices[indices_top++] = i+1 + CLOTH_DIMENSIONS*row;
@@ -310,10 +323,6 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 		}
 	}
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW);
-	
-	glBufferData(GL_ARRAY_BUFFER, sizeof(ball_3d) * state->cloth.ball_count, state->cloth.balls, GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ball_3d), (void*)0);
-	glEnableVertexAttribArray(0);
 
 
 
@@ -321,17 +330,20 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	const char *cloth_vs_source = "#version 300 es\n"
     "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 1) in vec3 normal;\n"
 	"uniform float aspectRatio;\n"
 	"uniform mat3 camRot;\n"
 	"uniform vec3 camPos;\n"
 	//"out vec3 velocity;\n"
 	"out vec3 position;\n"
+	"out vec3 normals;\n"
     "void main()\n"
     "{\n"
 	"	vec3 pos = camRot * (vec3((aPos.x), aPos.y, aPos.z) - camPos);\n"
     "   gl_Position = vec4(pos.x * aspectRatio, pos.y, pos.z*pos.z * 1./100., pos.z);\n" // 1./100. so the far clipping plane doesnt come too quick
     //"	velocity = ballPosition - prevPos;\n"
 	"	position = pos;\n"
+	"	normals = normal;\n"
     "}\0";
 
 	v_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -350,6 +362,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"\n"
 	//"in vec3 velocity;\n"
 	"in vec3 position;\n"
+	"in vec3 normals;\n"
 	"void main()\n"
 	"{\n"
 		"vec3 velocity = vec3(0.);\n"
@@ -363,8 +376,9 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 		"if(col.b < 0.) col.b = 0.;\n"
 		"vec3 X = dFdx ( position );"
 		"vec3 Y = dFdy ( position );"
-		"vec3 normal = normalize ( cross ( X, Y ) );"
-		"col *= 0.5*(1. + dot(normal, vec3(0., -1., 0.)));\n"
+		"vec3 normal = normalize ( -cross ( X, Y ) );"
+		"col *= max(dot(normals * ((float(gl_FrontFacing) - 0.5) * 2.), vec3(0., 1., 0.)), 0.);\n" // use harsher shading on cloth to make it look more occluded
+		"col += vec3(0, 0, 0.1);\n"
 	    "FragColor = vec4(col, 1.0f);\n"
 	"}\0";
 
@@ -685,9 +699,46 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	}
 
 	SDL_RenderPresent(state->renderer);*/
+	vec3 normals[CLOTH_DIMENSIONS * CLOTH_DIMENSIONS];
+	memset(normals, 0, sizeof(normals));
+	for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
+		for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
+			/*vec3 side_AB = v3_sub(state->cloth.balls[i + CLOTH_DIMENSIONS*row].position, state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row].position);
+			vec3 side_AC = v3_sub(state->cloth.balls[i + CLOTH_DIMENSIONS*row].position, state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row].position);
+			vec3 tri_normal = v3_normalize(v3_cross(side_AB, side_AC));
+			normals[row * CLOTH_DIMENSIONS + i] = v3_add(normals[row * CLOTH_DIMENSIONS + i], tri_normal);
+			normals[row * CLOTH_DIMENSIONS + i + 1] = v3_add(normals[row * CLOTH_DIMENSIONS + i+1], tri_normal);
+			normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS] = v3_add(normals[row * CLOTH_DIMENSIONS + i+CLOTH_DIMENSIONS], tri_normal);
+
+
+			side_AB = v3_sub(state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row].position, state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row].position);
+			side_AC = v3_sub(state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row].position, state->cloth.balls[i+CLOTH_DIMENSIONS+1 + CLOTH_DIMENSIONS*row].position);
+			tri_normal = v3_normalize(v3_cross(side_AB, side_AC));
+			normals[row * CLOTH_DIMENSIONS + i+1] = v3_add(normals[row * CLOTH_DIMENSIONS + i+1], tri_normal);
+			normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS] = v3_add(normals[row * CLOTH_DIMENSIONS + i+CLOTH_DIMENSIONS], tri_normal);
+			normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS+1] = v3_add(normals[row * CLOTH_DIMENSIONS + i+CLOTH_DIMENSIONS+1], tri_normal);*/ // didnt work
+			vec3 position = state->cloth.balls[row * CLOTH_DIMENSIONS + i].position;
+			vec3 next_right_position = state->cloth.balls[row * CLOTH_DIMENSIONS + i + 1].position;
+			vec3 next_down_position = state->cloth.balls[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS].position;
+
+			vec3 side_AB = v3_sub(position, next_right_position);
+			vec3 side_AC = v3_sub(position, next_down_position);
+			vec3 normal = v3_normalize(v3_cross(side_AB, side_AC));
+
+			normals[row * CLOTH_DIMENSIONS + i] = v3_add(normals[row * CLOTH_DIMENSIONS + i], normal);
+			normals[row * CLOTH_DIMENSIONS + i + 1] = v3_add(normals[row * CLOTH_DIMENSIONS + i + 1], normal);
+			normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS] = v3_add(normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS], normal);
+
+		}
+	}
+	for(int i = 0; i < CLOTH_DIMENSIONS*CLOTH_DIMENSIONS; ++i) {
+		normals[i] = v3_normalize(normals[i]);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_normals_VBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(normals), normals);
+
 	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_VBO);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, state->cloth.ball_count * sizeof(ball_3d), state->cloth.balls);
-
 
 	glBindBuffer(GL_ARRAY_BUFFER, state->instance_VBO);
 	if(state->ball_count > state->instance_max) {
