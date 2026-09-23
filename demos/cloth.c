@@ -68,8 +68,11 @@ typedef struct {
 
 	GLuint cloth_VBO;
 	GLuint cloth_normals_VBO;
+	GLuint cloth_texcoords_VBO;
 	GLuint cloth_VAO;
 	GLuint cloth_EBO;
+
+	GLuint cloth_texture;
 
 	GLuint cloth_shader_program;
 } prog_state;
@@ -260,6 +263,42 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glDeleteShader(v_shader);
 	glDeleteShader(f_shader);
 
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &state->cloth_texture);
+	glBindTexture(GL_TEXTURE_2D, state->cloth_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// fabric texture from ambientCG
+	int image_size = sizeof((unsigned char[]){
+		#embed "../resources/fabric.ppm"
+				});
+	unsigned char *fabric_texture = malloc(image_size+1); // you just need the +1 for some reason
+
+		/*= {
+		#embed "../resources/fabric.ppm"
+	};*/
+	memcpy(fabric_texture, (unsigned char[]){
+		#embed "../resources/fabric.ppm"
+			}, image_size);
+	strtok((char*)fabric_texture, "\n");
+	char *width = strtok(NULL, " ");
+	char *height = strtok(NULL, "\n");
+	float tex_width = atoi(width);
+	float tex_height = atoi(height);
+	strtok(NULL, "\n");
+
+	unsigned char *fabric_tex_bin = (unsigned char*)strtok(NULL, "\n");
+
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tex_width, tex_height, 0, GL_RGB, GL_UNSIGNED_BYTE, (void*)fabric_tex_bin);
+
+	free(fabric_texture);
+
+	glGenerateMipmap(GL_TEXTURE_2D);
+
 	glGenVertexArrays(1, &state->VAO);
 	glBindVertexArray(state->VAO);
 
@@ -307,6 +346,19 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
 	glEnableVertexAttribArray(1);
 
+	glGenBuffers(1, &state->cloth_texcoords_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_texcoords_VBO);
+	
+	vec2 texcoords[CLOTH_DIMENSIONS * CLOTH_DIMENSIONS];
+	for(int row = 0; row < CLOTH_DIMENSIONS; ++row) {
+		for(int i = 0; i < CLOTH_DIMENSIONS; ++i) {
+			texcoords[row * CLOTH_DIMENSIONS + i] = (vec2){(float)i / CLOTH_DIMENSIONS, (float)row / CLOTH_DIMENSIONS};
+		}
+	}
+	glBufferData(GL_ARRAY_BUFFER, sizeof(texcoords), texcoords, GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
+	glEnableVertexAttribArray(2);
+
 	glGenBuffers(1, &state->cloth_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->cloth_EBO);
 	GLuint indices[(CLOTH_DIMENSIONS-1)*(CLOTH_DIMENSIONS-1) * 6];
@@ -328,15 +380,19 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 
 
+
+
 	const char *cloth_vs_source = "#version 300 es\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec3 normal;\n"
+    "layout (location = 2) in vec2 texcoords;\n"
 	"uniform float aspectRatio;\n"
 	"uniform mat3 camRot;\n"
 	"uniform vec3 camPos;\n"
 	//"out vec3 velocity;\n"
 	"out vec3 position;\n"
 	"out vec3 normals;\n"
+	"out vec2 texcoord;\n"
     "void main()\n"
     "{\n"
 	"	vec3 pos = camRot * (vec3((aPos.x), aPos.y, aPos.z) - camPos);\n"
@@ -344,6 +400,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     //"	velocity = ballPosition - prevPos;\n"
 	"	position = pos;\n"
 	"	normals = normal;\n"
+	"	texcoord = texcoords;\n"
     "}\0";
 
 	v_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -363,10 +420,13 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	//"in vec3 velocity;\n"
 	"in vec3 position;\n"
 	"in vec3 normals;\n"
+	"in vec2 texcoord;\n"
+	"uniform sampler2D cloth_texture;\n"
 	"void main()\n"
 	"{\n"
-		"vec3 velocity = vec3(0.);\n"
-		"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 100.);\n"
+		//"vec3 velocity = vec3(0.);\n"
+		//"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 100.);\n"
+		"\nvec3 col = vec3(texture(cloth_texture, texcoord));\n"
 		"if(col.r > 1.) col.r = 1.;\n"
 		"if(col.g > 1.) col.g = 1.;\n"
 		"if(col.b > 1.) col.b = 1.;\n"
@@ -377,9 +437,11 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 		"vec3 X = dFdx ( position );"
 		"vec3 Y = dFdy ( position );"
 		"vec3 normal = normalize ( -cross ( X, Y ) );"
-		"col *= max(dot(normals * ((float(gl_FrontFacing) - 0.5) * 2.), vec3(0., 1., 0.)), 0.);\n" // use harsher shading on cloth to make it look more occluded
-		"col += vec3(0, 0, 0.1);\n"
+		"col *= max(0.5 + 0.5 * dot(normals * ((float(gl_FrontFacing) - 0.5) * 2.), vec3(0., 1., 0.)), 0.3);\n" 
+		"col *= max(0.5 + 0.5 * dot(normals * ((float(gl_FrontFacing) - 0.5) * 2.), vec3(0., 1., 0.)), 0.3);\n"
+		//"col += vec3(0, 0, 0.1);\n"
 	    "FragColor = vec4(col, 1.0f);\n"
+		//"FragColor = texture(cloth_texture, texcoord);\n"
 	"}\0";
 
 	f_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -758,6 +820,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	glBindVertexArray(state->VAO);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, CIRCLE_SIDE_COUNT * CIRCLE_SIDE_COUNT * 3 * 2, state->ball_count);
 	glUseProgram(state->cloth_shader_program);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, state->cloth_texture);
+	glUniform1i(glGetUniformLocation(state->cloth_shader_program, "cloth_texture"), 0);
+
+
 	glUniform1f(glGetUniformLocation(state->cloth_shader_program, "aspectRatio"), 1/aspect_ratio);
 	glUniformMatrix3fv(glGetUniformLocation(state->cloth_shader_program, "camRot"), 1, GL_TRUE, generate_rotation_matrix(state->cam.rotation.x, state->cam.rotation.y, state->cam.rotation.z).matrix);
 	glUniform3f(glGetUniformLocation(state->cloth_shader_program, "camPos"), state->cam.position.x, state->cam.position.y, state->cam.position.z);
