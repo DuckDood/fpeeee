@@ -89,9 +89,9 @@ endif
 
 build/fluid.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -105,9 +105,9 @@ endif
 
 build/cutcloth.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -121,9 +121,9 @@ endif
 
 build/parachute.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -137,9 +137,9 @@ endif
 
 build/fluid_3d.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
@@ -153,9 +153,9 @@ endif
 
 build/cloth.html: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth.html --shell-file web/shell.html -g3 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth.html --shell-file web/shell.html -g3 -sSTACK_SIZE=256000 -sUSE_WEBGL2=1 -sMIN_WEBGL_VERSION=2 -sMAX_WEBGL_VERSION=2 -sASSERTIONS=2 -sALLOW_MEMORY_GROWTH -sEXPORTED_RUNTIME_METHODS=[requestFullscreen,ccall,cwrap] -sEXPORTED_FUNCTIONS=[_get_option,_main] -lm -lSDL3 -g
 endif
 
 
