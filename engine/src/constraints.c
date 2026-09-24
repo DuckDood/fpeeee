@@ -15,23 +15,23 @@ vec2 dist_constraint_del_b_2d(vec2 **vectors,[[maybe_unused]] int size, [[maybe_
 	return v2_normalize(v2_sub(*vectors[1], *vectors[0]));
 }
 
-float distance_constraint_2d(constraint_params_2d *params) {
-	vec2 relative_position = v2_sub(*params->vectors[0], *params->vectors[1]);
+float distance_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]]int size, void *arguments) {
+	vec2 relative_position = v2_sub(*vectors[0], *vectors[1]);
 	float distance_between = v2_magnitude(relative_position);
 
 	float inv_dist_between = 1/distance_between;
 
-	params->output_ptr[0] = v2_fmult(relative_position, inv_dist_between);
-	params->output_ptr[1] = v2_fmult(relative_position, -inv_dist_between);
+	gradients[0] = v2_fmult(relative_position, inv_dist_between);
+	gradients[1] = v2_fmult(relative_position, -inv_dist_between);
 
-	return distance_between - *(float*)params->arguments;
+	return distance_between - *(float*)arguments;
 }
 
-float penetration_constraint_2d(constraint_params_2d* params) {
-	vec2 a_b_edge = v2_sub(*params->vectors[2], *params->vectors[1]);
+float penetration_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]]int size, void *arguments) {
+	vec2 a_b_edge = v2_sub(*vectors[2], *vectors[1]);
 
-	vec2 relative_a_position = v2_sub(*params->vectors[1], *params->vectors[0]);
-	vec2 relative_b_position = v2_sub(*params->vectors[2], *params->vectors[0]);
+	vec2 relative_a_position = v2_sub(*vectors[1], *vectors[0]);
+	vec2 relative_b_position = v2_sub(*vectors[2], *vectors[0]);
 
 	float a_position_magnitude = v2_magnitude(relative_a_position);
 	float b_position_magnitude = v2_magnitude(relative_b_position);
@@ -40,22 +40,22 @@ float penetration_constraint_2d(constraint_params_2d* params) {
 	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
 	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
 	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
-	vec2 a_b_closest_point = v2_lerp(*params->vectors[1], *params->vectors[2], a_b_closest_point_ratio);
+	vec2 a_b_closest_point = v2_lerp(*vectors[1], *vectors[2], a_b_closest_point_ratio);
 
-	vec2 relative_to_closest = v2_sub(*params->vectors[0], a_b_closest_point);
+	vec2 relative_to_closest = v2_sub(*vectors[0], a_b_closest_point);
 
-	float dist_to_closest = v2_magnitude(relative_to_closest);// - *(float*)params->arguments;
+	float dist_to_closest = v2_magnitude(relative_to_closest);// - *(float*)arguments;
 	float inv_dist_to_closest = 1/dist_to_closest;
 
-	params->output_ptr[0] = v2_fmult(relative_to_closest, inv_dist_to_closest);
+	gradients[0] = v2_fmult(relative_to_closest, inv_dist_to_closest);
 	float a_move_ratio = 1-a_b_closest_point_ratio;
 	float b_move_ratio = a_b_closest_point_ratio;
 
-	params->output_ptr[1] =  v2_fmult(relative_to_closest, -a_move_ratio * inv_dist_to_closest);
-	params->output_ptr[2] =  v2_fmult(relative_to_closest, -b_move_ratio * inv_dist_to_closest);
+	gradients[1] =  v2_fmult(relative_to_closest, -a_move_ratio * inv_dist_to_closest);
+	gradients[2] =  v2_fmult(relative_to_closest, -b_move_ratio * inv_dist_to_closest);
 
 
-	return dist_to_closest - *(float*)params->arguments;
+	return dist_to_closest - *(float*)arguments;
 
 }
 
@@ -345,29 +345,29 @@ vec3 wall_constraint_del_c_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_
 }
 
 
-float distance_constraint_3d(constraint_params_3d *params) {
-	vec3 relative_position = v3_sub(*params->vectors[0], *params->vectors[1]);
+float distance_constraint_3d(vec3 **vectors, vec3 *gradient_outputs, [[maybe_unused]]int size, void *arguments) {
+	vec3 relative_position = v3_sub(*vectors[0], *vectors[1]);
 	float distance_between = v3_magnitude(relative_position);
 
 	float inv_dist_between = 1/distance_between;
 
-	params->output_ptr[0] = v3_fmult(relative_position, inv_dist_between);
-	params->output_ptr[1] = v3_fmult(relative_position, -inv_dist_between);
+	gradient_outputs[0] = v3_fmult(relative_position, inv_dist_between);
+	gradient_outputs[1] = v3_fmult(relative_position, -inv_dist_between);
 
-	return distance_between - *(float*)params->arguments;
+	return distance_between - *(float*)arguments;
 }
 
-float penetration_constraint_3d(constraint_params_3d *params) {
+float penetration_constraint_3d(vec3 **vectors, vec3 *gradient_outputs, [[maybe_unused]]int size, void *arguments) {
 	float a_barycentric, b_barycentric, c_barycentric, distance;
 	bool in_triangle_plane;
 	int side;
 	vec3 normal;
 
-	get_point_triangle_info(*params->vectors[1], *params->vectors[2], *params->vectors[3], *params->vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
-	params->output_ptr[0] = v3_fmult(normal, -side);
-	params->output_ptr[1] = v3_fmult(normal, side * a_barycentric);
-	params->output_ptr[2] = v3_fmult(normal, side * b_barycentric);
-	params->output_ptr[3] = v3_fmult(normal, side * c_barycentric);
+	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
+	gradient_outputs[0] = v3_fmult(normal, -side);
+	gradient_outputs[1] = v3_fmult(normal, side * a_barycentric);
+	gradient_outputs[2] = v3_fmult(normal, side * b_barycentric);
+	gradient_outputs[3] = v3_fmult(normal, side * c_barycentric);
 
-	return distance - *(float*)params->arguments;
+	return distance - *(float*)arguments;
 }

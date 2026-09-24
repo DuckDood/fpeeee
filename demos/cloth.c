@@ -662,7 +662,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 							
 
 					vec3 output_ptrs[4];
-					solve_full_constraint_3d(penetration_constraint_3d, &(constraint_params_3d){(vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){state->balls[ball].radius}, 4}, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, state->deltatime, 0, INEQ_GREATER);
+					solve_full_constraint_3d(penetration_constraint_3d, (vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0, INEQ_LESS);
 
 					vert_a = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
 
@@ -672,7 +672,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 					/*solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 							(vec3*[]){&body->position, &vert_a->position, &vert_b->position, &vert_c->position},
 							(float[]){1/body->mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0);*/
-					solve_full_constraint_3d(penetration_constraint_3d, &(constraint_params_3d){(vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){state->balls[ball].radius}, 4}, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, state->deltatime, 0, INEQ_GREATER);
+					solve_full_constraint_3d(penetration_constraint_3d, (vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0, INEQ_LESS);
 				}
 			}
 		}
