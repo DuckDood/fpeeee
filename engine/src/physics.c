@@ -45,7 +45,7 @@ void solve_constraint_2d(constraint_function_2d constraint, del_constraint_funct
 	}
 }
 
-void solve_full_constraint_2d(full_constraint_function_2d constraint, constraint_params *parameters, float *inv_weights, float deltatime, float compliance, constraint_types type) {
+void solve_full_constraint_2d(full_constraint_function_2d constraint, constraint_params_2d *parameters, float *inv_weights, float deltatime, float compliance, constraint_types type) {
 	/*float lambda_numerator = -constraint(vectors, inv_weights, size, arguments);	
 	switch(type) {
 		case EQUALITY:
@@ -133,6 +133,33 @@ void solve_constraint_3d(constraint_function_3d constraint, del_constraint_funct
 	for(int i = 0; i < size; ++i) {
 		vec3 correction = v3_fmult(del_constraints[i](vectors, size, arguments), lamdba * inv_weights[i]);
 		*vectors[i] = v3_add(*vectors[i], correction);
+	}
+}
+
+void solve_full_constraint_3d(full_constraint_function_3d constraint, constraint_params_3d *parameters, float *inv_weights, float deltatime, float compliance, constraint_types type) {
+	float lambda_numerator = constraint(parameters);
+	switch(type) {
+		case EQUALITY:
+			if(lambda_numerator == 0) return;
+			break;
+		case INEQ_GREATER:
+			if(lambda_numerator >= 0) return;
+			break;
+		case INEQ_LESS:
+			if(lambda_numerator <= 0) return;
+			break;
+	}
+
+	float lagrange_denominator = 0;
+	int size = parameters->size;
+	for(int i = 0; i < size; ++i) {
+		lagrange_denominator += inv_weights[i] * v3_dot(parameters->output_ptr[i], parameters->output_ptr[i]);
+	}
+	float lagrange_multiplier = -lambda_numerator / (lagrange_denominator + compliance/(deltatime * deltatime));
+
+	for(int i = 0; i < size; ++i) {
+		vec3 correction = v3_fmult(parameters->output_ptr[i], lagrange_multiplier * inv_weights[i]);
+		*parameters->vectors[i] = v3_add(*parameters->vectors[i], correction);
 	}
 }
 

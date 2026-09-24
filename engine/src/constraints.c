@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 #include <types.h>
 #include <constraints.h>
 
@@ -14,7 +15,7 @@ vec2 dist_constraint_del_b_2d(vec2 **vectors,[[maybe_unused]] int size, [[maybe_
 	return v2_normalize(v2_sub(*vectors[1], *vectors[0]));
 }
 
-float distance_constraint_2d(constraint_params *params) {
+float distance_constraint_2d(constraint_params_2d *params) {
 	vec2 relative_position = v2_sub(*params->vectors[0], *params->vectors[1]);
 	float distance_between = v2_magnitude(relative_position);
 
@@ -26,7 +27,7 @@ float distance_constraint_2d(constraint_params *params) {
 	return distance_between - *(float*)params->arguments;
 }
 
-float penetration_constraint_2d(constraint_params* params) {
+float penetration_constraint_2d(constraint_params_2d* params) {
 	vec2 a_b_edge = v2_sub(*params->vectors[2], *params->vectors[1]);
 
 	vec2 relative_a_position = v2_sub(*params->vectors[1], *params->vectors[0]);
@@ -341,4 +342,32 @@ vec3 wall_constraint_del_c_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_
 	float move_ratio = c_barycentric;
 
 	return v3_fmult(normal, side * move_ratio);
+}
+
+
+float distance_constraint_3d(constraint_params_3d *params) {
+	vec3 relative_position = v3_sub(*params->vectors[0], *params->vectors[1]);
+	float distance_between = v3_magnitude(relative_position);
+
+	float inv_dist_between = 1/distance_between;
+
+	params->output_ptr[0] = v3_fmult(relative_position, inv_dist_between);
+	params->output_ptr[1] = v3_fmult(relative_position, -inv_dist_between);
+
+	return distance_between - *(float*)params->arguments;
+}
+
+float penetration_constraint_3d(constraint_params_3d *params) {
+	float a_barycentric, b_barycentric, c_barycentric, distance;
+	bool in_triangle_plane;
+	int side;
+	vec3 normal;
+
+	get_point_triangle_info(*params->vectors[1], *params->vectors[2], *params->vectors[3], *params->vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
+	params->output_ptr[0] = v3_fmult(normal, -side);
+	params->output_ptr[1] = v3_fmult(normal, side * a_barycentric);
+	params->output_ptr[2] = v3_fmult(normal, side * b_barycentric);
+	params->output_ptr[3] = v3_fmult(normal, side * c_barycentric);
+
+	return distance - *(float*)params->arguments;
 }

@@ -17,14 +17,14 @@ typedef struct {
 	vec2 *output_ptr;
 	void *arguments;
 	int size;
-} constraint_params;
+} constraint_params_2d;
 
-typedef float (*full_constraint_function_2d)(constraint_params*);
+typedef float (*full_constraint_function_2d)(constraint_params_2d*);
 
 
 
-float distance_constraint_2d(constraint_params*);
-float penetration_constraint_2d(constraint_params*);
+float distance_constraint_2d(constraint_params_2d*);
+float penetration_constraint_2d(constraint_params_2d*);
 
 
 
@@ -47,3 +47,17 @@ vec3 wall_constraint_del_body_3d(vec3 **vectors, int size, void *arguments);
 vec3 wall_constraint_del_a_3d(vec3 **vectors, int size, void *arguments);
 vec3 wall_constraint_del_b_3d(vec3 **vectors, int size, void *arguments);
 vec3 wall_constraint_del_c_3d(vec3 **vectors, int size, void *arguments);
+
+typedef struct {
+	vec3 **vectors;
+	vec3 *output_ptr;
+	void *arguments;
+	int size;
+} constraint_params_3d;
+
+typedef float (*full_constraint_function_3d)(constraint_params_3d*);
+
+
+
+float distance_constraint_3d(constraint_params_3d*);
+float penetration_constraint_3d(constraint_params_3d*);
