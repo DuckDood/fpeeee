@@ -108,7 +108,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	state->ball_count = 1500;
+	state->ball_count = 1000;
 	//state->ball_count = 130;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
@@ -263,12 +263,6 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glEnableVertexAttribArray(3);
 	glVertexAttribDivisor(3, 1);
 
-	for(int i = 0; i < state->ball_count; ++i) {
-		ball_2d *current_ball = state->balls + i;
-
-		begin_ball_update_2d(current_ball, state->deltatime);
-	}
-
 
 	return SDL_APP_CONTINUE;
 }
@@ -393,14 +387,13 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			//state->balls[state->ball_count-1].previous_position = state->spawn_position;
 			state->balls[state->ball_count-1].position = mouse_position;
 			vec2 velocity = v2_sub(state->spawn_position, mouse_position);
-			set_velocity_2d(&state->balls[state->ball_count-1], v2_fdiv(velocity, 1));
+			set_velocity_2d(&state->balls[state->ball_count-1], v2_fmult(velocity, 3));
 			state->balls[state->ball_count-1].mass = 1;
 			state->balls[state->ball_count-1].radius = 0.005;
 		}
 	}
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_2d *current_ball = state->balls + i;
-			end_ball_update_2d(current_ball, state->deltatime);
 
 			if(mouse_down) {
 				vec2 relative_to_mouse = v2_sub(current_ball->position, mouse_position);
@@ -488,6 +481,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		update_grid_2d(&state->grid, state->balls, state->ball_count);
 		
 		spatial_collision_2d(&state->grid, state->balls, state->ball_count);
+
+		for(int i = 0; i < state->ball_count; ++i) {
+			ball_2d *current_ball = state->balls + i;
+			end_ball_update_2d(current_ball, state->deltatime);
+		}
 
 	}
 
