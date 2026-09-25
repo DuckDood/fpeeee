@@ -18,34 +18,7 @@ void end_ball_update_2d(ball_2d *body, float deltatime) {
 	body->velocity = v2_fdiv(v2_sub(body->position, body->temp_position), deltatime);
 }
 
-void solve_constraint_2d(constraint_function_2d constraint, del_constraint_function_2d *del_constraints, constraint_types type, vec2 **vectors, float *inv_weights, int size, void *arguments, float deltatime, float compliance) {
-	float lambda_numerator = -constraint(vectors, inv_weights, size, arguments);	
-	switch(type) {
-		case EQUALITY:
-			if(-lambda_numerator == 0) return;
-			break;
-		case INEQ_GREATER:
-			if(-lambda_numerator >= 0) return;
-			break;
-		case INEQ_LESS:
-			if(-lambda_numerator <= 0) return;
-			break;
-	}
-	float lamdba_denominator = 0;
-	for(int i = 0; i < size; ++i) {
-		vec2 del_constraint = del_constraints[i](vectors, size, arguments);
-		lamdba_denominator += inv_weights[i] * v2_dot(del_constraint, del_constraint);
-	}
-
-	float lamdba = lambda_numerator / (lamdba_denominator + compliance/(deltatime*deltatime));
-
-	for(int i = 0; i < size; ++i) {
-		vec2 correction = v2_fmult(del_constraints[i](vectors, size, arguments), lamdba * inv_weights[i]);
-		*vectors[i] = v2_add(*vectors[i], correction);
-	}
-}
-
-void solve_full_constraint_2d(full_constraint_function_2d constraint, vec2 **vectors, vec2 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type) {
+void solve_constraint_2d(full_constraint_function_2d constraint, vec2 **vectors, vec2 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type) {
 	float lambda_numerator = constraint(vectors, gradient_outputs, size, constraint_args);
 	switch(type) {
 		case EQUALITY:
@@ -84,34 +57,7 @@ void end_ball_update_3d(ball_3d *body, float deltatime) {
 	body->velocity = v3_fdiv(v3_sub(body->position, body->temp_position), deltatime);
 }
 
-void solve_constraint_3d(constraint_function_3d constraint, del_constraint_function_3d *del_constraints, constraint_types type, vec3 **vectors, float *inv_weights, int size, void *arguments, float deltatime, float compliance) {
-	float lambda_numerator = -constraint(vectors, inv_weights, size, arguments);	
-	switch(type) {
-		case EQUALITY:
-			if(-lambda_numerator == 0) return;
-			break;
-		case INEQ_GREATER:
-			if(-lambda_numerator >= 0) return;
-			break;
-		case INEQ_LESS:
-			if(-lambda_numerator <= 0) return;
-			break;
-	}
-	float lamdba_denominator = 0;
-	for(int i = 0; i < size; ++i) {
-		vec3 del_constraint = del_constraints[i](vectors, size, arguments);
-		lamdba_denominator += inv_weights[i] * v3_dot(del_constraint, del_constraint);
-	}
-
-	float lamdba = lambda_numerator / (lamdba_denominator + compliance/(deltatime*deltatime));
-
-	for(int i = 0; i < size; ++i) {
-		vec3 correction = v3_fmult(del_constraints[i](vectors, size, arguments), lamdba * inv_weights[i]);
-		*vectors[i] = v3_add(*vectors[i], correction);
-	}
-}
-
-void solve_full_constraint_3d(full_constraint_function_3d constraint, vec3 **vectors, vec3 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type) {
+void solve_constraint_3d(constraint_function_3d constraint, vec3 **vectors, vec3 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type) {
 	float lambda_numerator = constraint(vectors, gradient_outputs, size, constraint_args);
 	switch(type) {
 		case EQUALITY:

@@ -290,20 +290,46 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			}
 		}
 
-		for(int i = 0; i < state->cloth.ball_count; ++i) {
-			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
-					(vec2*[]){&state->cloth.balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{-aspect_ratio, 1}}}, 
-					(float[]){1, 0, 0}, 3, (float[]){state->cloth.balls[1].radius}, state->deltatime, 0);
-			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
-					(vec2*[]){&state->cloth.balls[i].position, (vec2[]){{aspect_ratio, -1}},(vec2[]){{aspect_ratio, 1}}}, 
-					(float[]){1, 0, 0}, 3, (float[]){state->cloth.balls[1].radius}, state->deltatime, 0);
+		vec2 output_ptrs[3];
 
-			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
+		for(int i = 0; i < state->cloth.ball_count; ++i) {
+			solve_constraint_2d(penetration_constraint_2d, 
+					(vec2*[]){&state->cloth.balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{-aspect_ratio, 1}}}, 
+					output_ptrs,
+					(float[]){1, 0, 0},
+					3, 
+					(float[]){state->cloth.balls[1].radius},
+					state->deltatime, 0,
+					INEQ_GREATER
+					);
+			solve_constraint_2d(penetration_constraint_2d, 
+					(vec2*[]){&state->cloth.balls[i].position, (vec2[]){{aspect_ratio, -1}},(vec2[]){{aspect_ratio, 1}}}, 
+					output_ptrs,
+					(float[]){1, 0, 0},
+					3, 
+					(float[]){state->cloth.balls[1].radius},
+					state->deltatime, 0,
+					INEQ_GREATER
+					);
+
+			solve_constraint_2d(penetration_constraint_2d, 
 					(vec2*[]){&state->cloth.balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{aspect_ratio, -1}}}, 
-					(float[]){1, 0, 0}, 3, (float[]){state->cloth.balls[1].radius}, state->deltatime, 0);
-			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
+					output_ptrs,
+					(float[]){1, 0, 0},
+					3, 
+					(float[]){state->cloth.balls[1].radius},
+					state->deltatime, 0,
+					INEQ_GREATER
+					);
+			solve_constraint_2d(penetration_constraint_2d, 
 					(vec2*[]){&state->cloth.balls[i].position, (vec2[]){{-aspect_ratio, 1}},(vec2[]){{aspect_ratio, 1}}}, 
-					(float[]){1, 0, 0}, 3, (float[]){state->cloth.balls[1].radius}, state->deltatime, 0);
+					output_ptrs,
+					(float[]){1, 0, 0},
+					3, 
+					(float[]){state->cloth.balls[1].radius},
+					state->deltatime, 0,
+					INEQ_GREATER
+					);
 		}
 		for(int i = 0; i < CLOTH_RESOLUTION; ++i) {
 			state->cloth.balls[CLOTH_RESOLUTION*CLOTH_RESOLUTION - 1 - i].position = (vec2){((CLOTH_RESOLUTION-1)*0.5-i) * (CLOTH_WIDTH/(CLOTH_RESOLUTION-1)) - 0.013, CLOTH_WIDTH/2 - 0.013}; // ?????
@@ -313,9 +339,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			//update_linkage_2d(state->cloth.links[i], state->deltatime);
 			ball_2d *a = state->cloth.links[i].a;
 			ball_2d *b = state->cloth.links[i].b;
-			solve_constraint_2d(dist_constraint_2d,
-					(del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, INEQ_LESS, 
-					(vec2*[]){&a->position, &b->position}, (float[]){1/a->mass, 1/b->mass}, 2, (float[]){state->cloth.links[i].length}, state->deltatime, 1/state->cloth.links[i].stiffness);
+			solve_constraint_2d(distance_constraint_2d,
+					(vec2*[]){&a->position, &b->position},
+					output_ptrs,
+					(float[]){1/a->mass, 1/b->mass},
+					2, 
+					(float[]){state->cloth.links[i].length}, state->deltatime, 1/state->cloth.links[i].stiffness, INEQ_LESS);
 		}
 
 		if(state->self_collision) {

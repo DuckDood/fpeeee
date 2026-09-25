@@ -607,13 +607,16 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].position = (vec3){-2.5, 0, -2.5};
 		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};
         
+		vec3 output_ptrs[4];
 		for(int i = 0; i < state->cloth.link_count; ++i) {
 				//update_linkage_3d(state->cloth.links[i], state->deltatime);
 			ball_3d *a = state->cloth.links[i].a;
 			ball_3d *b = state->cloth.links[i].b;
-			solve_constraint_3d(dist_constraint_3d,
-					(del_constraint_function_3d[]){dist_constraint_del_a_3d, dist_constraint_del_b_3d}, INEQ_LESS, 
-					(vec3*[]){&a->position, &b->position}, (float[]){1/a->mass, 1/b->mass}, 2, (float[]){state->cloth.links[i].length}, state->deltatime, 1/state->cloth.links[i].stiffness);
+			solve_constraint_3d(distance_constraint_3d,
+					(vec3*[]){&a->position, &b->position}, 
+					output_ptrs,
+					(float[]){1/a->mass, 1/b->mass}, 2
+					, (float[]){state->cloth.links[i].length}, state->deltatime, 1/state->cloth.links[i].stiffness, INEQ_LESS);
 		}
         
 		state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
@@ -661,8 +664,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 							
 							
 
-					vec3 output_ptrs[4];
-					solve_full_constraint_3d(penetration_constraint_3d, (vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0, INEQ_LESS);
+					solve_constraint_3d(penetration_constraint_3d, (vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0, INEQ_GREATER);
 
 					vert_a = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
 
@@ -672,7 +674,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 					/*solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
 							(vec3*[]){&body->position, &vert_a->position, &vert_b->position, &vert_c->position},
 							(float[]){1/body->mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0);*/
-					solve_full_constraint_3d(penetration_constraint_3d, (vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0, INEQ_LESS);
+					solve_constraint_3d(penetration_constraint_3d, (vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0, INEQ_GREATER);
 				}
 			}
 		}

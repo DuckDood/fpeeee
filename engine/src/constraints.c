@@ -3,18 +3,6 @@
 #include <types.h>
 #include <constraints.h>
 
-// TODO: make the names better
-
-float dist_constraint_2d(vec2 **vectors,[[maybe_unused]] float *inv_weights,[[maybe_unused]] int size, void *arguments) {
-	return v2_magnitude(v2_sub(*vectors[0], *vectors[1])) - *(float*)arguments;
-}
-vec2 dist_constraint_del_a_2d(vec2 **vectors,[[maybe_unused]] int size, [[maybe_unused]]void *arguments) {
-	return v2_normalize(v2_sub(*vectors[0], *vectors[1]));
-}
-vec2 dist_constraint_del_b_2d(vec2 **vectors,[[maybe_unused]] int size, [[maybe_unused]]void *arguments) {
-	return v2_normalize(v2_sub(*vectors[1], *vectors[0]));
-}
-
 float distance_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]]int size, void *arguments) {
 	vec2 relative_position = v2_sub(*vectors[0], *vectors[1]);
 	float distance_between = v2_magnitude(relative_position);
@@ -59,91 +47,8 @@ float penetration_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]
 
 }
 
-float wall_constraint_2d(vec2 **vectors, [[maybe_unused]]float *inv_weights, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	// vectors should be 0,1,2 -> body, vertex a, vertex b
-	vec2 a_b_edge = v2_sub(*vectors[2], *vectors[1]);
-
-	vec2 relative_a_position = v2_sub(*vectors[1], *vectors[0]);
-	vec2 relative_b_position = v2_sub(*vectors[2], *vectors[0]);
-
-	float a_position_magnitude = v2_magnitude(relative_a_position);
-	float b_position_magnitude = v2_magnitude(relative_b_position);
-
-	float a_b_side_length = v2_magnitude(a_b_edge);
-	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
-	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
-	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
-	vec2 a_b_closest_point = v2_lerp(*vectors[1], *vectors[2], a_b_closest_point_ratio);
-
-	float dist_to_line = v2_magnitude(v2_sub(a_b_closest_point, *vectors[0])) - *(float*)arguments;
-	return dist_to_line;
-}
-
-vec2 wall_constraint_del_body_2d(vec2 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	vec2 a_b_edge = v2_sub(*vectors[2], *vectors[1]);
-
-	vec2 relative_a_position = v2_sub(*vectors[1], *vectors[0]);
-	vec2 relative_b_position = v2_sub(*vectors[2], *vectors[0]);
-
-	float a_position_magnitude = v2_magnitude(relative_a_position);
-	float b_position_magnitude = v2_magnitude(relative_b_position);
-
-	float a_b_side_length = v2_magnitude(a_b_edge);
-	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
-	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
-	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
-	vec2 a_b_closest_point = v2_lerp(*vectors[1], *vectors[2], a_b_closest_point_ratio);
-
-	return v2_normalize(v2_sub(*vectors[0], a_b_closest_point));
-}
-vec2 wall_constraint_del_a_2d(vec2 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	vec2 a_b_edge = v2_sub(*vectors[2], *vectors[1]);
-
-	vec2 relative_a_position = v2_sub(*vectors[1], *vectors[0]);
-	vec2 relative_b_position = v2_sub(*vectors[2], *vectors[0]);
-
-	float a_position_magnitude = v2_magnitude(relative_a_position);
-	float b_position_magnitude = v2_magnitude(relative_b_position);
-
-	float a_b_side_length = v2_magnitude(a_b_edge);
-	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
-	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
-	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
-	vec2 a_b_closest_point = v2_lerp(*vectors[1], *vectors[2], a_b_closest_point_ratio);
-	float move_ratio = 1-a_b_closest_point_ratio;
-
-	//return v2_fmult(v2_normalize(v2_sub(a_b_closest_point, *vectors[0])), move_ratio);
-	return v2_fmult(v2_normalize(v2_sub(a_b_closest_point, *vectors[0])), move_ratio);
-}
-vec2 wall_constraint_del_b_2d(vec2 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	vec2 a_b_edge = v2_sub(*vectors[2], *vectors[1]);
-
-	vec2 relative_a_position = v2_sub(*vectors[1], *vectors[0]);
-	vec2 relative_b_position = v2_sub(*vectors[2], *vectors[0]);
-
-	float a_position_magnitude = v2_magnitude(relative_a_position);
-	float b_position_magnitude = v2_magnitude(relative_b_position);
-
-	float a_b_side_length = v2_magnitude(a_b_edge);
-	float a_b_closest_point_ratio = (a_b_side_length + (a_position_magnitude*a_position_magnitude - b_position_magnitude*b_position_magnitude - a_b_side_length*a_b_side_length)/(2 * a_b_side_length)) / a_b_side_length;
-	if(a_b_closest_point_ratio < 0) a_b_closest_point_ratio = 0;
-	if(a_b_closest_point_ratio > 1) a_b_closest_point_ratio = 1;
-	vec2 a_b_closest_point = v2_lerp(*vectors[1], *vectors[2], a_b_closest_point_ratio);
-	float move_ratio = a_b_closest_point_ratio;
-	return v2_fmult(v2_normalize(v2_sub(a_b_closest_point, *vectors[0])), move_ratio);
-}
 
 // 3d
-float dist_constraint_3d(vec3 **vectors,[[maybe_unused]] float *inv_weights,[[maybe_unused]] int size, void *arguments) {
-	return v3_magnitude(v3_sub(*vectors[0], *vectors[1])) - *(float*)arguments;
-}
-vec3 dist_constraint_del_a_3d(vec3 **vectors,[[maybe_unused]] int size, [[maybe_unused]]void *arguments) {
-	return v3_normalize(v3_sub(*vectors[0], *vectors[1]));
-}
-vec3 dist_constraint_del_b_3d(vec3 **vectors,[[maybe_unused]] int size, [[maybe_unused]]void *arguments) {
-	return v3_normalize(v3_sub(*vectors[1], *vectors[0]));
-}
-
 float closest_point_along_line(vec3 a, vec3 b, vec3 point) {
 	vec3 relative_a_position = v3_sub(point, a);
 	vec3 relative_b_position = v3_sub(point, b);
@@ -288,62 +193,6 @@ void get_point_triangle_info(vec3 a, vec3 b, vec3 c, vec3 collider, float *baryc
 		c->position = v3_sub(c->position, v3_fmult(normal, side * c_move_ratio * inverse_mass_c * inverse_inverse_mass_total * (distance - collider->radius)));
 	}
 }*/
-
-float wall_constraint_3d(vec3 **vectors, [[maybe_unused]]float *inv_weights, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	// 0,1,2,3 -> body, a, b, c
-	float a_barycentric, b_barycentric, c_barycentric, distance;
-	bool in_triangle_plane;
-	int side;
-	vec3 normal;
-
-	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
-
-	return distance - *(float*)arguments;
-}
-
-vec3 wall_constraint_del_body_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	float a_barycentric, b_barycentric, c_barycentric, distance;
-	bool in_triangle_plane;
-	int side;
-	vec3 normal;
-
-	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
-
-	return v3_fmult(normal, -side);
-}
-vec3 wall_constraint_del_a_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	float a_barycentric, b_barycentric, c_barycentric, distance;
-	bool in_triangle_plane;
-	int side;
-	vec3 normal;
-
-	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
-	float move_ratio = a_barycentric;
-	return v3_fmult(normal, side * move_ratio);
-}
-vec3 wall_constraint_del_b_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	float a_barycentric, b_barycentric, c_barycentric, distance;
-	bool in_triangle_plane;
-	int side;
-	vec3 normal;
-
-	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
-	float move_ratio = b_barycentric;
-
-	return v3_fmult(normal, side * move_ratio);
-}
-vec3 wall_constraint_del_c_3d(vec3 **vectors, [[maybe_unused]]int size, [[maybe_unused]]void *arguments) {
-	float a_barycentric, b_barycentric, c_barycentric, distance;
-	bool in_triangle_plane;
-	int side;
-	vec3 normal;
-
-	get_point_triangle_info(*vectors[1], *vectors[2], *vectors[3], *vectors[0], &a_barycentric, &b_barycentric, &c_barycentric, &in_triangle_plane, &distance, &side, &normal);
-	float move_ratio = c_barycentric;
-
-	return v3_fmult(normal, side * move_ratio);
-}
-
 
 float distance_constraint_3d(vec3 **vectors, vec3 *gradient_outputs, [[maybe_unused]]int size, void *arguments) {
 	vec3 relative_position = v3_sub(*vectors[0], *vectors[1]);

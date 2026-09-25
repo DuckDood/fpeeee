@@ -49,8 +49,7 @@ void set_velocity_2d(ball_2d *body, vec2 velocity);
 void begin_ball_update_2d(ball_2d *body, float deltatime);
 void end_ball_update_2d(ball_2d *body, float deltatime);
 
-void solve_constraint_2d(constraint_function_2d constraint, del_constraint_function_2d *del_constraints, constraint_types type, vec2 **vectors, float *inv_weights, int size, void *arguments, float deltatime, float compliance);
-void solve_full_constraint_2d(full_constraint_function_2d constraint, vec2 **vectors, vec2 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type);
+void solve_constraint_2d(full_constraint_function_2d constraint, vec2 **vectors, vec2 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type);
 
 typedef struct {
 	vec3 position;
@@ -112,8 +111,4 @@ void set_velocity_3d(ball_3d *body, vec3 velocity);
 void begin_ball_update_3d(ball_3d *body, float deltatime);
 void end_ball_update_3d(ball_3d *body, float deltatime);
 
-typedef float (*constraint_function_3d)(vec3 **vectors, float *inv_weights, int size, void *arguments);
-typedef vec3 (*del_constraint_function_3d)(vec3 **vectors, int size, void *arguments);
-
-void solve_constraint_3d(constraint_function_3d constraint, del_constraint_function_3d *del_constraints, constraint_types type, vec3 **vectors, float *inv_weights, int size, void *arguments, float deltatime, float compliance);
-void solve_full_constraint_3d(full_constraint_function_3d constraint, vec3 **vectors, vec3 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type);
+void solve_constraint_3d(constraint_function_3d constraint, vec3 **vectors, vec3 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type);
