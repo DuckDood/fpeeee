@@ -115,12 +115,12 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	printf("ball size: %zu\n", sizeof(ball_2d));
 	state->grid = construct_grid_2d(205 * (float)WIDTH/HEIGHT, 205, 0.01);
 
-	int horizontal_max_spawn = 100;
+	int horizontal_max_spawn = 25;
 	float ball_radius = 0.005;
-	float spawn_height = -0.5;
+	float spawn_height = -0.75;
 
 	for(int i = 0; i < state->ball_count; ++i) {
-		state->balls[i].position = (vec2){((i%horizontal_max_spawn) - (horizontal_max_spawn-1)/2.0) * ball_radius*2, spawn_height + ball_radius*2 * floor((float)i / horizontal_max_spawn)};
+		state->balls[i].position = (vec2){((i%horizontal_max_spawn) - (horizontal_max_spawn-1)/2.0) * ball_radius*4, spawn_height + ball_radius*4 * floor((float)i / horizontal_max_spawn)};
 		//set_velocity_2d(state->balls + i, (vec2){rand() * 1e-11, rand() * 1e-10});
 		set_velocity_2d(state->balls + i, (vec2){0});
 		state->balls[i].mass = 0.5;
@@ -176,10 +176,14 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     "layout (location = 2) in float ballRadius;\n"
     "layout (location = 3) in vec2 velocity;\n"
 	"uniform float aspectRatio;\n"
+	"uniform mat3 camRot;\n"
+	"uniform vec3 camPos;\n"
 	"out float speed;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(aspectRatio * (aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, aPos.z * 0.1, 1.0);\n"
+	"	vec3 pos = camRot * (vec3((aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, 0) - camPos);\n"
+    //"   gl_Position = vec4(aspectRatio * (aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, aPos.z * 0.1, 1.0);\n"
+    "   gl_Position = vec4(pos.x * aspectRatio, pos.y, pos.z, pos.z);\n"
     "	speed = length(velocity);"
     "}\0";
 
@@ -310,7 +314,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	const bool * const key_states = SDL_GetKeyboardState(NULL);
 
 	int framerate = 60;
-	int steps_per_frame = 16;
+	int steps_per_frame = 8;
 	state->deltatime = 1.0/framerate/steps_per_frame;
 	//state->deltatime = 0;
 
@@ -476,11 +480,22 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		//solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, EQUALITY, (vec2*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){state->balls[0].radius * 100 + 0.001 });
 		//solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, (vec2*[]){&state->balls[2].position, &state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[2].mass, 1/state->balls[0].mass, 1/state->balls[1].mass}, 3, (float[]){state->balls[0].radius * 1});
 		//collide_wall_2d(state->balls + 0, state->balls + 1, state->balls + 2);
-		
-		
+		vec2 grads[state->ball_count];
+		vec2 *ball_vecs[state->ball_count];
+		float inv_weights[state->ball_count];
+		for(int i = 0; i < state->ball_count; ++i) {
+			ball_vecs[i] = &state->balls[i].position;
+			inv_weights[i] = 0;
+		}
+		(void)inv_weights;
 		update_grid_2d(&state->grid, state->balls, state->ball_count);
 		
-		spatial_collision_2d(&state->grid, state->balls, state->ball_count);
+		float fluid_constraint_2d(vec2 **vectors, [[maybe_unused]]vec2 *gradients, int size, [[maybe_unused]]void *arguments);
+		fluid_constraint_2d(ball_vecs, grads, state->ball_count, &state->grid);
+		//solve_constraint_2d(fluid_constraint_2d, ball_vecs, grads, inv_weights, state->ball_count, NULL, state->deltatime, 0, EQUALITY);
+		
+		
+		//spatial_collision_2d(&state->grid, state->balls, state->ball_count);
 
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_2d *current_ball = state->balls + i;

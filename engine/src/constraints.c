@@ -1,6 +1,9 @@
+#include <float.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <types.h>
+#include <spatial.h>
 #include <constraints.h>
 
 float distance_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]]int size, void *arguments) {
@@ -45,6 +48,284 @@ float penetration_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]
 
 	return dist_to_closest - *(float*)arguments;
 
+}
+
+float poly6(vec2 r, float h) {
+	/*float r_magnitude = v2_magnitude(r);
+	if(0 <= r_magnitude && r_magnitude <= h) {
+		return (315.f/(64 * 3.14159 * h*h*h*h*h)) * (h*h - r_magnitude*r_magnitude) * (h*h - r_magnitude*r_magnitude);
+	}
+	return 0;*/
+		
+
+	float r_magnitude = v2_magnitude(r);
+	if(0.00001 < r_magnitude && r_magnitude <= h) {
+		return (15/(3.14159*h*h*h*h)) * (h-r_magnitude)*(h-r_magnitude)*(h-r_magnitude);
+	}
+	return 0;
+}
+
+float poly6_len(float r, float h) {
+	/*float r_magnitude = r;
+	if(0 <= r_magnitude && r_magnitude <= h) {
+		return (315.f/(64 * 3.14159 * h*h*h*h*h)) * (h*h - r_magnitude*r_magnitude) * (h*h - r_magnitude*r_magnitude);
+	}
+	return 0;*/
+		
+	float r_magnitude = r;
+	if(0.00001 < r_magnitude && r_magnitude <= h) {
+		return (15/(3.14159*h*h*h*h)) * (h-r_magnitude)*(h-r_magnitude)*(h-r_magnitude);
+	}
+	return 0;
+}
+
+vec2 spiky_gradient(vec2 r, float h) {
+	float r_magnitude = v2_magnitude(r);
+
+	if(0.00000 < r_magnitude && r_magnitude <= h) {
+		return v2_fmult(v2_fdiv(r, r_magnitude), -1 * (6/3.14159 *h*h*h*h) * (0.000 < r_magnitude && r_magnitude <= h? (h-r_magnitude)*(h-r_magnitude): 0));
+	}
+	return (vec2){0};
+}
+
+float density_estimator(vec2 **vectors, int index, [[maybe_unused]]int size, float h, spatial_grid *grid) {
+
+	float density = 0;
+	int column = vectors[index]->x / grid->element_size + grid->width * 0.5;
+	int row = vectors[index]->y / grid->element_size + grid->height * 0.5;
+	if(column < 0 || column > grid->width - 1 || row < 0 || row > grid->height - 1) return 0;
+
+	int min_column = (vectors[index]->x - h) / grid->element_size + grid->width * 0.5;
+	int min_row = (vectors[index]->y - h) / grid->element_size + grid->height * 0.5;
+
+	int max_column = (vectors[index]->x + h) / grid->element_size + grid->width * 0.5;
+	int max_row = (vectors[index]->y + h) / grid->element_size + grid->height * 0.5;
+	/*for(int i = 0; i < size; ++i) {
+		density += poly6(v2_sub(*vectors[index], *vectors[i]), h);
+	}*/
+	for(int row = min_row; row <= max_row; ++row) {
+		if(row >= grid->height - 1) continue;
+		if(row < 0) continue;
+		for(int column = min_column; column <= max_column; ++column) {
+			if(column >= grid->width - 1) continue;
+			if(column < 0) continue;
+			int partition_index = row * grid->width + column;
+			spatial_partition * restrict partition = grid->partitions + partition_index;
+			/*for(int i = 0; i < size; ++i) {
+				density += poly6(v2_sub(*vectors[index], *vectors[i]), h);
+			}*/
+			for(int j = 0; j < partition->ball_count; ++j) {
+				vec2 *check = vectors[grid->ball_map[partition->ball_offset + j]];
+
+				density += poly6(v2_sub(*vectors[index], *check), h);
+				//solve_constraint_2d(distance_constraint_2d, (vec2*[]){&ball->position, &check_ball->position}, output_ptrs, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius}, 1, 0, INEQ_GREATER);
+
+			}
+		}
+	}
+
+	return density;
+}
+
+vec2 gradient_estimator(vec2 **vectors, int index, int size, float h) {
+	vec2 gradient = {0};
+	for(int j = 0; j < size; ++j) {
+		if(index == j) {
+			continue;
+		}
+		gradient = v2_add(gradient, v2_fmult(spiky_gradient(v2_sub(*vectors[index], *vectors[j]),h), 1));
+	}
+
+
+	return gradient;
+}
+
+float pressure_gradient_sum(vec2 **vectors, int index, [[maybe_unused]]int size, float h, float rest_density, spatial_grid *grid) {
+	float pressure_sum = 0;
+
+	vec2 out_pressure = {0};
+
+	/*for(int i = 0; i < size; ++i) {
+		out_pressure = v2_add(out_pressure, spiky_gradient(v2_sub(*vectors[index], *vectors[i]), h));
+	}
+
+	out_pressure = v2_fmult(out_pressure, 1/rest_density);
+	pressure_sum = v2_dot(out_pressure, out_pressure);
+
+	for(int i = 0; i < size; ++i) {
+		vec2 in_pressure = v2_fmult(spiky_gradient(v2_sub(*vectors[index], *vectors[i]), h), 1/rest_density);
+		pressure_sum += v2_dot(in_pressure, in_pressure); // ???? the tutorial says so
+	}*/
+	int column = vectors[index]->x / grid->element_size + grid->width * 0.5;
+	int row = vectors[index]->y / grid->element_size + grid->height * 0.5;
+	if(column < 0 || column > grid->width - 1 || row < 0 || row > grid->height - 1) return 0;
+
+	int min_column = (vectors[index]->x - h) / grid->element_size + grid->width * 0.5;
+	int min_row = (vectors[index]->y - h) / grid->element_size + grid->height * 0.5;
+
+	int max_column = (vectors[index]->x + h) / grid->element_size + grid->width * 0.5;
+	int max_row = (vectors[index]->y + h) / grid->element_size + grid->height * 0.5;
+	for(int row = min_row; row <= max_row; ++row) {
+		if(row >= grid->height - 1) continue;
+		if(row < 0) continue;
+		for(int column = min_column; column <= max_column; ++column) {
+			if(column >= grid->width - 1) continue;
+			if(column < 0) continue;
+			int partition_index = row * grid->width + column;
+			spatial_partition * restrict partition = grid->partitions + partition_index;
+			/*for(int i = 0; i < size; ++i) {
+				density += poly6(v2_sub(*vectors[index], *vectors[i]), h);
+			}*/
+			for(int j = 0; j < partition->ball_count; ++j) {
+				vec2 *check = vectors[grid->ball_map[partition->ball_offset + j]];
+
+				//density += poly6(v2_sub(*vectors[index], *check), h);
+				out_pressure = v2_add(out_pressure, spiky_gradient(v2_sub(*vectors[index], *check), h));
+				//solve_constraint_2d(distance_constraint_2d, (vec2*[]){&ball->position, &check_ball->position}, output_ptrs, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius}, 1, 0, INEQ_GREATER);
+
+			}
+		}
+	}
+
+	out_pressure = v2_fmult(out_pressure, 1/rest_density);
+	pressure_sum = v2_dot(out_pressure, out_pressure);
+
+	for(int row = min_row; row <= max_row; ++row) {
+		if(row >= grid->height - 1) continue;
+		if(row < 0) continue;
+		for(int column = min_column; column <= max_column; ++column) {
+			if(column >= grid->width - 1) continue;
+			if(column < 0) continue;
+			int partition_index = row * grid->width + column;
+			spatial_partition * restrict partition = grid->partitions + partition_index;
+			/*for(int i = 0; i < size; ++i) {
+				density += poly6(v2_sub(*vectors[index], *vectors[i]), h);
+			}*/
+			for(int j = 0; j < partition->ball_count; ++j) {
+				vec2 *check = vectors[grid->ball_map[partition->ball_offset + j]];
+
+				vec2 in_pressure = v2_fmult(spiky_gradient(v2_sub(*vectors[index], *check), h), 1/rest_density);
+				pressure_sum += v2_dot(in_pressure, in_pressure); // ???? the tutorial says so
+
+			}
+		}
+	}
+
+	return pressure_sum;
+}
+
+// thanks to https://mmacklin.com/pbf_sig_preprint.pdf and https://wleusch.wordpress.com/position-based-fluids-2d/
+float fluid_constraint_2d(vec2 **vectors, [[maybe_unused]]vec2 *gradients, int size, [[maybe_unused]]void *arguments) {
+	/*float h = 0.05;
+	float rest_density = 3;
+	float densities[size];
+	float density_constraints[size];
+	float lambdas[size];
+	//vec2 corrections[size];
+
+	for(int i = 0; i < size; ++i) {
+		densities[i] = density_estimator(vectors, i, size, h);
+		density_constraints[i] = densities[i]/rest_density - 1;
+		gradients[i] = v2_fmult(gradient_estimator(vectors, i, size, h), 1/rest_density);
+	}
+
+	for(int i = 0; i < size; ++i) {
+		float sum = 0;
+		for(int j = 0; j < size; ++j) {
+			if(i == j) {
+				sum += v2_dot(gradients[i], gradients[i]);
+				continue;
+			}
+			vec2 grad = spiky_gradient(v2_sub(*vectors[i], *vectors[j]),h); 
+			if(grad.x == 0 && grad.y == 0) continue;
+			grad = v2_fmult(grad, 1/rest_density);
+			sum += v2_dot(grad, grad);
+		}
+		if(sum < 0.0001) sum = 0.0001;
+
+		lambdas[i] = -density_constraints[i]/(sum + 1);
+	}
+
+	for(int i = 0; i < size; ++i) {
+		vec2 correction = {0};
+
+		for(int j = 0; j < size; ++j) {
+			correction = v2_add(correction, v2_fmult(spiky_gradient(v2_sub(*vectors[i], *vectors[j]), h), lambdas[i] + lambdas[j]));
+		}
+
+		correction = v2_fmult(correction, 1/rest_density);
+		*vectors[i] = v2_add(*vectors[i], v2_fmult(correction, 10));
+		//corrections[i] = v2_fmult(corrections[i], 1/rest_density);
+	}
+
+	return 1;*/
+	spatial_grid *grid = (spatial_grid*)arguments;
+	float h = 0.02;
+	float rest_density = 1;
+	float constraints[size];
+	float densities[size];
+	float lambdas[size];
+	vec2 deltas[size];
+
+	for(int i = 0; i < size; ++i) {
+		densities[i] = density_estimator(vectors, i, size, h, grid);
+		//printf("%f\n", densities[i]);
+		constraints[i] = densities[i]/rest_density - 1;
+		vec2 gradient = {0};
+		gradient = v2_fmult(gradient, 1/rest_density);
+		float lambda_denominator = pressure_gradient_sum(vectors, i, size, h, rest_density, grid);
+		if(lambda_denominator < 0.00001) lambda_denominator = 0.00001;
+		lambdas[i] = -constraints[i]/(lambda_denominator + 0.00);
+	}
+
+	for(int i = 0; i < size; ++i) {/*
+		for(int j = 0; j < size; ++j) {
+			float s_correct = -0.1 * pow(poly6(v2_sub(*vectors[i], *vectors[j]), h)/poly6_len(0.3 * h, h), 4.f);
+			vec2 delta_p = v2_fmult(spiky_gradient(v2_sub(*vectors[i], *vectors[j]), h), (1/rest_density) * (lambdas[i] + lambdas[j] + s_correct));
+			*vectors[i] = v2_add(*vectors[i], delta_p);
+		}*/
+		deltas[i] = (vec2){0};
+		int column = vectors[i]->x / grid->element_size + grid->width * 0.5;
+		int row = vectors[i]->y / grid->element_size + grid->height * 0.5;
+		if(column < 0 || column > grid->width - 1 || row < 0 || row > grid->height - 1) continue;
+
+		int min_column = (vectors[i]->x - h) / grid->element_size + grid->width * 0.5;
+		int min_row = (vectors[i]->y - h) / grid->element_size + grid->height * 0.5;
+
+		int max_column = (vectors[i]->x + h) / grid->element_size + grid->width * 0.5;
+		int max_row = (vectors[i]->y + h) / grid->element_size + grid->height * 0.5;
+		for(int row = min_row; row <= max_row; ++row) {
+			if(row >= grid->height - 1) continue;
+			if(row < 0) continue;
+			for(int column = min_column; column <= max_column; ++column) {
+				if(column >= grid->width - 1) continue;
+				if(column < 0) continue;
+				int partition_i = row * grid->width + column;
+				spatial_partition * restrict partition = grid->partitions + partition_i;
+				/*for(int i = 0; i < size; ++i) {
+					density += poly6(v2_sub(*vectors[i], *vectors[i]), h);
+				}*/
+				for(int j = 0; j < partition->ball_count; ++j) {
+					vec2 *check = vectors[grid->ball_map[partition->ball_offset + j]];
+					float lambda = lambdas[grid->ball_map[partition->ball_offset + j]];
+
+					//density += poly6(v2_sub(*vectors[i], *check), h);
+			//		out_pressure = v2_add(out_pressure, spiky_gradient(v2_sub(*vectors[i], *check), h));
+					//solve_constraint_2d(distance_constraint_2d, (vec2*[]){&ball->position, &check_ball->position}, output_ptrs, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius}, 1, 0, INEQ_GREATER);
+					float s_correct = -0.1 * pow(poly6(v2_sub(*vectors[i], *check), h)/poly6_len(0.3 * h, h), 4.f);
+					deltas[i] = v2_add(deltas[i], v2_fmult(spiky_gradient(v2_sub(*vectors[i], *check), h), (1/rest_density) * (lambdas[i] + lambda + s_correct)));
+					//*vectors[i] = v2_add(*vectors[i], delta_p);
+
+				}
+			}
+		}
+	}
+	for(int i = 0; i < size; ++i) {
+		*vectors[i] = v2_add(*vectors[i], deltas[i]);
+	}
+
+
+	return 1;
 }
 
 
