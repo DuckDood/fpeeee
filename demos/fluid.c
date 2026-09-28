@@ -108,7 +108,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	state->ball_count = 1000;
+	state->ball_count = 500;
 	//state->ball_count = 130;
 	state->balls = malloc(state->ball_count * sizeof(ball_2d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_2d) / 1000);
@@ -482,9 +482,12 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		//collide_wall_2d(state->balls + 0, state->balls + 1, state->balls + 2);
 		vec2 grads[state->ball_count];
 		vec2 *ball_vecs[state->ball_count];
+		vec2 ball_vecs_r[state->ball_count];
 		float inv_weights[state->ball_count];
+
 		for(int i = 0; i < state->ball_count; ++i) {
-			ball_vecs[i] = &state->balls[i].position;
+			ball_vecs_r[i] = v2_add(state->balls[i].position, v2_fmult(state->balls[i].velocity, state->deltatime * 1));
+			ball_vecs[i] = &ball_vecs_r[i];
 			inv_weights[i] = 0;
 		}
 		(void)inv_weights;
@@ -492,6 +495,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		
 		float fluid_constraint_2d(vec2 **vectors, [[maybe_unused]]vec2 *gradients, int size, [[maybe_unused]]void *arguments);
 		fluid_constraint_2d(ball_vecs, grads, state->ball_count, &state->grid);
+		for(int i = 0; i < state->ball_count; ++i) {
+			state->balls[i].position = v2_add(state->balls[i].position, grads[i]);
+		}
 		//solve_constraint_2d(fluid_constraint_2d, ball_vecs, grads, inv_weights, state->ball_count, NULL, state->deltatime, 0, EQUALITY);
 		
 		

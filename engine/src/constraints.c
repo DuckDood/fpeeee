@@ -51,31 +51,31 @@ float penetration_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]
 }
 
 float poly6(vec2 r, float h) {
-	/*float r_magnitude = v2_magnitude(r);
+	float r_magnitude = v2_magnitude(r);
 	if(0 <= r_magnitude && r_magnitude <= h) {
 		return (315.f/(64 * 3.14159 * h*h*h*h*h)) * (h*h - r_magnitude*r_magnitude) * (h*h - r_magnitude*r_magnitude);
 	}
-	return 0;*/
+	return 0;
 		
 
-	float r_magnitude = v2_magnitude(r);
+/*	float r_magnitude = v2_magnitude(r);
 	if(0.00001 < r_magnitude && r_magnitude <= h) {
-		return (15/(3.14159*h*h*h*h)) * (h-r_magnitude)*(h-r_magnitude)*(h-r_magnitude);
+		return (15/(3.14159*h*h*h*h*h*h*h)) * (h-r_magnitude)*(h-r_magnitude)*(h-r_magnitude);
 	}
-	return 0;
+	return 0;*/
 }
 
 float poly6_len(float r, float h) {
-	/*float r_magnitude = r;
+	float r_magnitude = r;
 	if(0 <= r_magnitude && r_magnitude <= h) {
 		return (315.f/(64 * 3.14159 * h*h*h*h*h)) * (h*h - r_magnitude*r_magnitude) * (h*h - r_magnitude*r_magnitude);
 	}
-	return 0;*/
+	return 0;
 		
-	float r_magnitude = r;
+/*	float r_magnitude = r;
 	if(0.00001 < r_magnitude && r_magnitude <= h) {
-		return (15/(3.14159*h*h*h*h)) * (h-r_magnitude)*(h-r_magnitude)*(h-r_magnitude);
-	}
+		return (15/(3.14159*h*h*h*h*h*h*h)) * (h-r_magnitude)*(h-r_magnitude)*(h-r_magnitude);
+	}*/
 	return 0;
 }
 
@@ -260,12 +260,11 @@ float fluid_constraint_2d(vec2 **vectors, [[maybe_unused]]vec2 *gradients, int s
 
 	return 1;*/
 	spatial_grid *grid = (spatial_grid*)arguments;
-	float h = 0.02;
-	float rest_density = 1;
+	float h = 0.06;
+	float rest_density = 100;
 	float constraints[size];
 	float densities[size];
 	float lambdas[size];
-	vec2 deltas[size];
 
 	for(int i = 0; i < size; ++i) {
 		densities[i] = density_estimator(vectors, i, size, h, grid);
@@ -284,7 +283,7 @@ float fluid_constraint_2d(vec2 **vectors, [[maybe_unused]]vec2 *gradients, int s
 			vec2 delta_p = v2_fmult(spiky_gradient(v2_sub(*vectors[i], *vectors[j]), h), (1/rest_density) * (lambdas[i] + lambdas[j] + s_correct));
 			*vectors[i] = v2_add(*vectors[i], delta_p);
 		}*/
-		deltas[i] = (vec2){0};
+		gradients[i] = (vec2){0};
 		int column = vectors[i]->x / grid->element_size + grid->width * 0.5;
 		int row = vectors[i]->y / grid->element_size + grid->height * 0.5;
 		if(column < 0 || column > grid->width - 1 || row < 0 || row > grid->height - 1) continue;
@@ -312,8 +311,8 @@ float fluid_constraint_2d(vec2 **vectors, [[maybe_unused]]vec2 *gradients, int s
 					//density += poly6(v2_sub(*vectors[i], *check), h);
 			//		out_pressure = v2_add(out_pressure, spiky_gradient(v2_sub(*vectors[i], *check), h));
 					//solve_constraint_2d(distance_constraint_2d, (vec2*[]){&ball->position, &check_ball->position}, output_ptrs, (float[]){1/ball->mass, 1/check_ball->mass}, 2, (float[]){ball->radius + check_ball->radius}, 1, 0, INEQ_GREATER);
-					float s_correct = -0.1 * pow(poly6(v2_sub(*vectors[i], *check), h)/poly6_len(0.3 * h, h), 4.f);
-					deltas[i] = v2_add(deltas[i], v2_fmult(spiky_gradient(v2_sub(*vectors[i], *check), h), (1/rest_density) * (lambdas[i] + lambda + s_correct)));
+					float s_correct = -100000 * pow(poly6(v2_sub(*vectors[i], *check), h)/poly6_len(0.3 * h, h), 4.f);
+					gradients[i] = v2_add(gradients[i], v2_fmult(spiky_gradient(v2_sub(*vectors[i], *check), h), (1/rest_density) * (lambdas[i] + lambda + s_correct)));
 					//*vectors[i] = v2_add(*vectors[i], delta_p);
 
 				}
@@ -321,7 +320,7 @@ float fluid_constraint_2d(vec2 **vectors, [[maybe_unused]]vec2 *gradients, int s
 		}
 	}
 	for(int i = 0; i < size; ++i) {
-		*vectors[i] = v2_add(*vectors[i], deltas[i]);
+		//*vectors[i] = v2_add(*vectors[i], deltas[i]);
 	}
 
 
