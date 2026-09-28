@@ -114,17 +114,17 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	state->ball_count = 0;
+	state->ball_count = 32;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
-	state->grid = construct_grid_3d(25, 50, 25, 0.3);
+	state->grid = construct_grid_3d(25, 50, 25, 0.6);
 
 
 	for(int i = 0; i < state->ball_count; ++i) {
 		state->balls[i].position = (vec3){0, i + 10, 0};
 		set_velocity_3d(state->balls + i, (vec3){0});
-		state->balls[i].mass = 0.25;
-		state->balls[i].radius = 0.25;
+		state->balls[i].mass = 0.3;
+		state->balls[i].radius = 0.3;
 	}
 
 	state->cloth = generate_cloth_3d(5, 5, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 100, (vec3){0});
@@ -531,7 +531,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			for(int i = 1; i <= spawn_count; ++i) {
 				state->balls[state->ball_count-i].position = (vec3){0, spawn_height + i * 2 * ball_radius, 0};
 				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, 0, 0});
-				state->balls[state->ball_count - i].mass = 0.5;
+				state->balls[state->ball_count - i].mass = 0.3;
 				state->balls[state->ball_count - i].radius = ball_radius;
 			}
 		}
@@ -639,45 +639,60 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		//collide_wall_3d(&state->cloth.balls[state->cloth.ball_count-1], &state->cloth.balls[CLOTH_DIMENSIONS-1], &state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS], state->balls + 4);
 		
 	
-		for(int ball = 0; ball < state->ball_count; ++ball) {
-			for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
-				for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
-					/*collide_wall_3d(
-							&state->cloth.balls[i + CLOTH_DIMENSIONS*row],
-							&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
-							&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
-							state->balls + ball);
-					collide_wall_3d(
-							&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
-							&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
-							&state->cloth.balls[i+CLOTH_DIMENSIONS+1 + CLOTH_DIMENSIONS*row],
-							state->balls + ball);*/
-					ball_3d *vert_a = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
-
-					ball_3d *vert_b = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
-					ball_3d *vert_c = &state->cloth.balls[i + CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row];
-
-					/*ball_3d *body = state->balls + ball;
-					solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
-							(vec3*[]){&body->position, &vert_a->position, &vert_b->position, &vert_c->position},
-							(float[]){1/body->mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0);*/
-							
-							
-
-					solve_constraint_3d(penetration_constraint_3d, (vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0, INEQ_GREATER);
-
-					vert_a = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
-
-					vert_b = &state->cloth.balls[i + CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row];
-					vert_c = &state->cloth.balls[i + CLOTH_DIMENSIONS + 1 + CLOTH_DIMENSIONS*row];
-
-					/*solve_constraint_3d(wall_constraint_3d, (del_constraint_function_3d[]){wall_constraint_del_body_3d, wall_constraint_del_a_3d, wall_constraint_del_b_3d, wall_constraint_del_c_3d}, INEQ_GREATER, 
-							(vec3*[]){&body->position, &vert_a->position, &vert_b->position, &vert_c->position},
-							(float[]){1/body->mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0);*/
-					solve_constraint_3d(penetration_constraint_3d, (vec3*[]){&state->balls[ball].position, &vert_a->position, &vert_b->position, &vert_c->position}, output_ptrs, (float[]){1/state->balls[ball].mass, 1/vert_a->mass, 1/vert_b->mass, 1/vert_c->mass}, 4, (float[]){state->balls[ball].radius}, state->deltatime, 0, INEQ_GREATER);
-				}
+		for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
+			for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
+				spatial_bounds_3d bounds;
+				ball_3d *vert_a = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
+				ball_3d *vert_b = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
+				ball_3d *vert_c = &state->cloth.balls[i + CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row];
+	
+				vec3 min;
+				min.x = fmin(fmin(vert_a->position.x, vert_b->position.x), vert_c->position.x);
+				min.y = fmin(fmin(vert_a->position.y, vert_b->position.y), vert_c->position.y);
+				min.z = fmin(fmin(vert_a->position.z, vert_b->position.z), vert_c->position.z);
+	
+				vec3 max;
+				max.x = fmax(fmax(vert_a->position.x, vert_b->position.x), vert_c->position.x);
+				max.y = fmax(fmax(vert_a->position.y, vert_b->position.y), vert_c->position.y);
+				max.z = fmax(fmax(vert_a->position.z, vert_b->position.z), vert_c->position.z);
+				
+				bounds.min_column = (min.x - state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+				bounds.min_row = (min.y - state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+				bounds.min_layer = (min.z - state->balls[0].radius) / state->grid.element_size + state->grid.depth * 0.5;
+	
+				bounds.max_column = (max.x + state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+				bounds.max_row = (max.y + state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+				bounds.max_layer = (max.z + state->balls[0].radius) / state->grid.element_size + state->grid.depth * 0.5;
+	
+				vec3 *vectors[4];
+				vectors[1] = &vert_a->position;
+				vectors[2] = &vert_b->position;
+				vectors[3] = &vert_c->position;
+	
+				float inv_weights[4];
+				inv_weights[1] = 1/vert_a->mass;
+				inv_weights[2] = 1/vert_b->mass;
+				inv_weights[3] = 1/vert_c->mass;
+	
+	
+				spatial_constraint_3d(&state->grid, bounds, 0, state->balls, penetration_constraint_3d, vectors, output_ptrs, inv_weights, 4, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);
+	
+				vert_a = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
+				vert_b = &state->cloth.balls[i + CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row];
+				vert_c = &state->cloth.balls[i + CLOTH_DIMENSIONS + 1 + CLOTH_DIMENSIONS*row];
+	
+				vectors[1] = &vert_a->position;
+				vectors[2] = &vert_b->position;
+				vectors[3] = &vert_c->position;
+	
+				inv_weights[1] = 1/vert_a->mass;
+				inv_weights[2] = 1/vert_b->mass;
+				inv_weights[3] = 1/vert_c->mass;
+	
+				spatial_constraint_3d(&state->grid, bounds, 0, state->balls, penetration_constraint_3d, vectors, output_ptrs, inv_weights, 4, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);
 			}
 		}
+
 		for(int i = 0; i < state->cloth.ball_count; ++i) {
 			ball_3d *current_ball = state->cloth.balls + i;
 			end_ball_update_3d(current_ball, state->deltatime);

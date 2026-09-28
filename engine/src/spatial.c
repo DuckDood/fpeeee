@@ -343,6 +343,26 @@ dontcol:
 
 }
 
+void spatial_constraint_2d(spatial_grid *grid, spatial_bounds_2d bounds, int constraint_index, ball_2d *balls, constraint_function_2d constraint, vec2 **vectors, vec2 *gradients, float *inv_weights, int size, void *arguments, float deltatime, float compliance, constraint_types type) {
+	for(int row = bounds.min_row; row <= bounds.max_row; ++row) {
+		if(row >= grid->height - 1) continue;
+		if(row < 0) continue;
+		for(int column = bounds.min_column; column <= bounds.max_column; ++column) {
+			if(column >= grid->width - 1) continue;
+			if(column < 0) continue;
+			int partition_index = row * grid->width + column;
+			spatial_partition * restrict partition = grid->partitions + partition_index;
+			for(int i = 0; i < partition->ball_count; ++i) {
+				for(int i = 0; i < partition->ball_count; ++i) {
+					vectors[constraint_index] = &balls[grid->ball_map[partition->ball_offset + i]].position;
+					inv_weights[constraint_index] = 1/balls[grid->ball_map[partition->ball_offset + i]].mass;
+					solve_constraint_2d(constraint, vectors, gradients, inv_weights, size, arguments, deltatime, compliance, type);
+				}
+			}
+		}
+	}
+}
+
 // 3d
 
 spatial_grid construct_grid_3d(int grid_width, int grid_height, int grid_depth, float element_size) {
@@ -515,4 +535,28 @@ void spatial_collision_3d(spatial_grid *grid, ball_3d *balls, int ball_count) {
 		}*/
 	}
 
+}
+
+void spatial_constraint_3d(spatial_grid *grid, spatial_bounds_3d bounds, int constraint_index, ball_3d *balls, constraint_function_3d constraint, vec3 **vectors, vec3 *gradients, float *inv_weights, int size, void *arguments, float deltatime, float compliance, constraint_types type) {
+	for(int layer = bounds.min_layer; layer <= bounds.max_layer; ++layer) {
+		if(layer >= grid->depth - 1) continue;
+		if(layer < 0) continue;
+		for(int row = bounds.min_row; row <= bounds.max_row; ++row) {
+			if(row >= grid->height - 1) continue;
+			if(row < 0) continue;
+			for(int column = bounds.min_column; column <= bounds.max_column; ++column) {
+				if(column >= grid->width - 1) continue;
+				if(column < 0) continue;
+				int partition_index = layer * grid->width * grid->height + row * grid->width + column;
+				spatial_partition * restrict partition = grid->partitions + partition_index;
+				for(int i = 0; i < partition->ball_count; ++i) {
+					for(int i = 0; i < partition->ball_count; ++i) {
+						vectors[constraint_index] = &balls[grid->ball_map[partition->ball_offset + i]].position;
+						inv_weights[constraint_index] = 1/balls[grid->ball_map[partition->ball_offset + i]].mass;
+						solve_constraint_3d(constraint, vectors, gradients, inv_weights, size, arguments, deltatime, compliance, type);
+					}
+				}
+			}
+		}
+	}
 }
