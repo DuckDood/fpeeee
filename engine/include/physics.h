@@ -49,7 +49,7 @@ void set_velocity_2d(ball_2d *body, vec2 velocity);
 void begin_ball_update_2d(ball_2d *body, float deltatime);
 void end_ball_update_2d(ball_2d *body, float deltatime);
 
-void solve_constraint_2d(full_constraint_function_2d constraint, vec2 **vectors, vec2 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type);
+void solve_constraint_2d(constraint_function_2d constraint, vec2 **vectors, vec2 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type);
 
 typedef struct {
 	vec3 position;

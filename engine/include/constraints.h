@@ -1,7 +1,7 @@
 #pragma once
 #include <types.h>
 
-typedef float (*full_constraint_function_2d)(vec2 **vectors, vec2 *gradients, int size, void *arguments);
+typedef float (*constraint_function_2d)(vec2 **vectors, vec2 *gradients, int size, void *arguments);
 
 
 
