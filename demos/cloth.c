@@ -53,6 +53,7 @@ typedef struct {
 
 	Uint64 frame_tick_count;
 	int frame_count;
+	int true_frame_count;
 
 	Uint64 spawn_tick_count;
 
@@ -69,6 +70,7 @@ typedef struct {
 	GLuint cloth_VBO;
 	GLuint cloth_normals_VBO;
 	GLuint cloth_texcoords_VBO;
+	GLuint cloth_tear_VBO;
 	GLuint cloth_VAO;
 	GLuint cloth_EBO;
 
@@ -130,6 +132,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->frame_tick_count = SDL_GetTicks();
 	state->frame_count = 0;
+	state->true_frame_count = 0;
 
 
 	glEnable(GL_DEPTH_TEST);
@@ -219,12 +222,11 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	const char *fs_source = "#version 300 es\nprecision mediump float;\n"
 	"out vec4 FragColor;\n"
-	"\n"
 	"in vec3 velocity;\n"
 	"in vec3 normal;\n"
 	"void main()\n"
 	"{\n"
-		"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 100.);\n"
+		"vec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 100.);\n"
 		"if(col.r > 1.) col.r = 1.;\n"
 		"if(col.g > 1.) col.g = 1.;\n"
 		"if(col.b > 1.) col.b = 1.;\n"
@@ -359,6 +361,15 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
 	glEnableVertexAttribArray(2);
 
+	glGenBuffers(1, &state->cloth_tear_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_tear_VBO);
+	
+	float damage[CLOTH_DIMENSIONS * CLOTH_DIMENSIONS];
+	memset(damage, 0, sizeof(damage));
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * state->cloth.ball_count, damage, GL_DYNAMIC_DRAW);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+	glEnableVertexAttribArray(3);
+
 	glGenBuffers(1, &state->cloth_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->cloth_EBO);
 	GLuint indices[(CLOTH_DIMENSIONS-1)*(CLOTH_DIMENSIONS-1) * 6];
@@ -386,6 +397,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec3 normal;\n"
     "layout (location = 2) in vec2 texcoords;\n"
+    "layout (location = 3) in float damage;\n"
 	"uniform float aspectRatio;\n"
 	"uniform mat3 camRot;\n"
 	"uniform vec3 camPos;\n"
@@ -393,6 +405,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"out vec3 position;\n"
 	"out vec3 normals;\n"
 	"out vec2 texcoord;\n"
+	"out float clothDamage;\n"
     "void main()\n"
     "{\n"
 	"	vec3 pos = camRot * (vec3((aPos.x), aPos.y, aPos.z) - camPos);\n"
@@ -401,6 +414,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"	position = pos;\n"
 	"	normals = normal;\n"
 	"	texcoord = texcoords;\n"
+	"	clothDamage = damage;\n"
     "}\0";
 
 	v_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -422,8 +436,10 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"in vec3 normals;\n"
 	"in vec2 texcoord;\n"
 	"uniform sampler2D cloth_texture;\n"
+	"in float clothDamage;\n"
 	"void main()\n"
 	"{\n"
+		"if(clothDamage > 0.) discard;\n"
 		//"vec3 velocity = vec3(0.);\n"
 		//"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 100.);\n"
 		"\nvec3 col = vec3(texture(cloth_texture, texcoord));\n"
@@ -530,7 +546,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			for(int i = 1; i <= spawn_count; ++i) {
 				state->balls[state->ball_count-i].position = (vec3){0, spawn_height + i * 2 * ball_radius, 0};
 				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, 0, 0});
-				state->balls[state->ball_count - i].mass = 0.5;
+				state->balls[state->ball_count - i].mass = 1;
 				state->balls[state->ball_count - i].radius = ball_radius;
 			}
 		}
@@ -600,21 +616,49 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			current_ball->position.y -= 10 * state->deltatime * state->deltatime;
 		}
 
-		state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
+		/*state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
 		state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5};
         
 		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].position = (vec3){-2.5, 0, -2.5};
-		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};
+		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};*/
         
 		for(int i = 0; i < state->cloth.link_count; ++i) {
-				update_linkage_3d(state->cloth.links[i], state->deltatime);
+			linkage_3d link = state->cloth.links[i];
+			if(state->true_frame_count > 60 && v3_magnitude(v3_sub(link.a->position, link.b->position)) > link.length * 1.8) {
+				state->cloth.links[i].stiffness = 0;
+			}
+			update_linkage_3d(state->cloth.links[i], state->deltatime);
 		}
         
-		state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
+	/*	state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
 		state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5};
         
 		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].position = (vec3){-2.5, 0, -2.5};
 		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};
+
+		state->cloth.balls[0].mass = INFINITY;
+		state->cloth.balls[CLOTH_DIMENSIONS-1].mass = INFINITY;
+        
+		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].mass = INFINITY;
+		state->cloth.balls[state->cloth.ball_count-1].mass = INFINITY;*/
+
+		for(int i = 0; i < CLOTH_DIMENSIONS; ++i) {
+			state->cloth.balls[i].position = (vec3){-2.5 + ((float)i/(CLOTH_DIMENSIONS-1)) * 5, 0, 2.5};
+			state->cloth.balls[i].mass = 1000;
+
+			state->cloth.balls[state->cloth.ball_count-i-1].position = (vec3){2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5, 0, -2.5};
+			state->cloth.balls[state->cloth.ball_count-i-1].mass = 1000;
+
+			state->cloth.balls[CLOTH_DIMENSIONS * i].position = (vec3){-2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
+			state->cloth.balls[CLOTH_DIMENSIONS * i].mass = 1000;
+
+
+			state->cloth.balls[CLOTH_DIMENSIONS * i + CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
+			state->cloth.balls[CLOTH_DIMENSIONS * i + CLOTH_DIMENSIONS-1].mass = 1000;
+			/*state->cloth.balls[CLOTH_DIMENSIONS * i + CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
+			state->cloth.balls[i + CLOTH_DIMENSIONS].mass = INFINITY;*/
+
+		}
 		
 		
 		
@@ -761,6 +805,21 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	}
 
 	SDL_RenderPresent(state->renderer);*/
+	float damage[CLOTH_DIMENSIONS * CLOTH_DIMENSIONS];
+	memset(damage, 0, sizeof(damage));
+
+	for(int i = 0; i < state->cloth.link_count; ++i) {
+			linkage_3d link = state->cloth.links[i];
+			if(link.stiffness == 0) {
+				//printf("hi\n");
+				damage[link.a - state->cloth.balls] += 1; // javascript cant do this
+				damage[link.b - state->cloth.balls] += 1; // javascript cant do this
+			}
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_tear_VBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(damage), damage);
+
 	vec3 normals[CLOTH_DIMENSIONS * CLOTH_DIMENSIONS];
 	memset(normals, 0, sizeof(normals));
 	for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
@@ -779,6 +838,20 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			normals[row * CLOTH_DIMENSIONS + i+1] = v3_add(normals[row * CLOTH_DIMENSIONS + i+1], tri_normal);
 			normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS] = v3_add(normals[row * CLOTH_DIMENSIONS + i+CLOTH_DIMENSIONS], tri_normal);
 			normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS+1] = v3_add(normals[row * CLOTH_DIMENSIONS + i+CLOTH_DIMENSIONS+1], tri_normal);*/ // didnt work
+
+			if(damage[row * CLOTH_DIMENSIONS + i] != 0) {
+				//printf("here\n");
+				continue;
+			}
+			if(damage[row * CLOTH_DIMENSIONS + i + 1] != 0) {
+				//printf("here\n");
+				continue;
+			}
+			if(damage[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS] != 0) {
+				//printf("here\n");
+				continue;
+			}
+
 			vec3 position = state->cloth.balls[row * CLOTH_DIMENSIONS + i].position;
 			vec3 next_right_position = state->cloth.balls[row * CLOTH_DIMENSIONS + i + 1].position;
 			vec3 next_down_position = state->cloth.balls[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS].position;
@@ -801,6 +874,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_VBO);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, state->cloth.ball_count * sizeof(ball_3d), state->cloth.balls);
+
 
 	glBindBuffer(GL_ARRAY_BUFFER, state->instance_VBO);
 	if(state->ball_count > state->instance_max) {
@@ -846,6 +920,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 
 	state->frame_count++;
+	state->true_frame_count++;
 
 	
 	ball_count = state->ball_count;
