@@ -30,7 +30,7 @@ int ball_count = 0;
 char optionstr[256];
 
 char *get_option() {
-	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nEnter to spawn balls\nWASD to move\nArrow keys to rotate camera (sorry)\n\nFPS: %i, Number of balls: %i", fps, ball_count);
+	snprintf((char*)optionstr, sizeof(optionstr), "Controls:\nEnter to spawn balls\nClick and drag on cloth move it\nWASD to move\nArrow keys to rotate camera (sorry)\n\nFPS: %i, Number of balls: %i", fps, ball_count);
 	return optionstr;
 }
 
@@ -54,6 +54,7 @@ typedef struct {
 
 	Uint64 frame_tick_count;
 	int frame_count;
+	int true_frame_count;
 
 	Uint64 spawn_tick_count;
 
@@ -70,12 +71,16 @@ typedef struct {
 	GLuint cloth_VBO;
 	GLuint cloth_normals_VBO;
 	GLuint cloth_texcoords_VBO;
+	GLuint cloth_tear_VBO;
 	GLuint cloth_VAO;
 	GLuint cloth_EBO;
 
 	GLuint cloth_texture;
 
 	GLuint cloth_shader_program;
+
+	float dist_to_mouse;
+	ball_3d *moving_ball;
 } prog_state;
 
 SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
@@ -127,10 +132,14 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 		state->balls[i].radius = 0.3;
 	}
 
-	state->cloth = generate_cloth_3d(5, 5, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 100, (vec3){0});
+	state->cloth = generate_cloth_3d(5.5, 5.5, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 100, (vec3){0});
 
 	state->frame_tick_count = SDL_GetTicks();
 	state->frame_count = 0;
+	state->true_frame_count = 0;
+
+	state->moving_ball = NULL;
+	state->dist_to_mouse = 0;
 
 
 	glEnable(GL_DEPTH_TEST);
@@ -220,7 +229,6 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	const char *fs_source = "#version 300 es\nprecision mediump float;\n"
 	"out vec4 FragColor;\n"
-	"\n"
 	"in vec3 velocity;\n"
 	"in vec3 normal;\n"
 	"void main()\n"
@@ -287,8 +295,9 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	strtok((char*)fabric_texture, "\n");
 	char *width = strtok(NULL, " ");
 	char *height = strtok(NULL, "\n");
-	float tex_width = atoi(width);
-	float tex_height = atoi(height);
+	int tex_width = atoi(width);
+	int tex_height = atoi(height);
+	printf("tex w,h, %i, %i", tex_width, tex_height);
 	strtok(NULL, "\n");
 
 	unsigned char *fabric_tex_bin = (unsigned char*)strtok(NULL, "\n");
@@ -360,6 +369,15 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
 	glEnableVertexAttribArray(2);
 
+	glGenBuffers(1, &state->cloth_tear_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_tear_VBO);
+	
+	float damage[CLOTH_DIMENSIONS * CLOTH_DIMENSIONS];
+	memset(damage, 0, sizeof(damage));
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * state->cloth.ball_count, damage, GL_DYNAMIC_DRAW);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+	glEnableVertexAttribArray(3);
+
 	glGenBuffers(1, &state->cloth_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, state->cloth_EBO);
 	GLuint indices[(CLOTH_DIMENSIONS-1)*(CLOTH_DIMENSIONS-1) * 6];
@@ -387,6 +405,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec3 normal;\n"
     "layout (location = 2) in vec2 texcoords;\n"
+    "layout (location = 3) in float damage;\n"
 	"uniform float aspectRatio;\n"
 	"uniform mat3 camRot;\n"
 	"uniform vec3 camPos;\n"
@@ -394,6 +413,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"out vec3 position;\n"
 	"out vec3 normals;\n"
 	"out vec2 texcoord;\n"
+	"out float clothDamage;\n"
     "void main()\n"
     "{\n"
 	"	vec3 pos = camRot * (vec3((aPos.x), aPos.y, aPos.z) - camPos);\n"
@@ -402,6 +422,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"	position = pos;\n"
 	"	normals = normal;\n"
 	"	texcoord = texcoords;\n"
+	"	clothDamage = damage;\n"
     "}\0";
 
 	v_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -423,8 +444,10 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"in vec3 normals;\n"
 	"in vec2 texcoord;\n"
 	"uniform sampler2D cloth_texture;\n"
+	"in float clothDamage;\n"
 	"void main()\n"
 	"{\n"
+		"if(clothDamage > 0.) discard;\n"
 		//"vec3 velocity = vec3(0.);\n"
 		//"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 100.);\n"
 		"\nvec3 col = vec3(texture(cloth_texture, texcoord));\n"
@@ -502,6 +525,139 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 			state->cam.width = event->window.data1;
 			state->cam.height = event->window.data2;
 			glViewport(0, 0, event->window.data1, event->window.data2);
+			break;
+		case SDL_EVENT_MOUSE_BUTTON_UP:
+			state->moving_ball = NULL;
+			break;
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+			vec3 ray_origin = state->cam.position;
+			//vec3 ray_direction = m3_v3_mult(generate_rotation_matrix(state->cam.rotation.x, state->cam.rotation.y, state->cam.rotation.z), (vec3){0, 0, 1});
+			float aspect_ratio = (float)state->cam.width / state->cam.height;
+
+			float mouse_x, mouse_y;
+
+			SDL_GetMouseState(&mouse_x, &mouse_y);
+
+			mouse_x /= state->cam.width;
+			mouse_y /= -state->cam.height;
+
+			mouse_x -= 0.5;
+			mouse_y += 0.5;
+
+			mouse_x *= 2;
+			mouse_y *= 2;
+
+			float distances[16];
+			ball_3d *selected_balls[16];
+
+			int distance_stack_top = 0;
+			bool searching = true;
+
+			vec2 mouse_position = (vec2){mouse_x * aspect_ratio, mouse_y};
+			vec3 ray_direction = v3_normalize(m3_v3_mult(generate_rotation_matrix(state->cam.rotation.x, state->cam.rotation.y, state->cam.rotation.z), (vec3){mouse_position.x, mouse_position.y, 1}));
+
+			for(int row = 0; row < CLOTH_DIMENSIONS-1 && searching; ++row) {
+				for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
+					{
+						bool hit = true;
+
+						vec3 triangle_a = state->cloth.balls[i + CLOTH_DIMENSIONS*row].position;
+						vec3 triangle_b = state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row].position;
+						vec3 triangle_c = state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row].position;
+
+						vec3 edge_1 = v3_sub(triangle_b, triangle_a);
+						vec3 edge_2 = v3_sub(triangle_c, triangle_a);
+						//vec3 normal = v3_cross(edge_1, edge_2);
+						//if(v3_dot(normal, ray_direction) > 0) hit = false;
+						
+						vec3 ray_cross_e2 = v3_cross(ray_direction, edge_2);
+						float det = v3_dot(edge_1, ray_cross_e2);
+						if(fabs(det) < 0.001) hit = false;
+
+						float inv_det = 1/det;
+						vec3 s = v3_sub(ray_origin, triangle_a);
+						float u = inv_det * v3_dot(s, ray_cross_e2);
+
+						if(u < 0.001 || u-1 > 0.001) hit = false;
+
+						vec3 s_cross_e1 = v3_cross(s, edge_1);
+						float v = inv_det * v3_dot(ray_direction, s_cross_e1);
+
+						if(v < -0.001 || u + v - 1 > 0.001) hit = false;
+
+						float t = inv_det * v3_dot(edge_2, s_cross_e1);
+
+						if(hit) {
+							//state->cloth.balls[i + CLOTH_DIMENSIONS*row].position.y = 0;
+							//state->dist_to_mouse = t;
+							//state->moving_ball = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
+							if(distance_stack_top > 16) {
+								searching = false;
+								break;
+							}
+							distances[distance_stack_top] = t;
+							selected_balls[distance_stack_top++] = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
+						}
+					}
+
+					{
+						bool hit = true;
+
+						vec3 triangle_a = state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row].position;
+						vec3 triangle_b = state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row].position;
+						vec3 triangle_c = state->cloth.balls[i+CLOTH_DIMENSIONS+1 + CLOTH_DIMENSIONS*row].position;
+
+						vec3 edge_1 = v3_sub(triangle_b, triangle_a);
+						vec3 edge_2 = v3_sub(triangle_c, triangle_a);
+						/*vec3 normal = v3_cross(edge_2, edge_1);
+						if(v3_dot(normal, ray_direction) > 0) hit = false;*/
+						
+						vec3 ray_cross_e2 = v3_cross(ray_direction, edge_2);
+						float det = v3_dot(edge_1, ray_cross_e2);
+						if(fabs(det) < 0.001) hit = false;
+
+						float inv_det = 1/det;
+						vec3 s = v3_sub(ray_origin, triangle_a);
+						float u = inv_det * v3_dot(s, ray_cross_e2);
+
+						if(u < 0.001 || u-1 > 0.001) hit = false;
+
+						vec3 s_cross_e1 = v3_cross(s, edge_1);
+						float v = inv_det * v3_dot(ray_direction, s_cross_e1);
+
+						if(v < -0.001 || u + v - 1 > 0.001) hit = false;
+
+						float t = inv_det * v3_dot(edge_2, s_cross_e1);
+
+						if(hit) {
+							//state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row].position.y = 0;
+							if(distance_stack_top > 16) {
+								searching = false;
+								break;
+							}
+							distances[distance_stack_top] = t;
+							selected_balls[distance_stack_top++] = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
+						}
+					}
+	//					&state->cloth.balls[i + CLOTH_DIMENSIONS*row],
+	//					&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
+	//					&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
+    //
+	//					&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
+	//					&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
+	//					&state->cloth.balls[i+CLOTH_DIMENSIONS+1 + CLOTH_DIMENSIONS*row],
+				}
+			}
+
+			float smallest_dist = INFINITY;
+			for(int i = 0; i < distance_stack_top; ++i) {
+				if(distances[i] < smallest_dist) {
+					smallest_dist = distances[i];
+					state->dist_to_mouse = distances[i];
+					state->moving_ball = selected_balls[i];
+				}
+			}
+
 			break;
 		default: 
 			break;
@@ -587,6 +743,22 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		state->cam.position.x -= 0.2 * cos(state->cam.rotation.x);
 	}
 
+	float mouse_x, mouse_y;
+
+	SDL_GetMouseState(&mouse_x, &mouse_y);
+
+	mouse_x /= state->cam.width;
+	mouse_y /= -state->cam.height;
+
+	mouse_x -= 0.5;
+	mouse_y += 0.5;
+
+	mouse_x *= 2;
+	mouse_y *= 2;
+
+	vec2 mouse_position = (vec2){mouse_x * aspect_ratio, mouse_y};
+	vec3 ray_direction = v3_normalize(m3_v3_mult(generate_rotation_matrix(state->cam.rotation.x, state->cam.rotation.y, state->cam.rotation.z), (vec3){mouse_position.x, mouse_position.y, 1}));
+
 	for(int steps = 0; steps < steps_per_frame; ++steps) {
 
 		for(int i = 0; i < state->cloth.ball_count; ++i) {
@@ -601,11 +773,15 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			current_ball->position.y -= 10 * state->deltatime * state->deltatime;
 		}
 
-		state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
+		if(state->moving_ball != NULL) {
+			state->moving_ball->position = v3_add(state->cam.position, v3_fmult(ray_direction, state->dist_to_mouse));
+		}
+
+		/*state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
 		state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5};
         
 		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].position = (vec3){-2.5, 0, -2.5};
-		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};
+		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};*/
         
 		vec3 output_ptrs[4];
 		for(int i = 0; i < state->cloth.link_count; ++i) {
@@ -618,14 +794,33 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 					(float[]){1/a->mass, 1/b->mass}, 2
 					, (float[]){state->cloth.links[i].length}, state->deltatime, 1/state->cloth.links[i].stiffness, INEQ_LESS);
 		}
+
         
-		state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
+	/*	state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
 		state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5};
         
 		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].position = (vec3){-2.5, 0, -2.5};
 		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};
 
-		//state->balls[0].position = (vec3){0, 10, 0};
+		state->cloth.balls[0].mass = INFINITY;
+		state->cloth.balls[CLOTH_DIMENSIONS-1].mass = INFINITY;
+        
+		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].mass = INFINITY;
+		state->cloth.balls[state->cloth.ball_count-1].mass = INFINITY;*/
+
+		for(int i = 0; i < CLOTH_DIMENSIONS; ++i) {
+			state->cloth.balls[i].position = (vec3){-2.5 + ((float)i/(CLOTH_DIMENSIONS-1)) * 5, 0, 2.5};
+
+			state->cloth.balls[state->cloth.ball_count-i-1].position = (vec3){2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5, 0, -2.5};
+
+			state->cloth.balls[CLOTH_DIMENSIONS * i].position = (vec3){-2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
+
+
+			state->cloth.balls[CLOTH_DIMENSIONS * i + CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
+			/*state->cloth.balls[CLOTH_DIMENSIONS * i + CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
+			state->cloth.balls[i + CLOTH_DIMENSIONS].mass = INFINITY;*/
+
+		}
 		
 		
 		
@@ -822,6 +1017,21 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	}
 
 	SDL_RenderPresent(state->renderer);*/
+	float damage[CLOTH_DIMENSIONS * CLOTH_DIMENSIONS];
+	memset(damage, 0, sizeof(damage));
+
+	for(int i = 0; i < state->cloth.link_count; ++i) {
+			linkage_3d link = state->cloth.links[i];
+			if(link.stiffness == 0) {
+				//printf("hi\n");
+				damage[link.a - state->cloth.balls] += 1; // javascript cant do this
+				damage[link.b - state->cloth.balls] += 1; // javascript cant do this
+			}
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_tear_VBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(damage), damage);
+
 	vec3 normals[CLOTH_DIMENSIONS * CLOTH_DIMENSIONS];
 	memset(normals, 0, sizeof(normals));
 	for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
@@ -840,6 +1050,20 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			normals[row * CLOTH_DIMENSIONS + i+1] = v3_add(normals[row * CLOTH_DIMENSIONS + i+1], tri_normal);
 			normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS] = v3_add(normals[row * CLOTH_DIMENSIONS + i+CLOTH_DIMENSIONS], tri_normal);
 			normals[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS+1] = v3_add(normals[row * CLOTH_DIMENSIONS + i+CLOTH_DIMENSIONS+1], tri_normal);*/ // didnt work
+
+			if(damage[row * CLOTH_DIMENSIONS + i] != 0) {
+				//printf("here\n");
+				continue;
+			}
+			if(damage[row * CLOTH_DIMENSIONS + i + 1] != 0) {
+				//printf("here\n");
+				continue;
+			}
+			if(damage[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS] != 0) {
+				//printf("here\n");
+				continue;
+			}
+
 			vec3 position = state->cloth.balls[row * CLOTH_DIMENSIONS + i].position;
 			vec3 next_right_position = state->cloth.balls[row * CLOTH_DIMENSIONS + i + 1].position;
 			vec3 next_down_position = state->cloth.balls[row * CLOTH_DIMENSIONS + i + CLOTH_DIMENSIONS].position;
@@ -862,6 +1086,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, state->cloth_VBO);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, state->cloth.ball_count * sizeof(ball_3d), state->cloth.balls);
+
 
 	glBindBuffer(GL_ARRAY_BUFFER, state->instance_VBO);
 	if(state->ball_count > state->instance_max) {
@@ -907,6 +1132,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 
 	state->frame_count++;
+	state->true_frame_count++;
 
 	
 	ball_count = state->ball_count;
