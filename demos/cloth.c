@@ -294,8 +294,9 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	strtok((char*)fabric_texture, "\n");
 	char *width = strtok(NULL, " ");
 	char *height = strtok(NULL, "\n");
-	float tex_width = atoi(width);
-	float tex_height = atoi(height);
+	int tex_width = atoi(width);
+	int tex_height = atoi(height);
+	printf("tex w,h, %i, %i", tex_width, tex_height);
 	strtok(NULL, "\n");
 
 	unsigned char *fabric_tex_bin = (unsigned char*)strtok(NULL, "\n");
@@ -545,10 +546,16 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 			mouse_x *= 2;
 			mouse_y *= 2;
 
+			float distances[16];
+			ball_3d *selected_balls[16];
+
+			int distance_stack_top = 0;
+			bool searching = true;
+
 			vec2 mouse_position = (vec2){mouse_x * aspect_ratio, mouse_y};
 			vec3 ray_direction = v3_normalize(m3_v3_mult(generate_rotation_matrix(state->cam.rotation.x, state->cam.rotation.y, state->cam.rotation.z), (vec3){mouse_position.x, mouse_position.y, 1}));
 
-			for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
+			for(int row = 0; row < CLOTH_DIMENSIONS-1 && searching; ++row) {
 				for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
 					{
 						bool hit = true;
@@ -559,8 +566,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 						vec3 edge_1 = v3_sub(triangle_b, triangle_a);
 						vec3 edge_2 = v3_sub(triangle_c, triangle_a);
-						vec3 normal = v3_cross(edge_1, edge_2);
-						if(v3_dot(normal, ray_direction) > 0) hit = false;
+						//vec3 normal = v3_cross(edge_1, edge_2);
+						//if(v3_dot(normal, ray_direction) > 0) hit = false;
 						
 						vec3 ray_cross_e2 = v3_cross(ray_direction, edge_2);
 						float det = v3_dot(edge_1, ray_cross_e2);
@@ -581,8 +588,14 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 						if(hit) {
 							//state->cloth.balls[i + CLOTH_DIMENSIONS*row].position.y = 0;
-							state->dist_to_mouse = t;
-							state->moving_ball = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
+							//state->dist_to_mouse = t;
+							//state->moving_ball = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
+							if(distance_stack_top > 16) {
+								searching = false;
+								break;
+							}
+							distances[distance_stack_top] = t;
+							selected_balls[distance_stack_top++] = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
 						}
 					}
 
@@ -595,9 +608,8 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 						vec3 edge_1 = v3_sub(triangle_b, triangle_a);
 						vec3 edge_2 = v3_sub(triangle_c, triangle_a);
-						//vec3 normal = v3_cross(edge_1, edge_2);
-						vec3 normal = v3_cross(edge_2, edge_1);
-						if(v3_dot(normal, ray_direction) > 0) hit = false;
+						/*vec3 normal = v3_cross(edge_2, edge_1);
+						if(v3_dot(normal, ray_direction) > 0) hit = false;*/
 						
 						vec3 ray_cross_e2 = v3_cross(ray_direction, edge_2);
 						float det = v3_dot(edge_1, ray_cross_e2);
@@ -618,8 +630,12 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 						if(hit) {
 							//state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row].position.y = 0;
-							state->dist_to_mouse = t;
-							state->moving_ball = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
+							if(distance_stack_top > 16) {
+								searching = false;
+								break;
+							}
+							distances[distance_stack_top] = t;
+							selected_balls[distance_stack_top++] = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
 						}
 					}
 	//					&state->cloth.balls[i + CLOTH_DIMENSIONS*row],
@@ -629,6 +645,15 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 	//					&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
 	//					&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
 	//					&state->cloth.balls[i+CLOTH_DIMENSIONS+1 + CLOTH_DIMENSIONS*row],
+				}
+			}
+
+			float smallest_dist = INFINITY;
+			for(int i = 0; i < distance_stack_top; ++i) {
+				if(distances[i] < smallest_dist) {
+					smallest_dist = distances[i];
+					state->dist_to_mouse = distances[i];
+					state->moving_ball = selected_balls[i];
 				}
 			}
 
@@ -764,6 +789,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			}
 			update_linkage_3d(state->cloth.links[i], state->deltatime);
 		}
+
         
 	/*	state->cloth.balls[0].position = (vec3){-2.5, 0, 2.5};
 		state->cloth.balls[CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5};
@@ -779,17 +805,13 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 		for(int i = 0; i < CLOTH_DIMENSIONS; ++i) {
 			state->cloth.balls[i].position = (vec3){-2.5 + ((float)i/(CLOTH_DIMENSIONS-1)) * 5, 0, 2.5};
-			state->cloth.balls[i].mass = 1000;
 
 			state->cloth.balls[state->cloth.ball_count-i-1].position = (vec3){2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5, 0, -2.5};
-			state->cloth.balls[state->cloth.ball_count-i-1].mass = 1000;
 
 			state->cloth.balls[CLOTH_DIMENSIONS * i].position = (vec3){-2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
-			state->cloth.balls[CLOTH_DIMENSIONS * i].mass = 1000;
 
 
 			state->cloth.balls[CLOTH_DIMENSIONS * i + CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
-			state->cloth.balls[CLOTH_DIMENSIONS * i + CLOTH_DIMENSIONS-1].mass = 1000;
 			/*state->cloth.balls[CLOTH_DIMENSIONS * i + CLOTH_DIMENSIONS-1].position = (vec3){2.5, 0, 2.5 - ((float)i/(CLOTH_DIMENSIONS-1)) * 5};
 			state->cloth.balls[i + CLOTH_DIMENSIONS].mass = INFINITY;*/
 
