@@ -50,6 +50,15 @@ float penetration_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]
 
 }
 
+float boundary_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]]int size, void *arguments) {
+	boundary_args *args = arguments;
+
+	vec2 relative_pos = v2_sub(*vectors[0], args->position);
+
+	gradients[0] = args->normal;
+	return v2_dot(relative_pos, args->normal) - args->distance;
+}
+
 float poly6(vec2 r, float h) {
 	float r_magnitude = v2_magnitude(r);
 	if(0 <= r_magnitude && r_magnitude <= h) {

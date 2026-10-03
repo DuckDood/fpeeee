@@ -424,7 +424,14 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 				solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, INEQ_GREATER, (vec2*[]){&state->balls[i].position, &state->balls[j].position}, (float[]){1, 1}, 2, (float[]){state->balls[0].radius * 2});
 			}
 		}*/
-		vec2 output_ptrs[3];
+		vec2 output_ptr[1];
+		for(int i = 0; i < state->ball_count; ++i) {
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptr, (float[]){1}, 1, &(boundary_args_2d){(vec2){0, -1}, (vec2){0, 1}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptr, (float[]){1}, 1, &(boundary_args_2d){(vec2){aspect_ratio, 0}, (vec2){-1, 0}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptr, (float[]){1}, 1, &(boundary_args_2d){(vec2){-aspect_ratio, 0}, (vec2){1, 0}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptr, (float[]){1}, 1, &(boundary_args_2d){(vec2){0, 1}, (vec2){0, -1}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+		}
+		/*vec2 output_ptrs[3];
 		spatial_bounds_2d bounds;
 
 		vec2 min;
@@ -479,7 +486,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		bounds.max_row = (max.y + state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
 		vectors[1] = &(vec2){aspect_ratio, -1};
 		vectors[2] = &(vec2){aspect_ratio, 1};
-		spatial_constraint_2d(&state->grid, bounds, 0, state->balls, penetration_constraint_2d, vectors, output_ptrs, inv_weight, 3, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);
+		spatial_constraint_2d(&state->grid, bounds, 0, state->balls, penetration_constraint_2d, vectors, output_ptrs, inv_weight, 3, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);*/
 //		for(int i = 0; i < state->ball_count; ++i) {
 //			/*solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
 //					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{-aspect_ratio, 1}}}, 
