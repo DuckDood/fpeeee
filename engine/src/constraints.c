@@ -51,7 +51,7 @@ float penetration_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]
 }
 
 float boundary_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]]int size, void *arguments) {
-	boundary_args *args = arguments;
+	boundary_args_2d *args = arguments;
 
 	vec2 relative_pos = v2_sub(*vectors[0], args->position);
 
