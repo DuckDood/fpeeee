@@ -888,6 +888,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 			}
 		}
 
+		for(int i = 0; i < state->ball_count; ++i) {
+			solve_constraint_3d(boundary_constraint_3d, (vec3*[]){&state->balls[i].position}, output_ptrs, (float[]){1}, 1, &(boundary_args_3d){.position = (vec3){0, -3, 0}, .distance = state->balls[i].radius, .normal = (vec3){0, 1, 0}}, state->deltatime, 0, INEQ_GREATER);
+		}
+
 		for(int i = 0; i < state->cloth.ball_count; ++i) {
 			ball_3d *current_ball = state->cloth.balls + i;
 			end_ball_update_3d(current_ball, state->deltatime);

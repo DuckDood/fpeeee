@@ -509,3 +509,12 @@ float penetration_constraint_3d(vec3 **vectors, vec3 *gradient_outputs, [[maybe_
 
 	return distance - *(float*)arguments;
 }
+
+float boundary_constraint_3d(vec3 **vectors, vec3 *gradients, [[maybe_unused]]int size, void *arguments) {
+	boundary_args_3d *args = arguments;
+
+	vec3 relative_pos = v3_sub(*vectors[0], args->position);
+
+	gradients[0] = args->normal;
+	return v3_dot(relative_pos, args->normal) - args->distance;
+}

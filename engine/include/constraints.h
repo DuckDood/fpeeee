@@ -21,3 +21,10 @@ typedef float (*constraint_function_3d)(vec3 **vectors, vec3 *gradients, int siz
 
 float distance_constraint_3d(vec3 **vectors, vec3 *gradients, int size, void *arguments);
 float penetration_constraint_3d(vec3 **vectors, vec3 *gradients, int size, void *arguments);
+
+typedef struct {
+	vec3 position;
+	vec3 normal;
+	float distance;
+} boundary_args_3d;
+float boundary_constraint_3d(vec3 **vectors, vec3 *gradients, int size, void *arguments);
