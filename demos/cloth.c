@@ -1,5 +1,4 @@
 #include <SDL3/SDL_video.h>
-#include <lua.h>
 #ifndef __EMSCRIPTEN__
 #include <glad/gl.h>
 #else
@@ -24,9 +23,6 @@
 
 #include <spatial.h>
 #include <constraints.h>
-
-#include <lualib.h>
-#include <lauxlib.h>
 
 int fps = 0;
 int ball_count = 0;
@@ -87,32 +83,9 @@ typedef struct {
 	ball_3d *moving_ball;
 } prog_state;
 
-int remove_object(lua_State *lua) {
-	prog_state *state = lua_touserdata(lua, lua_upvalueindex(1));
-	int index = luaL_checkinteger(lua, 1) - 1; // cause lua starts at index 1
-	if(index < 0 || index+1 > state->ball_count) {
-		return luaL_error(lua, "Failure to remove object %d: index is outside of bounds", index+1);
-	}
-	memmove(state->balls + index, state->balls + index + 1, (--state->ball_count - index) * sizeof(ball_3d));
-
-	return 0;
-}
-
-
 SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
-
 	*appstate = malloc(sizeof(prog_state));
 	prog_state *state = *appstate;
-
-	lua_State *lua;
-	lua = luaL_newstate();
-	if(lua == NULL) printf("oops");
-	luaL_openlibs(lua);
-
-	lua_pushlightuserdata(lua, state);
-	lua_pushcclosure(lua, &remove_object, 1);
-	lua_setglobal(lua, "remove_object");
-
 
 	if(!SDL_Init(SDL_INIT_VIDEO)) {
 		printf("Failed to initialize SDL3: %s\n", SDL_GetError());
@@ -138,7 +111,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	SDL_GL_SetSwapInterval(1);
 
 
-	state->cam.position = (vec3){0, 1, -20};
+	state->cam.position = (vec3){0, 1, -6};
 	state->cam.rotation = (vec3){0, 0, 0};
 
 	state->cam.width = WIDTH;
@@ -521,14 +494,6 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	glDeleteShader(v_shader);
 	glDeleteShader(f_shader);
-
-	int status = luaL_dofile(lua, "luafile.lua");
-	printf("lua status: %b\n", status == LUA_OK);
-	if(status != LUA_OK) {
-		printf("lua error: %s\n", lua_tostring(lua, -1));
-	}
-
-	//lua_close(lua);
 
 
 

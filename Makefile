@@ -89,9 +89,9 @@ endif
 
 build/fluid: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid.c.o -o build/fluid -lm -lSDL3 -g
 endif
 
 
@@ -105,9 +105,9 @@ endif
 
 build/cutcloth: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cutcloth.c.o -o build/cutcloth -lm -lSDL3 -g
 endif
 
 
@@ -121,9 +121,9 @@ endif
 
 build/parachute: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/parachute.c.o -o build/parachute -lm -lSDL3 -g
 endif
 
 
@@ -137,9 +137,9 @@ endif
 
 build/fluid_3d: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/fluid_3d.c.o -o build/fluid_3d -lm -lSDL3 -g
 endif
 
 
@@ -153,9 +153,9 @@ endif
 
 build/cloth: obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o 
 ifeq (${OSMODE}, l)
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -g
 else
-	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -llua -g
+	${CC} obj/types.c.o obj/physics.c.o obj/shape_generators.c.o obj/spatial.c.o obj/constraints.c.o obj/helpers.c.o obj/matrix.c.o obj/gl.c.o obj/cloth.c.o -o build/cloth -lm -lSDL3 -g
 endif
 
 

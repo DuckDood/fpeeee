@@ -10,8 +10,6 @@ srcdir engine/src
 buildflag -lm
 buildflag -lSDL3
 
-buildflag -llua
-
 buildflag -g
 
 srcflag -O3
