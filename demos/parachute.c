@@ -349,48 +349,10 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		}, state->deltatime);*/
 
 		for(int i = 0; i < state->ball_count; ++i) {
-			//check_and_resolve_2d(state->balls+i, floor, 0, 0, state->deltatime);
-			//check_and_resolve_2d(state->balls+i, ceiling, 0, 0, state->deltatime);
-			//check_and_resolve_2d(state->balls+i, left, 0, 0, state->deltatime);
-			//check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
-			//check_and_resolve_2d(state->balls+i, another, 0, 0, state->deltatime);
-			solve_constraint_2d(penetration_constraint_2d, 
-					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{-aspect_ratio, 1}}}, 
-					output_ptrs,
-					(float[]){1, 0, 0},
-					3, 
-					(float[]){state->balls[1].radius},
-					state->deltatime, 0,
-					INEQ_GREATER
-					);
-			solve_constraint_2d(penetration_constraint_2d, 
-					(vec2*[]){&state->balls[i].position, (vec2[]){{aspect_ratio, -1}},(vec2[]){{aspect_ratio, 1}}}, 
-					output_ptrs,
-					(float[]){1, 0, 0},
-					3, 
-					(float[]){state->balls[1].radius},
-					state->deltatime, 0,
-					INEQ_GREATER
-					);
-
-			solve_constraint_2d(penetration_constraint_2d, 
-					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{aspect_ratio, -1}}}, 
-					output_ptrs,
-					(float[]){1, 0, 0},
-					3, 
-					(float[]){state->balls[1].radius},
-					state->deltatime, 0,
-					INEQ_GREATER
-					);
-			solve_constraint_2d(penetration_constraint_2d, 
-					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, 1}},(vec2[]){{aspect_ratio, 1}}}, 
-					output_ptrs,
-					(float[]){1, 0, 0},
-					3, 
-					(float[]){state->balls[1].radius},
-					state->deltatime, 0,
-					INEQ_GREATER
-					);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptrs, (float[]){1}, 1, &(boundary_args_2d){(vec2){0, -1}, (vec2){0, 1}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptrs, (float[]){1}, 1, &(boundary_args_2d){(vec2){aspect_ratio, 0}, (vec2){-1, 0}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptrs, (float[]){1}, 1, &(boundary_args_2d){(vec2){-aspect_ratio, 0}, (vec2){1, 0}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptrs, (float[]){1}, 1, &(boundary_args_2d){(vec2){0, 1}, (vec2){0, -1}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
 		}
 
 		
