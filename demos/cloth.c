@@ -119,17 +119,17 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	state->ball_count = 32;
+	state->ball_count = 128;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
-	state->grid = construct_grid_3d(25, 50, 25, 0.6);
+	state->grid = construct_grid_3d(25 * 3, 50 * 3, 25 * 3, 0.2);
 
 
 	for(int i = 0; i < state->ball_count; ++i) {
-		state->balls[i].position = (vec3){0, i + 10, 0};
+		state->balls[i].position = (vec3){sin(i * 0.2) * 2, i * 0.2 + 3, cos(i * 0.2) * 2};
 		set_velocity_3d(state->balls + i, (vec3){0});
-		state->balls[i].mass = 0.3;
-		state->balls[i].radius = 0.3;
+		state->balls[i].mass = 0.2 * 0.2;
+		state->balls[i].radius = 0.2;
 	}
 
 	state->cloth = generate_cloth_3d(5.5, 5.5, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 100, (vec3){0});
@@ -673,11 +673,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	const bool * const key_states = SDL_GetKeyboardState(NULL);
 
 	int framerate = 60;
-	int steps_per_frame = 10;
+	int steps_per_frame = 5;
 	state->deltatime = 1.0/framerate/steps_per_frame;
 	//state->deltatime *= 0.5;
 	if(key_states[SDL_SCANCODE_RETURN]) {
-		if(SDL_GetTicks() > state->spawn_tick_count + 500) {
+		if(SDL_GetTicks() > state->spawn_tick_count + 100) {
 			int spawn_count = 1;
 			float ball_radius = 0.3;
 			float spawn_height = 5;
@@ -686,9 +686,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 			for(int i = 1; i <= spawn_count; ++i) {
 				state->balls[state->ball_count-i].position = (vec3){0, spawn_height + i * 2 * ball_radius, 0};
-				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, 0, 0});
-				state->balls[state->ball_count - i].mass = 0.3;
-				state->balls[state->ball_count - i].radius = ball_radius;
+				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, -10, 0});
+				state->balls[state->ball_count - i].mass = 0.2;
+				state->balls[state->ball_count - i].radius = 0.2;
 			}
 		}
 	}
@@ -889,7 +889,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		}
 
 		for(int i = 0; i < state->ball_count; ++i) {
-			solve_constraint_3d(boundary_constraint_3d, (vec3*[]){&state->balls[i].position}, output_ptrs, (float[]){1}, 1, &(boundary_args_3d){.position = (vec3){0, -3, 0}, .distance = state->balls[i].radius, .normal = (vec3){0, 1, 0}}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_3d(boundary_constraint_3d, (vec3*[]){&state->balls[i].position}, output_ptrs, (float[]){1}, 1, &(boundary_args_3d){.position = (vec3){0, -5, 0}, .distance = state->balls[i].radius, .normal = (vec3){0, 1, 0}}, state->deltatime, 0, INEQ_GREATER);
 		}
 
 		for(int i = 0; i < state->cloth.ball_count; ++i) {
