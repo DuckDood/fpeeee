@@ -22,6 +22,7 @@
 #include <helpers.h>
 
 #include <spatial.h>
+#include <constraints.h>
 
 int fps = 0;
 int ball_count = 0;
@@ -118,17 +119,17 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	state->ball_count = 0;
+	state->ball_count = 128;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
-	state->grid = construct_grid_3d(25, 50, 25, 0.3);
+	state->grid = construct_grid_3d(25 * 3, 50 * 3, 25 * 3, 0.2);
 
 
 	for(int i = 0; i < state->ball_count; ++i) {
-		state->balls[i].position = (vec3){0, i * 0.5 + 5, 0};
+		state->balls[i].position = (vec3){sin(i * 0.2) * 2, i * 0.2 + 3, cos(i * 0.2) * 2};
 		set_velocity_3d(state->balls + i, (vec3){0});
-		state->balls[i].mass = 1;
-		state->balls[i].radius = 0.5;
+		state->balls[i].mass = 0.2 * 0.2;
+		state->balls[i].radius = 0.2;
 	}
 
 	state->cloth = generate_cloth_3d(5.5, 5.5, CLOTH_DIMENSIONS, CLOTH_DIMENSIONS, 100, (vec3){0});
@@ -199,7 +200,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec3 ballPosition;\n"
     "layout (location = 2) in float ballRadius;\n"
-    "layout (location = 3) in vec3 prevPos;\n"
+    "layout (location = 3) in vec3 ballVelocity;\n"
 	"uniform float aspectRatio;\n"
 	"uniform mat3 camRot;\n"
 	"uniform vec3 camPos;\n"
@@ -209,7 +210,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     "{\n"
 	"	vec3 pos = camRot * (vec3((aPos.x * ballRadius * 0.99 + ballPosition.x), aPos.y * ballRadius * 0.99+ ballPosition.y, aPos.z * ballRadius * 0.99 + ballPosition.z) - camPos);\n"
     "   gl_Position = vec4(pos.x * aspectRatio, pos.y, pos.z*pos.z * 1./100., pos.z);\n" // 1./100. so the far clipping plane doesnt come too quick
-    "	velocity = ballPosition - prevPos;\n"
+    "	velocity = ballVelocity;\n"
 	"	normal = normalize(aPos);\n"
     "}\0";
 
@@ -232,7 +233,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	"in vec3 normal;\n"
 	"void main()\n"
 	"{\n"
-		"vec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 100.);\n"
+		"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 0.25);\n"
 		"if(col.r > 1.) col.r = 1.;\n"
 		"if(col.g > 1.) col.g = 1.;\n"
 		"if(col.b > 1.) col.b = 1.;\n"
@@ -328,7 +329,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glEnableVertexAttribArray(1);
 	glVertexAttribDivisor(1, 1);
 
-	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ball_3d), (void*)(6*sizeof(float)));
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ball_3d), (void*)(3*sizeof(vec3)));
 	glEnableVertexAttribArray(2);
 	glVertexAttribDivisor(2, 1);
 
@@ -672,11 +673,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	const bool * const key_states = SDL_GetKeyboardState(NULL);
 
 	int framerate = 60;
-	int steps_per_frame = 10;
+	int steps_per_frame = 5;
 	state->deltatime = 1.0/framerate/steps_per_frame;
 	//state->deltatime *= 0.5;
 	if(key_states[SDL_SCANCODE_RETURN]) {
-		if(SDL_GetTicks() > state->spawn_tick_count + 500) {
+		if(SDL_GetTicks() > state->spawn_tick_count + 100) {
 			int spawn_count = 1;
 			float ball_radius = 0.3;
 			float spawn_height = 5;
@@ -685,9 +686,9 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 			for(int i = 1; i <= spawn_count; ++i) {
 				state->balls[state->ball_count-i].position = (vec3){0, spawn_height + i * 2 * ball_radius, 0};
-				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, 0, 0});
-				state->balls[state->ball_count - i].mass = 1;
-				state->balls[state->ball_count - i].radius = ball_radius;
+				set_velocity_3d(state->balls + state->ball_count - i, (vec3){0, -10, 0});
+				state->balls[state->ball_count - i].mass = 0.2;
+				state->balls[state->ball_count - i].radius = 0.2;
 			}
 		}
 	}
@@ -762,13 +763,13 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 
 		for(int i = 0; i < state->cloth.ball_count; ++i) {
 			ball_3d *current_ball = state->cloth.balls + i;
-			update_ball_3d(current_ball);
+			begin_ball_update_3d(current_ball, state->deltatime);
 			current_ball->position.y -= 10 * state->deltatime * state->deltatime;
 		}
 
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_3d *current_ball = state->balls + i;
-			update_ball_3d(current_ball);
+			begin_ball_update_3d(current_ball, state->deltatime);
 			current_ball->position.y -= 10 * state->deltatime * state->deltatime;
 		}
 
@@ -782,12 +783,16 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS].position = (vec3){-2.5, 0, -2.5};
 		state->cloth.balls[state->cloth.ball_count-1].position = (vec3){2.5, 0, -2.5};*/
         
+		vec3 output_ptrs[4];
 		for(int i = 0; i < state->cloth.link_count; ++i) {
-			linkage_3d link = state->cloth.links[i];
-			if(state->true_frame_count > 60 && v3_magnitude(v3_sub(link.a->position, link.b->position)) > link.length * 2) {
-				//state->cloth.links[i].stiffness = 0;
-			}
-			update_linkage_3d(state->cloth.links[i], state->deltatime);
+				//update_linkage_3d(state->cloth.links[i], state->deltatime);
+			ball_3d *a = state->cloth.links[i].a;
+			ball_3d *b = state->cloth.links[i].b;
+			solve_constraint_3d(distance_constraint_3d,
+					(vec3*[]){&a->position, &b->position}, 
+					output_ptrs,
+					(float[]){1/a->mass, 1/b->mass}, 2
+					, (float[]){state->cloth.links[i].length}, state->deltatime, 1/state->cloth.links[i].stiffness, INEQ_LESS);
 		}
 
         
@@ -821,26 +826,80 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		
 		update_grid_3d(&state->grid, state->balls, state->ball_count);
 		spatial_collision_3d(&state->grid, state->balls, state->ball_count);
+
+		//update_grid_3d(&state->grid, state->cloth.balls, state->cloth.ball_count);
+		//spatial_collision_3d(&state->grid, state->cloth.balls, state->cloth.ball_count);
 	
 		//collide_wall_3d(&state->cloth.balls[0], &state->cloth.balls[CLOTH_DIMENSIONS-1], &state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS], state->balls + 4);
 		//collide_wall_3d(&state->cloth.balls[state->cloth.ball_count-1], &state->cloth.balls[CLOTH_DIMENSIONS-1], &state->cloth.balls[state->cloth.ball_count-CLOTH_DIMENSIONS], state->balls + 4);
 		
 	
-		for(int ball = 0; ball < state->ball_count; ++ball) {
-			for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
-				for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
-					collide_wall_3d(
-							&state->cloth.balls[i + CLOTH_DIMENSIONS*row],
-							&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
-							&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
-							state->balls + ball);
-					collide_wall_3d(
-							&state->cloth.balls[i+1 + CLOTH_DIMENSIONS*row],
-							&state->cloth.balls[i+CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row],
-							&state->cloth.balls[i+CLOTH_DIMENSIONS+1 + CLOTH_DIMENSIONS*row],
-							state->balls + ball);
-				}
+		for(int row = 0; row < CLOTH_DIMENSIONS-1; ++row) {
+			for(int i = 0; i < CLOTH_DIMENSIONS-1; ++i) {
+				spatial_bounds_3d bounds;
+				ball_3d *vert_a = &state->cloth.balls[i + CLOTH_DIMENSIONS*row];
+				ball_3d *vert_b = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
+				ball_3d *vert_c = &state->cloth.balls[i + CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row];
+	
+				vec3 min;
+				min.x = fmin(fmin(vert_a->position.x, vert_b->position.x), vert_c->position.x);
+				min.y = fmin(fmin(vert_a->position.y, vert_b->position.y), vert_c->position.y);
+				min.z = fmin(fmin(vert_a->position.z, vert_b->position.z), vert_c->position.z);
+	
+				vec3 max;
+				max.x = fmax(fmax(vert_a->position.x, vert_b->position.x), vert_c->position.x);
+				max.y = fmax(fmax(vert_a->position.y, vert_b->position.y), vert_c->position.y);
+				max.z = fmax(fmax(vert_a->position.z, vert_b->position.z), vert_c->position.z);
+				
+				bounds.min_column = (min.x - state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+				bounds.min_row = (min.y - state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+				bounds.min_layer = (min.z - state->balls[0].radius) / state->grid.element_size + state->grid.depth * 0.5;
+	
+				bounds.max_column = (max.x + state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+				bounds.max_row = (max.y + state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+				bounds.max_layer = (max.z + state->balls[0].radius) / state->grid.element_size + state->grid.depth * 0.5;
+	
+				vec3 *vectors[4];
+				vectors[1] = &vert_a->position;
+				vectors[2] = &vert_b->position;
+				vectors[3] = &vert_c->position;
+	
+				float inv_weights[4];
+				inv_weights[1] = 1/vert_a->mass;
+				inv_weights[2] = 1/vert_b->mass;
+				inv_weights[3] = 1/vert_c->mass;
+	
+	
+				spatial_constraint_3d(&state->grid, bounds, 0, state->balls, penetration_constraint_3d, vectors, output_ptrs, inv_weights, 4, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);
+	
+				vert_a = &state->cloth.balls[i + 1 + CLOTH_DIMENSIONS*row];
+				vert_b = &state->cloth.balls[i + CLOTH_DIMENSIONS + CLOTH_DIMENSIONS*row];
+				vert_c = &state->cloth.balls[i + CLOTH_DIMENSIONS + 1 + CLOTH_DIMENSIONS*row];
+	
+				vectors[1] = &vert_a->position;
+				vectors[2] = &vert_b->position;
+				vectors[3] = &vert_c->position;
+	
+				inv_weights[1] = 1/vert_a->mass;
+				inv_weights[2] = 1/vert_b->mass;
+				inv_weights[3] = 1/vert_c->mass;
+	
+				spatial_constraint_3d(&state->grid, bounds, 0, state->balls, penetration_constraint_3d, vectors, output_ptrs, inv_weights, 4, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);
 			}
+		}
+
+		for(int i = 0; i < state->ball_count; ++i) {
+			solve_constraint_3d(boundary_constraint_3d, (vec3*[]){&state->balls[i].position}, output_ptrs, (float[]){1}, 1, &(boundary_args_3d){.position = (vec3){0, -5, 0}, .distance = state->balls[i].radius, .normal = (vec3){0, 1, 0}}, state->deltatime, 0, INEQ_GREATER);
+		}
+
+		for(int i = 0; i < state->cloth.ball_count; ++i) {
+			ball_3d *current_ball = state->cloth.balls + i;
+			end_ball_update_3d(current_ball, state->deltatime);
+		}
+
+		for(int i = 0; i < state->ball_count; ++i) {
+			ball_3d *current_ball = state->balls + i;
+			end_ball_update_3d(current_ball, state->deltatime);
 		}
 	}
 

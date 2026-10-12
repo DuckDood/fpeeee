@@ -1,9 +1,11 @@
 #pragma once
 #include <types.h>
+#include <constraints.h>
 
 typedef struct {
 	vec2 position;
-	vec2 previous_position;
+	vec2 velocity;
+	vec2 temp_position;
 	float radius;
 	float mass;
 } ball_2d;
@@ -30,41 +32,29 @@ typedef struct {
 } linkage_2d;
 
 typedef struct {
-	float depth;
-	vec2 normal;
-	int hit;
-} collision_info_2d;
-
-typedef struct {
 	ball_2d *balls;
 	int ball_count;
 	linkage_2d *links;
 	int link_count;
 } shape_2d;
 
+typedef enum {
+	EQUALITY,
+	INEQ_GREATER,
+	INEQ_LESS,
+} constraint_types;
+
 
 void set_velocity_2d(ball_2d *body, vec2 velocity);
-collision_info_2d check_collision_2d(ball_2d a, wall_2d b);
-void resolve_collision_2d(ball_2d *body, collision_info_2d hit_info, float elasticity, float friction, float deltatime);
-void check_and_resolve_2d(ball_2d *body, wall_2d collider, float elasticity, float friction, float deltatime);
-void update_ball_2d(ball_2d *body);
+void begin_ball_update_2d(ball_2d *body, float deltatime);
+void end_ball_update_2d(ball_2d *body, float deltatime);
 
-void distance_constraint_2d(ball_2d *a, ball_2d *b, float length);
-void spring_constraint_2d(ball_2d *a, ball_2d *b, float length, float stiffness, float deltatime);
-void rope_constraint_2d(ball_2d *a, ball_2d *b, float length);
-void rope_spring_constraint_2d(ball_2d *a, ball_2d *b, float length, float stiffness, float deltatime);
-
-void update_linkage_2d(linkage_2d link, float deltatime);
-
-collision_info_2d check_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b);
-void resolve_ball_collision_2d(ball_2d * restrict a, ball_2d * restrict b, collision_info_2d hit_info);
-void check_and_resolve_balls_2d(ball_2d * restrict a, ball_2d * restrict b);
-
-void collide_wall_2d(ball_2d *a, ball_2d *b, ball_2d *collider);
+void solve_constraint_2d(constraint_function_2d constraint, vec2 **vectors, vec2 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type);
 
 typedef struct {
 	vec3 position;
-	vec3 previous_position;
+	vec3 velocity;
+	vec3 temp_position;
 	float radius;
 	float mass;
 } ball_3d;
@@ -98,7 +88,7 @@ typedef struct {
 	int link_count;
 } shape_3d;
 
-void set_velocity_3d(ball_3d *body, vec3 velocity);
+/*void set_velocity_3d(ball_3d *body, vec3 velocity);
 collision_info_3d check_collision_3d(ball_3d a, wall_3d b);
 void resolve_collision_3d(ball_3d *body, collision_info_3d hit_info, float elasticity, float friction, float deltatime);
 void check_and_resolve_3d(ball_3d *body, wall_3d collider, float elasticity, float friction, float deltatime);
@@ -115,4 +105,10 @@ collision_info_3d check_ball_collision_3d(ball_3d a, ball_3d b);
 void resolve_ball_collision_3d(ball_3d *a, ball_3d *b, collision_info_3d hit_info);
 void check_and_resolve_balls_3d(ball_3d *a, ball_3d *b);
 
-void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider);
+void collide_wall_3d(ball_3d *a, ball_3d *b, ball_3d *c, ball_3d *collider);*/
+
+void set_velocity_3d(ball_3d *body, vec3 velocity);
+void begin_ball_update_3d(ball_3d *body, float deltatime);
+void end_ball_update_3d(ball_3d *body, float deltatime);
+
+void solve_constraint_3d(constraint_function_3d constraint, vec3 **vectors, vec3 *gradient_outputs, float *inv_weights, int size, void *constraint_args, float deltatime, float compliance, constraint_types type);

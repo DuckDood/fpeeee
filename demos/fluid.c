@@ -21,6 +21,7 @@
 #include <helpers.h>
 
 #include <spatial.h>
+#include <constraints.h>
 
 int fps = 0;
 int ball_count = 0;
@@ -119,8 +120,9 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	float spawn_height = -0.5;
 
 	for(int i = 0; i < state->ball_count; ++i) {
-		state->balls[i].position = (vec2){((i%horizontal_max_spawn) - (horizontal_max_spawn-1)/2.0) * ball_radius*2, spawn_height + ball_radius*2 * floor((float)i / horizontal_max_spawn)};
-		set_velocity_2d(state->balls + i, (vec2){0, 0});
+		state->balls[i].position = (vec2){((i%horizontal_max_spawn) - (horizontal_max_spawn-1)/2.0) * ball_radius*2.1, spawn_height + ball_radius*2 * floor((float)i / horizontal_max_spawn)};
+		//set_velocity_2d(state->balls + i, (vec2){rand() * 1e-11, rand() * 1e-10});
+		set_velocity_2d(state->balls + i, (vec2){0});
 		state->balls[i].mass = 0.5;
 		state->balls[i].radius = ball_radius;
 	}
@@ -130,6 +132,19 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->frame_count = 0;
 	state->spawn_delay = 250;
 	state->spawn_position = (vec2){0,0};
+	/*state->balls[0].position = (vec2){0.5, 0.5};
+	state->balls[1].position = (vec2){0.5, -0.5};
+	state->balls[2].position = (vec2){-0., 0.2};
+
+	state->balls[0].velocity = (vec2){-0.1, 0};
+	state->balls[1].velocity = (vec2){-0.1, 0};
+
+	state->balls[2].velocity = (vec2){0.3, 0};
+
+	//state->balls[0].mass = INFINITY;
+	//state->balls[1].mass = INFINITY;
+
+	state->balls[0].mass = 10;*/
 
 
 
@@ -159,16 +174,13 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec2 ballPosition;\n"
     "layout (location = 2) in float ballRadius;\n"
-    "layout (location = 3) in vec2 prevPos;\n"
+    "layout (location = 3) in vec2 velocity;\n"
 	"uniform float aspectRatio;\n"
-	"uniform mat3 camRot;\n"
-	"uniform vec3 camPos;\n"
-	"out vec2 velocity;\n"
+	"out float speed;\n"
     "void main()\n"
     "{\n"
-	"	vec3 pos = camRot * (vec3(aspectRatio * (aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, aPos.z) - camPos);\n"
-    "   gl_Position = vec4(pos, pos.z);\n"
-    "	velocity = ballPosition - prevPos;\n"
+    "   gl_Position = vec4(aspectRatio * (aPos.x * ballRadius + ballPosition.x), aPos.y * ballRadius + ballPosition.y, aPos.z * 0.1, 1.0);\n"
+    "	speed = length(velocity);"
     "}\0";
 
 	GLuint v_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -187,10 +199,12 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	const char *fs_source = "#version 300 es\nprecision mediump float;\n"
 	"out vec4 FragColor;\n"
 	"\n"
-	"in vec2 velocity;\n"
+	"in float speed;\n"
 	"void main()\n"
 	"{\n"
-		"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), length(velocity) * 1000.);\n"
+		"float speedMix = speed;"
+		"if(speed < 1.) speedMix *= speed * speed; else speedMix *= speed;\n"
+		"\nvec3 col = mix(vec3(0., 0., 1.), vec3(1., 0.4, 0.1), speedMix * 0.8);\n"
 	    "FragColor = vec4(col, 1.0f);\n"
 	"}\0";
 
@@ -241,7 +255,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glEnableVertexAttribArray(1);
 	glVertexAttribDivisor(1, 1);
 
-	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ball_2d), (void*)(4*sizeof(float)));
+	glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(ball_2d), (void*)(6*sizeof(float)));
 	glEnableVertexAttribArray(2);
 	glVertexAttribDivisor(2, 1);
 
@@ -296,7 +310,7 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	const bool * const key_states = SDL_GetKeyboardState(NULL);
 
 	int framerate = 60;
-	int steps_per_frame = 15;
+	int steps_per_frame = 16;
 	state->deltatime = 1.0/framerate/steps_per_frame;
 	//state->deltatime = 0;
 
@@ -343,30 +357,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		state->cam.position.x -= 0.1 * cos(state->cam.rotation.x);
 	}
 
-	wall_2d floor;
-	floor.length = aspect_ratio * 2;
-	floor.normal = (vec2){0, 1};
-	floor.position = (vec2){0, -1};
-
-	wall_2d ceiling;
-	ceiling.length = aspect_ratio * 2;
-	ceiling.normal = (vec2){0, -1};
-	ceiling.position = (vec2){0, 1};
-
-	wall_2d left;
-	left.length = 2;
-	left.normal = (vec2){1, 0};
-	left.position = (vec2){-aspect_ratio, 0};
-
-	wall_2d right;
-	right.length = 2;
-	right.normal = (vec2){1, 0};
-	right.position = (vec2){aspect_ratio, 0};
-
-	/*wall_2d another;
-	another.length = 1;
-	another.normal = (vec2){cos(1.7), sin(1.7)};
-	another.position = (vec2){0.75, 0.1};*/
 	float mouse_x, mouse_y;
 
 	bool mouse_down = SDL_BUTTON_LMASK & SDL_GetMouseState(&mouse_x, &mouse_y);
@@ -394,42 +384,169 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 		if(SDL_GetTicks() > state->spawn_tick_count + state->spawn_delay) {
 			state->spawn_tick_count = SDL_GetTicks();
 			state->balls = realloc(state->balls, ++state->ball_count * sizeof(ball_2d));
-			state->balls[state->ball_count-1].previous_position = state->spawn_position;
+			//state->balls[state->ball_count-1].previous_position = state->spawn_position;
 			state->balls[state->ball_count-1].position = mouse_position;
 			vec2 velocity = v2_sub(state->spawn_position, mouse_position);
-			set_velocity_2d(&state->balls[state->ball_count-1], v2_fdiv(velocity, 100));
+			set_velocity_2d(&state->balls[state->ball_count-1], v2_fmult(velocity, 3));
 			state->balls[state->ball_count-1].mass = 1;
 			state->balls[state->ball_count-1].radius = 0.005;
 		}
 	}
 		for(int i = 0; i < state->ball_count; ++i) {
 			ball_2d *current_ball = state->balls + i;
-			update_ball_2d(current_ball);
-			current_ball->position.y -= 1 * state->deltatime * state->deltatime;
 
 			if(mouse_down) {
 				vec2 relative_to_mouse = v2_sub(current_ball->position, mouse_position);
 				float distance_to_mouse = v2_magnitude(relative_to_mouse);
 				if(distance_to_mouse < mouse_radius + current_ball->radius) {
 					float total_mouse_power = mouse_power * (mouse_radius - distance_to_mouse + current_ball->radius) / mouse_radius;
-					current_ball->position = v2_sub(current_ball->position, v2_fmult(v2_normalize(relative_to_mouse), total_mouse_power * state->deltatime * state->deltatime));
+					current_ball->velocity = v2_sub(current_ball->velocity, v2_fmult(v2_normalize(relative_to_mouse), total_mouse_power * state->deltatime));
 				}
 			}
-		}
-		for(int i = 0; i < state->ball_count; ++i) {
-			check_and_resolve_2d(state->balls+i, floor, 0, 0, state->deltatime);
-			check_and_resolve_2d(state->balls+i, ceiling, 0, 0, state->deltatime);
-			check_and_resolve_2d(state->balls+i, left, 0, 0, state->deltatime);
-			check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
-			//check_and_resolve_2d(state->balls+i, another, 0, 0, state->deltatime);
+			current_ball->velocity.y -= 1 * state->deltatime;
+			begin_ball_update_2d(current_ball, state->deltatime);
 		}
 
-		
-		
-		
+		//distance_constraint_2d(state->balls + 0, state->balls+1, 0.3);
+		//distance_constraint_2d(state->balls + 0, state->balls+1, 0.3);
+
+		/*for(int i = 0; i < state->ball_count; ++i) {
+			//check_and_resolve_2d(state->balls+i, floor, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, ceiling, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, left, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, right, 0, 0, state->deltatime);
+			//check_and_resolve_2d(state->balls+i, another, 0, 0, state->deltatime);
+			for(int j = 0; j < state->ball_count; ++j) {
+				solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, INEQ_GREATER, (vec2*[]){&state->balls[i].position, &state->balls[j].position}, (float[]){1, 1}, 2, (float[]){state->balls[0].radius * 2});
+			}
+		}*/
+		vec2 output_ptr[1];
+		for(int i = 0; i < state->ball_count; ++i) {
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptr, (float[]){1}, 1, &(boundary_args_2d){(vec2){0, -1}, (vec2){0, 1}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptr, (float[]){1}, 1, &(boundary_args_2d){(vec2){aspect_ratio, 0}, (vec2){-1, 0}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptr, (float[]){1}, 1, &(boundary_args_2d){(vec2){-aspect_ratio, 0}, (vec2){1, 0}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+			solve_constraint_2d(boundary_constraint_2d, (vec2*[]){&state->balls[i].position}, output_ptr, (float[]){1}, 1, &(boundary_args_2d){(vec2){0, 1}, (vec2){0, -1}, state->balls[i].radius}, state->deltatime, 0, INEQ_GREATER);
+		}
+		/*vec2 output_ptrs[3];
+		spatial_bounds_2d bounds;
+
+		vec2 min;
+		vec2 max;
+		min.x = -aspect_ratio;
+		max.x = -aspect_ratio;
+		min.y = -1;
+		max.y = 1;
+		bounds.min_column = (min.x - state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+		bounds.min_row = (min.y - state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+		bounds.max_column = (max.x + state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+		bounds.max_row = (max.y + state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+		vec2 *vectors[3];
+		float inv_weight[3];
+		vectors[1] = &(vec2){-aspect_ratio, -1};
+		vectors[2] = &(vec2){-aspect_ratio, 1};
+		inv_weight[1] = 0;
+		inv_weight[2] = 0;
+		spatial_constraint_2d(&state->grid, bounds, 0, state->balls, penetration_constraint_2d, vectors, output_ptrs, inv_weight, 3, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);
+
+		min.x = -aspect_ratio;
+		max.x = aspect_ratio;
+		min.y = -1;
+		max.y = -1;
+		bounds.min_column = (min.x - state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+		bounds.min_row = (min.y - state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+		bounds.max_column = (max.x + state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+		bounds.max_row = (max.y + state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+		vectors[1] = &(vec2){-aspect_ratio, -1};
+		vectors[2] = &(vec2){aspect_ratio, -1};
+		spatial_constraint_2d(&state->grid, bounds, 0, state->balls, penetration_constraint_2d, vectors, output_ptrs, inv_weight, 3, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);
+
+		min.x = -aspect_ratio;
+		max.x = aspect_ratio;
+		min.y = 1;
+		max.y = 1;
+		bounds.min_column = (min.x - state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+		bounds.min_row = (min.y - state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+		bounds.max_column = (max.x + state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+		bounds.max_row = (max.y + state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+		vectors[1] = &(vec2){-aspect_ratio, 1};
+		vectors[2] = &(vec2){aspect_ratio, 1};
+		spatial_constraint_2d(&state->grid, bounds, 0, state->balls, penetration_constraint_2d, vectors, output_ptrs, inv_weight, 3, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);
+
+		min.x = aspect_ratio;
+		max.x = aspect_ratio;
+		min.y = -1;
+		max.y = 1;
+		bounds.min_column = (min.x - state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+		bounds.min_row = (min.y - state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+		bounds.max_column = (max.x + state->balls[0].radius) / state->grid.element_size + state->grid.width * 0.5;
+		bounds.max_row = (max.y + state->balls[0].radius) / state->grid.element_size + state->grid.height * 0.5;
+		vectors[1] = &(vec2){aspect_ratio, -1};
+		vectors[2] = &(vec2){aspect_ratio, 1};
+		spatial_constraint_2d(&state->grid, bounds, 0, state->balls, penetration_constraint_2d, vectors, output_ptrs, inv_weight, 3, &state->balls[0].radius, state->deltatime, 0, INEQ_GREATER);*/
+//		for(int i = 0; i < state->ball_count; ++i) {
+//			/*solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
+//					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{-aspect_ratio, 1}}}, 
+//					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius}, state->deltatime, 0);
+//			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
+//					(vec2*[]){&state->balls[i].position, (vec2[]){{aspect_ratio, -1}},(vec2[]){{aspect_ratio, 1}}}, 
+//					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius}, state->deltatime, 0);
+//
+//			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
+//					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{aspect_ratio, -1}}}, 
+//					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius}, state->deltatime, 0);
+//			solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, 
+//					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, 1}},(vec2[]){{aspect_ratio, 1}}}, 
+//					(float[]){1, 0, 0}, 3, (float[]){state->balls[1].radius}, state->deltatime, 0);*/
+//			solve_constraint_2d(penetration_constraint_2d, 
+//					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{-aspect_ratio, 1}}},
+//					output_ptrs,
+//					(float[]){1, 0, 0},
+//					3,
+//					(float[]){state->balls[i].radius},
+//					state->deltatime, 0, INEQ_GREATER);
+//			solve_constraint_2d(penetration_constraint_2d,
+//					(vec2*[]){&state->balls[i].position, (vec2[]){{aspect_ratio, -1}},(vec2[]){{aspect_ratio, 1}}},
+//					output_ptrs,
+//					(float[]){1, 0, 0},
+//					3,
+//					(float[]){state->balls[i].radius},
+//					state->deltatime, 0, INEQ_GREATER);
+//
+//			solve_constraint_2d(penetration_constraint_2d,
+//					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, -1}},(vec2[]){{aspect_ratio, -1}}},
+//					output_ptrs,
+//					(float[]){1, 0, 0},
+//					3,
+//					(float[]){state->balls[i].radius},
+//					state->deltatime, 0, INEQ_GREATER);
+//
+//			solve_constraint_2d(penetration_constraint_2d,
+//					(vec2*[]){&state->balls[i].position, (vec2[]){{-aspect_ratio, 1}},(vec2[]){{aspect_ratio, 1}}},
+//					output_ptrs,
+//					(float[]){1, 0, 0},
+//					3,
+//					(float[]){state->balls[i].radius},
+//					state->deltatime, 0, INEQ_GREATER);
+//		}
+
+		/*solve_full_constraint_2d(penetration_constraint_2d, &(constraint_params){
+				.arguments = (float[]){state->balls[2].radius},
+				.size = 3,
+				.vectors = (vec2*[]){&state->balls[2].position, &state->balls[0].position, &state->balls[1].position},
+				.output_ptr = output_ptrs
+				}, (float[]){1/state->balls[2].mass, 1/state->balls[0].mass, 1/state->balls[1].mass}, state->deltatime, 0, INEQ_GREATER);*/
+		//solve_constraint_2d(dist_constraint_2d, (del_constraint_function_2d[]){dist_constraint_del_a_2d, dist_constraint_del_b_2d}, EQUALITY, (vec2*[]){&state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[0].mass, 1/state->balls[1].mass}, 2, (float[]){state->balls[0].radius * 100 + 0.001 });
+		//solve_constraint_2d(wall_constraint_2d, (del_constraint_function_2d[]){wall_constraint_del_body_2d, wall_constraint_del_a_2d, wall_constraint_del_b_2d}, INEQ_GREATER, (vec2*[]){&state->balls[2].position, &state->balls[0].position, &state->balls[1].position}, (float[]){1/state->balls[2].mass, 1/state->balls[0].mass, 1/state->balls[1].mass}, 3, (float[]){state->balls[0].radius * 1});
+		//collide_wall_2d(state->balls + 0, state->balls + 1, state->balls + 2);
 		update_grid_2d(&state->grid, state->balls, state->ball_count);
 		
 		spatial_collision_2d(&state->grid, state->balls, state->ball_count);
+
+		for(int i = 0; i < state->ball_count; ++i) {
+			ball_2d *current_ball = state->balls + i;
+			end_ball_update_2d(current_ball, state->deltatime);
+		}
+
 	}
 
 	
@@ -440,11 +557,6 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	for(int i = 0; i < state->ball_count; i+=1) {
 		//draw_circle(state->renderer, state->balls[i], 6, state->cam);
 	}
-	//draw_wall(state->renderer, floor, state->cam);
-	//draw_wall(state->renderer, ceiling, state->cam);
-	//draw_wall(state->renderer, left, state->cam);
-	//draw_wall(state->renderer, right, state->cam);
-	//draw_wall(state->renderer, another, state->cam);
 
 	//ball_2d mouse_ball;
 	//mouse_ball.position = mouse_position;
@@ -506,6 +618,11 @@ SDL_AppResult SDL_AppIterate(void *appstate) {
 	}
 	glBufferSubData(GL_ARRAY_BUFFER, 0, state->ball_count * sizeof(ball_2d), state->balls);
 	
+	/*vec2 momenta = {0};
+	for(int i = 0; i < state->ball_count; ++i) {
+		momenta = v2_add(momenta, v2_fmult(state->balls[i].velocity, state->balls[i].mass));
+	}
+	printf("momenta: %f\n", v2_magnitude(momenta));*/
 
 	//SDL_RenderPresent(state->renderer);
 	
