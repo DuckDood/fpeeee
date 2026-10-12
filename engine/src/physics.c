@@ -36,6 +36,7 @@ void solve_constraint_2d(constraint_function_2d constraint, vec2 **vectors, vec2
 	for(int i = 0; i < size; ++i) {
 		lagrange_denominator += inv_weights[i] * v2_dot(gradient_outputs[i], gradient_outputs[i]);
 	}
+	if(lagrange_denominator == 0) return; // just in case
 	float lagrange_multiplier = -lambda_numerator / (lagrange_denominator + compliance/(deltatime * deltatime));
 
 	for(int i = 0; i < size; ++i) {
@@ -75,6 +76,7 @@ void solve_constraint_3d(constraint_function_3d constraint, vec3 **vectors, vec3
 	for(int i = 0; i < size; ++i) {
 		lagrange_denominator += inv_weights[i] * v3_dot(gradient_outputs[i], gradient_outputs[i]);
 	}
+	if(lagrange_denominator == 0) return; // just in case
 	float lagrange_multiplier = -lambda_numerator / (lagrange_denominator + compliance/(deltatime * deltatime));
 
 	for(int i = 0; i < size; ++i) {
