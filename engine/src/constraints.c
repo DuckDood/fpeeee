@@ -1,18 +1,21 @@
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <types.h>
 #include <constraints.h>
 
 float distance_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]]int size, void *arguments) {
 	vec2 relative_position = v2_sub(*vectors[0], *vectors[1]);
 	float distance_between = v2_magnitude(relative_position);
+	int dist_not_zero = distance_between != 0;
 
 	float inv_dist_between = 1/distance_between;
+	if(!dist_not_zero) inv_dist_between = 0;
 
 	gradients[0] = v2_fmult(relative_position, inv_dist_between);
 	gradients[1] = v2_fmult(relative_position, -inv_dist_between);
 
-	return distance_between - *(float*)arguments;
+	return (distance_between - *(float*)arguments) * dist_not_zero;
 }
 
 float penetration_constraint_2d(vec2 **vectors, vec2 *gradients, [[maybe_unused]]int size, void *arguments) {
@@ -206,12 +209,15 @@ float distance_constraint_3d(vec3 **vectors, vec3 *gradient_outputs, [[maybe_unu
 	vec3 relative_position = v3_sub(*vectors[0], *vectors[1]);
 	float distance_between = v3_magnitude(relative_position);
 
+	int dist_not_zero = distance_between != 0;
+
 	float inv_dist_between = 1/distance_between;
+	if(!dist_not_zero) inv_dist_between = 0;
 
 	gradient_outputs[0] = v3_fmult(relative_position, inv_dist_between);
 	gradient_outputs[1] = v3_fmult(relative_position, -inv_dist_between);
 
-	return distance_between - *(float*)arguments;
+	return (distance_between - *(float*)arguments) * dist_not_zero;
 }
 
 float penetration_constraint_3d(vec3 **vectors, vec3 *gradient_outputs, [[maybe_unused]]int size, void *arguments) {
