@@ -122,7 +122,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	state->ball_count = 128;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
-	state->grid = construct_grid_3d(25 * 3, 50 * 3, 25 * 3, 0.2);
+	state->grid = construct_grid_3d(30 * 2, 25 * 4, 30 * 2, 0.2);
 
 
 	for(int i = 0; i < state->ball_count; ++i) {
@@ -320,7 +320,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	state->instance_max = 1002;
+	state->instance_max = state->ball_count + 1;
 	glGenBuffers(1, &state->instance_VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, state->instance_VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(ball_3d) * state->instance_max, NULL, GL_DYNAMIC_DRAW);
