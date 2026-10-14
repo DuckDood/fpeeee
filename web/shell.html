@@ -84,10 +84,11 @@
       <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
     </div>
 	<div class="emscripten" id="settings">
+	  <p>info and controls below!</p>
       <input type="checkbox" id="resize">Resize canvas
       <input type="checkbox" id="pointerLock" checked>Lock/hide mouse pointer
       <input type="button" value="Fullscreen" onclick="Module.requestFullscreen(document.getElementById('pointerLock').checked,
-                                                                                document.getElementById('resize').checked)">
+											  document.getElementById('resize').checked)">
 	  <hr/>
 	  <h1>Info and Controls</h1>
 	  <p>For some reason on some devices the canvas doesn't show up, please use fullscreen if so!</p>
