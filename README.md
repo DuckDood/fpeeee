@@ -19,6 +19,7 @@ Try some demos of the project [here](https://duckdood.github.io/physics_demo) (c
     * A C compiler (I've tested with GCC and Clang)
     * Make
     * SDL3
+    * OpenGL
 * ### Building
     `git clone https://github.com/duckdood/fpeeee && cd fpeeee && make`\
     This will put demos in a the build/ directory for you to run.
