@@ -119,7 +119,7 @@ SDL_AppResult SDL_AppInit(void **appstate, [[maybe_unused]] int argc, [[maybe_un
 
 	state->deltatime = 0;
 
-	state->ball_count = 128;
+	state->ball_count = 32;
 	state->balls = malloc(state->ball_count * sizeof(ball_3d));
 	printf("ball mem usage (kb): %zu\n", state->ball_count * sizeof(ball_3d) / 1000);
 	state->grid = construct_grid_3d(30 * 2, 25 * 4, 30 * 2, 0.2);
