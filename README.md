@@ -1,7 +1,7 @@
 # FPE(eee)
 Funky Physics Engine(eee) is a portable, fast, and flexible position-based-dynamics physics engine.
 
-![Cloth showcase](cloth.gif)
+![Cloth showcase](cloth.webp)
 
 ## Try it
 Try some demos of the project [here](https://duckdood.github.io/physics_demo) (cloth demo recommended)
